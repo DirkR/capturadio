@@ -56,7 +56,7 @@ parser = argparse.ArgumentParser(description='Capture internet radio programs br
 parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
 parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadiorc. %s' % config.sections())
 parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
-parser.add_argument('-t', metavar='title', required=True, help='Title of the recording')
+parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
 
 args = parser.parse_args()
 
@@ -70,6 +70,9 @@ if (not config.has_option('stations', station)):
     print "Station '%s' is unknown. Use one of these: %s." % (station, config.sections())
     exit(1)
 
+title = args.t if (args.t != None) else args.b
+
 file = capture(config.get('stations', station), duration)
-file = store_file(file, station, args.b, args.t)
-add_metadata(file, station, args.b, args.t)
+
+file = store_file(file, station, args.b, title)
+add_metadata(file, station, args.b, title)
