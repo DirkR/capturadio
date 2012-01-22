@@ -1,0 +1,7 @@
+[stations]
+dlf = http://dradio.ic.llnwd.net/stream/dradio_dlf_m_a
+
+; additional settings for station 'dlf'
+[dlf]
+name = Deutschlandfunk
+logo = http://www.dradio.de/images/31064/square/

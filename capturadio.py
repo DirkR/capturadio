@@ -19,24 +19,43 @@ def capture(stream_url, duration):
 	file.close
 	return file_name
 
-def add_metadata(src_file, station_name, artist, title):
+def add_metadata(file, station_name, broadcast, title):
+	from mutagen.mp3 import MP3
+	from mutagen.id3 import ID3, TIT2, TCON, TDRC, TALB, APIC
+	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
+		station_name = config.get(station_name, 'name', station_name)
+
+	audio = MP3(file)
+	audio["TIT2"] = TIT2(encoding=3, text=[title])
+	audio["TCON"] = TCON(encoding=3, text=['Podcast'])
+	audio["TDRC"] = TDRC(encoding=3, text=[time.strftime('%Y')])
+	audio["TALB"] = TALB(encoding=3, text=[broadcast])
+	
+#	if (config.has_section(station_name) and config.has_option(station_name, 'logo')):
+#		logo = config.get(station_name, 'logo')
+#		audio["APIC"] = APIC(encoding=0, data=['Podcast'])	
+	audio.save()
+
+def store_file(src_file, station_name, artist, title):
 	import shutil, re
+	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
+		station_name = config.get(station_name, 'name', station_name)
+
 	target_file = "./%s/%s/%s_%s.mp3" % (station_name, artist, title, time.strftime("%Y-%m-%d"))
 	target_file = re.sub("[^\w\d._/ -]", "", target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
 		os.makedirs(os.path.dirname(target_file))
 	print "copy %s to %s" % (src_file, target_file)
 	shutil.copy2(src_file, target_file)
+	return target_file
 
 config = ConfigParser.ConfigParser()
 config.read([os.path.expanduser('~/.capturadiorc')])
 
-usage="Usage: $0: [-l length] [-u url|-s station] [-a Artist] [-t title] [-d destination] args";
-
 parser = argparse.ArgumentParser(description='Capture internet radio programs broadcasted in mp3 encoding format.')
 parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
 parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadiorc. %s' % config.sections())
-parser.add_argument('-a', metavar='artist', required=True, help='Title of the artist')
+parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
 parser.add_argument('-t', metavar='title', required=True, help='Title of the recording')
 
 args = parser.parse_args()
@@ -47,12 +66,10 @@ if (duration < 1):
     exit(1)
 
 station = args.s
-if (station not in config.sections()):
+if (not config.has_option('stations', station)):
     print "Station '%s' is unknown. Use one of these: %s." % (station, config.sections())
     exit(1)
-if (not config.has_option(station, 'url')):
-    print "Station '%s' has no url defined. Please edit your ~/.capturadiorc file." % (station)
-    exit(1)
 
-file = capture(config.get(station, 'url'), duration)
-add_metadata(file, station, args.a, args.t)
+file = capture(config.get('stations', station), duration)
+file = store_file(file, station, args.b, args.t)
+add_metadata(file, station, args.b, args.t)
