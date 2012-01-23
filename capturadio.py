@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.7
 import urllib2
 import time
 import argparse
@@ -21,16 +21,18 @@ def capture(stream_url, duration):
 
 def add_metadata(file, station_name, broadcast, title):
 	from mutagen.mp3 import MP3
-	from mutagen.id3 import ID3, TIT2, TCON, TDRC, TALB, APIC
+	import mutagen.id3 
 	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
 		station_name = config.get(station_name, 'name', station_name)
 
 	audio = MP3(file)
-	audio["TIT2"] = TIT2(encoding=3, text=[title])
-	audio["TCON"] = TCON(encoding=3, text=['Podcast'])
-	audio["TDRC"] = TDRC(encoding=3, text=[time.strftime('%Y')])
-	audio["TALB"] = TALB(encoding=3, text=[broadcast])
-	
+	# See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
+	audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=[title])
+	audio["TCON"] = mutagen.id3.TCON(encoding=2, text=['Podcast'])
+	audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[time.strftime('%Y')])
+	audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[broadcast])
+	audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[duration * 1000])
+
 #	if (config.has_section(station_name) and config.has_option(station_name, 'logo')):
 #		logo = config.get(station_name, 'logo')
 #		audio["APIC"] = APIC(encoding=0, data=['Podcast'])	
@@ -41,16 +43,16 @@ def store_file(src_file, destination, station_name, artist, title):
 	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
 		station_name = config.get(station_name, 'name', station_name)
 
+	destination = os.path.expanduser(destination)
 	target_file = "%s/%s/%s/%s_%s.mp3" % (destination, station_name, artist, title, time.strftime("%Y-%m-%d"))
 	target_file = re.sub("[^\w\d._/ -]", "", target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
 		os.makedirs(os.path.dirname(target_file))
-	print "copy %s to %s" % (src_file, target_file)
 	shutil.copy2(src_file, target_file)
 	return target_file
 
 config = ConfigParser.ConfigParser()
-config.read([os.path.expanduser('~/.capturadiorc')])
+config.read([os.path.expanduser('~/.capturadio/capturadiorc'), os.path.expanduser('~/.capturadiorc')])
 
 parser = argparse.ArgumentParser(description='Capture internet radio programs broadcasted in mp3 encoding format.')
 parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
