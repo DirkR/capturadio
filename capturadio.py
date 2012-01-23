@@ -48,7 +48,6 @@ def store_file(src_file, destination, station_name, artist, title):
 	target_file = re.sub("[^\w\d._/ -]", "", target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
 		os.makedirs(os.path.dirname(target_file))
-	print "copy %s to %s" % (src_file, target_file)
 	shutil.copy2(src_file, target_file)
 	return target_file
 
