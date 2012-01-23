@@ -36,12 +36,12 @@ def add_metadata(file, station_name, broadcast, title):
 #		audio["APIC"] = APIC(encoding=0, data=['Podcast'])	
 	audio.save()
 
-def store_file(src_file, station_name, artist, title):
+def store_file(src_file, destination, station_name, artist, title):
 	import shutil, re
 	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
 		station_name = config.get(station_name, 'name', station_name)
 
-	target_file = "./%s/%s/%s_%s.mp3" % (station_name, artist, title, time.strftime("%Y-%m-%d"))
+	target_file = "%s/%s/%s/%s_%s.mp3" % (destination, station_name, artist, title, time.strftime("%Y-%m-%d"))
 	target_file = re.sub("[^\w\d._/ -]", "", target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
 		os.makedirs(os.path.dirname(target_file))
@@ -56,7 +56,8 @@ parser = argparse.ArgumentParser(description='Capture internet radio programs br
 parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
 parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadiorc. %s' % config.sections())
 parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
-parser.add_argument('-t', metavar='title', required=True, help='Title of the recording')
+parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
+parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
 
 args = parser.parse_args()
 
@@ -70,6 +71,16 @@ if (not config.has_option('stations', station)):
     print "Station '%s' is unknown. Use one of these: %s." % (station, config.sections())
     exit(1)
 
+title = args.t if (args.t != None) else args.b
+
+if (args.d != None):
+	destination = args.d
+elif(config.has_section('settings') and config.has_option('settings', 'destination')):
+	destination = config.get('settings', 'destination')
+else:
+	destination = os.getcwd()
+
 file = capture(config.get('stations', station), duration)
-file = store_file(file, station, args.b, args.t)
-add_metadata(file, station, args.b, args.t)
+
+file = store_file(file, destination, station, args.b, title)
+add_metadata(file, station, args.b, title)
