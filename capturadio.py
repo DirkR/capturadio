@@ -43,6 +43,7 @@ def store_file(src_file, destination, station_name, artist, title):
 	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
 		station_name = config.get(station_name, 'name', station_name)
 
+	destination = os.path.expanduser(destination)
 	target_file = "%s/%s/%s/%s_%s.mp3" % (destination, station_name, artist, title, time.strftime("%Y-%m-%d"))
 	target_file = re.sub("[^\w\d._/ -]", "", target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
@@ -52,7 +53,7 @@ def store_file(src_file, destination, station_name, artist, title):
 	return target_file
 
 config = ConfigParser.ConfigParser()
-config.read([os.path.expanduser('~/.capturadiorc')])
+config.read([os.path.expanduser('~/.capturadio/capturadiorc'), os.path.expanduser('~/.capturadiorc')])
 
 parser = argparse.ArgumentParser(description='Capture internet radio programs broadcasted in mp3 encoding format.')
 parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
