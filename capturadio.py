@@ -11,13 +11,18 @@ def capture(stream_url, duration):
 	file = open(file_name, 'w+b')
 	start_time = time.time()
 	not_ready = True
-	stream = urllib2.urlopen(stream_url);
-	while not_ready:
-		file.write(stream.read(10240));
-		if ((time.time() - start_time) > duration):
-			not_ready = False
-	file.close
-	return file_name
+	try:
+		stream = urllib2.urlopen(stream_url);
+		while not_ready:
+			file.write(stream.read(10240));
+			if ((time.time() - start_time) > duration):
+				not_ready = False
+		file.close
+		return file_name
+	except Exception as e:
+		print "Could not complete capturing, because an exception occured.", e
+	finally:
+		os.remove(file_name)
 
 def add_metadata(file, station_name, broadcast, title):
 	from mutagen.mp3 import MP3
