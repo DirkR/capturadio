@@ -21,7 +21,6 @@ def capture(stream_url, duration):
 		return file_name
 	except Exception as e:
 		print "Could not complete capturing, because an exception occured.", e
-	finally:
 		os.remove(file_name)
 
 def add_metadata(file, station_name, broadcast, title):
