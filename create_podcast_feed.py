@@ -5,7 +5,7 @@
 # Found at http://snippsnapp.polite.se/wiki?action=browse&diff=0&id=PyPodcastGen
 # and adopted for my needs
 
-import datetime,urlparse,os
+import datetime,urlparse,urllib,os
 import PyRSS2Gen
 import eyeD3
 import string
@@ -16,7 +16,7 @@ class Audiofile:
         if (os.path.isabs(self.basename)):
             self.basename = string.replace(self.basename, '/', '', 1)
         self.path = os.path.join(collection.dirname, basename)
-        self.link = urlparse.urljoin(collection.urlbase, self.basename)
+        self.link = urlparse.urljoin(collection.urlbase, urllib.quote(self.basename))
 
         tag = eyeD3.Tag()
         tag.link(self.path)
@@ -34,7 +34,10 @@ class Audiofile:
             if description:
                 self.description = description
             else:
-                self.description = basename[:-4]
+                self.description = string.replace(basename[:-4], collection.dirname, '')
+                if (self.description.startswith('/')):
+                    self.description = self.description[1:]
+                    self.description = string.replace(self.description, '/', ' &raquo; ')
 
             self.playtime = mp3file.getPlayTimeString()
         except Exception, e:
