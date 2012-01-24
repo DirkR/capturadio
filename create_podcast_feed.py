@@ -135,7 +135,7 @@ if __name__ == "__main__":
                             "en")
 
     audiofiles.readfolder(path)
-    outfilename = "rss.xml"
+    outfilename = os.path.join(path, "rss.xml")
 
     rss = audiofiles.getrss()
     rss.write_xml(open(outfilename, "w"))
