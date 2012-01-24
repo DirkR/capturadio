@@ -21,19 +21,31 @@ class Audiofile:
         tag = eyeD3.Tag()
         tag.link(self.path)
 
-        mp3file = eyeD3.Mp3AudioFile(self.path)
+        try:
+            mp3file = eyeD3.Mp3AudioFile(self.path)
 
-        title = tag.getTitle()
-        if title: self.title = title
-        else:     self.title = basename[:-4]
+            title = tag.getTitle()
+            if title:
+                self.title = title
+            else:
+                self.title = basename[:-4]
 
-        description = tag.getComment()
-        if description: self.description = description
-        else:     self.description = basename[:-4]
+            description = tag.getComment()
+            if description:
+                self.description = description
+            else:
+                self.description = basename[:-4]
+
+            self.playtime = mp3file.getPlayTimeString()
+        except Exception, e:
+            print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
+            self.title = basename[:-4]
+            self.description = basename[:-4]
+            self.playtime = 0
 
         self.guid = PyRSS2Gen.Guid(self.link)
         self.size = os.path.getsize(self.path)
-        self.enclosure = PyRSS2Gen.Enclosure(self.link, mp3file.getPlayTimeString(), "audio/mpeg")
+        self.enclosure = PyRSS2Gen.Enclosure(self.link, self.playtime, "audio/mpeg")
         self.pubdate = datetime.datetime.fromtimestamp(os.path.getmtime(self.path))
                               
 
@@ -65,7 +77,6 @@ class Audiofiles:
             for filename in filenames:
                 path = os.path.join(dirname,filename)
                 if os.path.exists(path) and os.path.isfile(path) and path.endswith(".mp3"):
-                    print "found: %s" % (filename)
                     if (path.startswith('./')):
                         path = string.replace(path, './', '', 1)
                     audiofile = Audiofile(self, path)
