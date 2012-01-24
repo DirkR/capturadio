@@ -13,12 +13,10 @@ import string
 class Audiofile:
     def __init__(self, collection, basename):
         self.basename = string.replace(basename, collection.dirname, '', 1)
-        if (self.basename.startswith('/')):
+        if (os.path.isabs(self.basename)):
             self.basename = string.replace(self.basename, '/', '', 1)
         self.path = os.path.join(collection.dirname, basename)
         self.link = urlparse.urljoin(collection.urlbase, self.basename)
-
-        print "basename=%s, dirname=%s" % (self.basename, collection.dirname)
 
         tag = eyeD3.Tag()
         tag.link(self.path)
