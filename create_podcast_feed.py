@@ -118,14 +118,20 @@ class Audiofiles:
 if __name__ == "__main__":
     #Example usage
     import sys
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
+    parser.add_argument('-r', metavar='', help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
+    parser.add_argument('directory', help='The directory to be indexed. Use current directory if ommitted.')
+    args = parser.parse_args()
 
     path = os.getcwd()
-    if (len(sys.argv) > 1):
-        if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):
-            path = sys.argv[1]
+    if (args.directory != None):
+        if os.path.exists(args.directory) and os.path.isdir(args.directory):
+            path = args.directory
             if (path.startswith('./')):
                 path = string.replace(path, './', '', 1)
-            if (not path.startswith('/')):
+            if (not os.path.isabs(path)):
                 path = os.path.join(os.getcwd(), path)
 
     audiofiles = Audiofiles("http://music.niebegeg.net",
