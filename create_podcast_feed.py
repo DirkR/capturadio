@@ -71,6 +71,7 @@ class Audiofiles:
         self.data.append(audiofile)
 
     def readfolder(self,dirname):
+        print "Audiofiles.readfolder: %s" % dirname
         self.dirname = dirname
         for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
@@ -112,6 +113,17 @@ class Audiofiles:
                               lastBuildDate = datetime.datetime.now(),                         
                               items = self.rssitems())
         
+def process_folder(path):
+    audiofiles = Audiofiles("http://music.niebegeg.net",
+                            "Mitschnitte",
+                            "http://music.niebegeg.net/aboutyourpodcast",
+                            "Recordings of internet radio station broadcastings",
+                            "en")
+    audiofiles.readfolder(path)
+    outfilename = os.path.join(path, "rss.xml")
+
+    rss = audiofiles.getrss()
+    rss.write_xml(open(outfilename, "w"))
         
 
 if __name__ == "__main__":
@@ -119,11 +131,14 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser(description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
-    parser.add_argument('-r', metavar='', help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
-    parser.add_argument('directory', help='The directory to be indexed. Use current directory if ommitted.')
+    parser.add_argument('-r', action='store_true', help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
+    parser.add_argument('directory', nargs='?', help='The directory to be indexed. Use current directory if ommitted.')
     args = parser.parse_args()
 
     path = os.getcwd()
+
+    print "argsr=%s" % args.r
+
     if (args.directory != None):
         if os.path.exists(args.directory) and os.path.isdir(args.directory):
             path = args.directory
@@ -132,14 +147,8 @@ if __name__ == "__main__":
             if (not os.path.isabs(path)):
                 path = os.path.join(os.getcwd(), path)
 
-    audiofiles = Audiofiles("http://music.niebegeg.net",
-                            "Mitschnitte",
-                            "http://music.niebegeg.net/aboutyourpodcast",
-                            "Recordings of internet radio station broadcastings",
-                            "en")
-
-    audiofiles.readfolder(path)
-    outfilename = os.path.join(path, "rss.xml")
-
-    rss = audiofiles.getrss()
-    rss.write_xml(open(outfilename, "w"))
+    if (not args.r):
+        process_folder(path)
+    else:
+        for dirname, dirnames, filenames in os.walk(path):
+            process_folder(dirname)
