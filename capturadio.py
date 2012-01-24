@@ -37,8 +37,13 @@ def add_metadata(file, station_name, broadcast, title):
 	audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[broadcast])
 	audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[duration * 1000])
 
-#	if (config.has_section(station_name) and config.has_option(station_name, 'logo')):
-#		logo = config.get(station_name, 'logo')
+	# APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
+	if (config.has_section(station_name) and config.has_option(station_name, 'logo')):
+		logo = config.get(station_name, 'logo')
+		imgdata = urlopen(logo).read()
+		img = mutagen.id3.APIC(3, u'image/jpeg', 3, u'Station logo', imgdata)
+		audio.tags.add(img)
+
 #		audio["APIC"] = APIC(encoding=0, data=['Podcast'])	
 	audio.save()
 
