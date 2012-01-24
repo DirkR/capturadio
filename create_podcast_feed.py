@@ -60,6 +60,7 @@ class Audiofiles:
 
     def __init__(self,urlbase,title, link, description, language):
 
+
         self.urlbase = urlbase
         self.title = title
         self.link = link
@@ -74,7 +75,6 @@ class Audiofiles:
         self.data.append(audiofile)
 
     def readfolder(self,dirname):
-        print "Audiofiles.readfolder: %s" % dirname
         self.dirname = dirname
         for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
@@ -116,9 +116,17 @@ class Audiofiles:
                               lastBuildDate = datetime.datetime.now(),                         
                               items = self.rssitems())
         
-def process_folder(path):
-    audiofiles = Audiofiles("http://music.niebegeg.net",
-                            "Mitschnitte",
+def process_folder(path, root_path):
+    local_path = string.replace(path, root_path, '')
+    if (local_path.startswith('/')):
+        local_path = local_path[1:]
+
+    title = "Mitschnitte"
+    if (local_path != ''):
+        title = title + " - " + string.replace(local_path, '/', ' &raquo; ')
+
+    audiofiles = Audiofiles("http://music.niebegeg.net/" + urllib.quote(local_path) + '/',
+                            title,
                             "http://music.niebegeg.net/aboutyourpodcast",
                             "Recordings of internet radio station broadcastings",
                             "en")
@@ -127,7 +135,7 @@ def process_folder(path):
 
     rss = audiofiles.getrss()
     rss.write_xml(open(outfilename, "w"))
-        
+
 
 if __name__ == "__main__":
     #Example usage
@@ -140,8 +148,6 @@ if __name__ == "__main__":
 
     path = os.getcwd()
 
-    print "argsr=%s" % args.r
-
     if (args.directory != None):
         if os.path.exists(args.directory) and os.path.isdir(args.directory):
             path = args.directory
@@ -149,9 +155,11 @@ if __name__ == "__main__":
                 path = string.replace(path, './', '', 1)
             if (not os.path.isabs(path)):
                 path = os.path.join(os.getcwd(), path)
+    root_path = path
+        
 
     if (not args.r):
-        process_folder(path)
+        process_folder(path, root_path)
     else:
         for dirname, dirnames, filenames in os.walk(path):
-            process_folder(dirname)
+            process_folder(dirname, root_path)
