@@ -63,9 +63,10 @@ def store_file(src_file, destination, station_name, artist, title):
 config = ConfigParser.ConfigParser()
 config.read([os.path.expanduser('~/.capturadio/capturadiorc'), os.path.expanduser('~/.capturadiorc')])
 
-parser = argparse.ArgumentParser(description='Capture internet radio programs broadcasted in mp3 encoding format.')
+parser = argparse.ArgumentParser(description='Capture internet radio programs broadcasted in mp3 encoding format.',
+epilog="Here is a list of defined radio stations: %s" % config.options('stations'))
 parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
-parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadiorc. %s' % config.sections())
+parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
 parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
 parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
 parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
@@ -79,7 +80,7 @@ if (duration < 1):
 
 station = args.s
 if (not config.has_option('stations', station)):
-    print "Station '%s' is unknown. Use one of these: %s." % (station, config.sections())
+    print "Station '%s' is unknown. Use one of these: %s." % (station, config.options('stations'))
     exit(1)
 
 title = args.t if (args.t != None) else args.b

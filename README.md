@@ -42,10 +42,11 @@ _CaptuRadio_ needs some information on the commandline to operate correctly.
       -l length       Length of recording in seconds
       -s station      Name of the station, defined in 
                       ~/.capturadio/capturadiorcrc.
-                      ['list', 'of', 'defined', 'stations']
       -b broadcast    Title of the broadcast
       -t title        Title of the recording
       -d destination  Destination directory
+
+    Here is a list of defined radio stations: ['list', 'of', 'defined', 'stations']
 
 The option `-l length` tells _CaptuRadio_ how many seconds the capturing should last.
 
@@ -81,6 +82,8 @@ To capture a mp3 stream you have to define the station (aka the nickname of the 
 The mp3 file will be stored inside the current working directory. You can also put the file somewhere else:
 
     capturadio.py -l 3300 -s station1 -b "My favorite radio show" -d /var/www/radio
+
+Usually these commands are run by the cron facility on your host.
 
 The command
 
