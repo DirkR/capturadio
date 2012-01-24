@@ -72,7 +72,6 @@ class Audiofiles:
 
     def readfolder(self,dirname):
         self.dirname = dirname
-        print "Read folder: %s" % (dirname)
         for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
                 path = os.path.join(dirname,filename)
@@ -117,7 +116,6 @@ class Audiofiles:
 
 if __name__ == "__main__":
     #Example usage
-    import sys
     import argparse
 
     parser = argparse.ArgumentParser(description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
