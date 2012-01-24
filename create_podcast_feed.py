@@ -8,12 +8,17 @@
 import datetime,urlparse,os
 import PyRSS2Gen
 import eyeD3
+import string
 
 class Audiofile:
     def __init__(self, collection, basename):
-        self.basename = basename
+        self.basename = string.replace(basename, collection.dirname, '', 1)
+        if (self.basename.startswith('/')):
+            self.basename = string.replace(self.basename, '/', '', 1)
         self.path = os.path.join(collection.dirname, basename)
-        self.link = urlparse.urljoin(collection.urlbase, basename)
+        self.link = urlparse.urljoin(collection.urlbase, self.basename)
+
+        print "basename=%s, dirname=%s" % (self.basename, collection.dirname)
 
         tag = eyeD3.Tag()
         tag.link(self.path)
@@ -56,13 +61,13 @@ class Audiofiles:
         self.data.append(audiofile)
 
     def readfolder(self,dirname):
-        import string
-        
         self.dirname = dirname
-        for dirname, dirnames, filenames in os.walk('.'):
+        print "Read folder: %s" % (dirname)
+        for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
                 path = os.path.join(dirname,filename)
                 if os.path.exists(path) and os.path.isfile(path) and path.endswith(".mp3"):
+                    print "found: %s" % (filename)
                     if (path.startswith('./')):
                         path = string.replace(path, './', '', 1)
                     audiofile = Audiofile(self, path)
@@ -105,10 +110,14 @@ if __name__ == "__main__":
     #Example usage
     import sys
 
-    folder = os.getcwd()
+    path = os.getcwd()
     if (len(sys.argv) > 1):
         if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):
-            folder = sys.argv[1]
+            path = sys.argv[1]
+            if (path.startswith('./')):
+                path = string.replace(path, './', '', 1)
+            if (not path.startswith('/')):
+                path = os.path.join(os.getcwd(), path)
 
     audiofiles = Audiofiles("http://music.niebegeg.net",
                             "Mitschnitte",
@@ -116,7 +125,7 @@ if __name__ == "__main__":
                             "Recordings of internet radio station broadcastings",
                             "en")
 
-    audiofiles.readfolder(folder)
+    audiofiles.readfolder(path)
     outfilename = "rss.xml"
 
     rss = audiofiles.getrss()
