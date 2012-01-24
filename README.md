@@ -72,6 +72,22 @@ For every station you can provide an own section in the configuration file. Ther
     name = My favorite music radio station
     logo = http://example.net/media/images/logo_256.png
 
+## Usage
+
+To capture a mp3 stream you have to define the station (aka the nickname of the stream and the stream URL, see abowe) in `~/.capturadio/capturadiorcrc`. Now you can run the capturing
+
+    capturadio.py -l 3300 -s station1 -b "My favorite radio show" -t "Monday talk"
+
+The mp3 file will be stored inside the current working directory. You can also put the file somewhere else:
+
+    capturadio.py -l 3300 -s station1 -b "My favorite radio show" -d /var/www/radio
+
+The command
+
+    capturadio.py -h
+
+provide help as well as a list of all defined stations.
+
 ## Downloads
 
 Git clone _CaptuRadio_ from GitHub at https://github.com/DirkR/capturadio
