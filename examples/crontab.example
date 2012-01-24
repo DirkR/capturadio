@@ -1,0 +1,29 @@
+@daily      find ~drue/music/ -mindepth 1 -mtime +21  -type f -name \*.mp3 -exec rm "{}" \;
+
+# Nachtradio vom dlf
+#5 1 * * 1   capturadio.py -s dlf -l 3300 -b Nachtradio -t Klang-Horizonte
+#5 1 * * 2   capturadio.py -s dlf -l 3300 -b Nachtradio -t "Jazz zur Nacht"
+#5 1 * * 3   capturadio.py -s dlf -l 3300 -b Nachtradio -t Lieder-Laden
+#5 1 * * 4   capturadio.py -s dlf -l 3300 -b Nachtradio -t Rock-Zeit
+5 1 * * 5   capturadio.py -s dlf -l 3300 -b Nachtradio -t "Midnight Blue"
+#5 1 * * 6   capturadio.py -s dlf -l 3300 -b Nachtradio -t Soundcheck
+
+# Tonart von DRadio Kultur
+#5 2 * * 1   capturadio.py -s dkultur -l 3300 -b Tonart -t "Eine Welt Musik"
+#5 2 * * 2   capturadio.py -s dkultur -l 3300 -b Tonart -t "Tonart Jazz"
+5 2 * * 3   capturadio.py -s dkultur -l 3300 -b Tonart -t "Tonart Country; Chansons und Balladen"
+#5 2 * * 4   capturadio.py -s dkultur -l 3300 -b Tonart -t "Tonart Rock"
+5 2 * * 5   capturadio.py -s dkultur -l 3300 -b Tonart -t "Tonart Club"
+5 2 * * 7   capturadio.py -s dkultur -l 3300 -b Tonart -t "Tonart Lounge"
+
+# Klassik, Pop et cetera
+5 2 * * 3   capturadio.py -s dlf -l 3300 -b "Klassik, Pop et cetera"
+5 10 * * 6  capturadio.py -s dlf -l 3300 -b "Klassik, Pop et cetera"
+
+5 14 * * 7  capturadio.py -s dkultur -l 3300 -b "Kakadu" -t "Hoerspiel fuer Kinder"
+5 21 * * 2  capturadio.py -s ndr1  -l 3300  -b "Jazz"
+
+2 19 * * 6  capturadio.py -s jazzfm -l 7100  -b "Jazz FM" -t "Funky Senssation"
+2 17 * * 7  capturadio.py -s jazzfm -l 10700 -b "Jazz FM" -t "Luxury Soul"
+
+3 20 * * 4  capturadio.py -s drs3 -l 7020 -b "World Music Special"
