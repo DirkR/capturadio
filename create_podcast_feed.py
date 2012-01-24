@@ -71,8 +71,8 @@ class Audiofiles:
         self.data.append(audiofile)
 
     def readfolder(self,dirname):
+        print "Audiofiles.readfolder: %s" % dirname
         self.dirname = dirname
-        print "Read folder: %s" % (dirname)
         for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
                 path = os.path.join(dirname,filename)
@@ -113,29 +113,42 @@ class Audiofiles:
                               lastBuildDate = datetime.datetime.now(),                         
                               items = self.rssitems())
         
-        
-
-if __name__ == "__main__":
-    #Example usage
-    import sys
-
-    path = os.getcwd()
-    if (len(sys.argv) > 1):
-        if os.path.exists(sys.argv[1]) and os.path.isdir(sys.argv[1]):
-            path = sys.argv[1]
-            if (path.startswith('./')):
-                path = string.replace(path, './', '', 1)
-            if (not path.startswith('/')):
-                path = os.path.join(os.getcwd(), path)
-
+def process_folder(path):
     audiofiles = Audiofiles("http://music.niebegeg.net",
                             "Mitschnitte",
                             "http://music.niebegeg.net/aboutyourpodcast",
                             "Recordings of internet radio station broadcastings",
                             "en")
-
     audiofiles.readfolder(path)
     outfilename = os.path.join(path, "rss.xml")
 
     rss = audiofiles.getrss()
     rss.write_xml(open(outfilename, "w"))
+        
+
+if __name__ == "__main__":
+    #Example usage
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
+    parser.add_argument('-r', action='store_true', help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
+    parser.add_argument('directory', nargs='?', help='The directory to be indexed. Use current directory if ommitted.')
+    args = parser.parse_args()
+
+    path = os.getcwd()
+
+    print "argsr=%s" % args.r
+
+    if (args.directory != None):
+        if os.path.exists(args.directory) and os.path.isdir(args.directory):
+            path = args.directory
+            if (path.startswith('./')):
+                path = string.replace(path, './', '', 1)
+            if (not os.path.isabs(path)):
+                path = os.path.join(os.getcwd(), path)
+
+    if (not args.r):
+        process_folder(path)
+    else:
+        for dirname, dirnames, filenames in os.walk(path):
+            process_folder(dirname)
