@@ -173,13 +173,10 @@ if __name__ == "__main__":
             path = string.replace(path, './', '', 1)
         if (not os.path.isabs(path)):
             path = os.path.join(os.getcwd(), path)
-        print "use path from cmdline: %s" % path
     elif(config.has_section('settings') and config.has_option('settings', 'destination')):
         path = os.path.expanduser(config.get('settings', 'destination'))
-        print "use path from configuration: %s" % path
     else:
         path = os.getcwd()
-        print "use path from defaults (pwd): %s" % path
 
     if (not args.r):
         process_folder(path, path)
