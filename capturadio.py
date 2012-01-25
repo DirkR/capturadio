@@ -88,7 +88,7 @@ title = args.t if (args.t != None) else args.b
 if (args.d != None):
 	destination = args.d
 elif(config.has_section('settings') and config.has_option('settings', 'destination')):
-	destination = config.get('settings', 'destination')
+	destination = os.path.expanduser(config.get('settings', 'destination'))
 else:
 	destination = os.getcwd()
 

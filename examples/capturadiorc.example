@@ -1,16 +1,18 @@
 [settings]
-destination = ~/Music
+destination = ~/Downloads
 
 [stations]
 dlf = http://dradio.ic.llnwd.net/stream/dradio_dlf_m_a
 dkultur = http://dradio.ic.llnwd.net/stream/dradio_dkultur_m_a
-dradiowissen = http://dradio.ic.llnwd.net/stream/dradio_dwissen_m_a
-ndrinfo = http://ndrstream.ic.llnwd.net/stream/ndrstream_ndrinfo_hi_mp3
-ndr1 = http://ndrstream.ic.llnwd.net/stream/ndrstream_ndr1radiomv_hi_mp3
-ndr2 = http://ndrstream.ic.llnwd.net/stream/ndrstream_ndr2_hi_mp3
-wdr2 = http://gffstream.ic.llnwd.net/stream/gffstream_w17b
-jazzfm = http://listen.onmyradio.net:8002
-drs3 =http://glb-stream10.streamserver.ch/1/drs3/mp3_128
+
+; settings for the Podcast feed
+[feed]
+url = http://music.example.org
+title = Internet Radio Recordings
+about_url = http://music.example.org/about
+description = Recordings of internet radio station broadcastings
+language = en
+filename = rss.xml
 
 ; additional settings for station 'dlf'
 [dlf]
@@ -20,30 +22,3 @@ logo = http://www.dradio.de/images/31064/square/
 [dkultur]
 name = Deutschlandradio Kultur
 logo = http://www.dradio.de/images/31064/square/
-
-[dradiowissen]
-name =  Dradio Wissen
-logo = http://www.dradio.de/images/31064/square/
-
-[ndrinfo]
-name = NDR Info
-logo = http://t0.gstatic.com/images?q=tbn:ANd9GcSvXZKJhZCSi6TqM65iTBu5z_9EGzSbJ0UEQKHApL7Lx8Tmul1drg
-
-[ndr1]
-name = NDR1 Radio MV
-logo = http://static.radio.de/images/broadcasts/2345_4.gif
-
-[ndr2]
-name = NDR2
-logo = http://static.radio.de/images/broadcasts/2262_4.jpeg
-
-[wdr2]
-name = WDR2
-logo = http://static.radio.de/images/broadcasts/2279_4.gif
-
-[jazzfm]
-name = Jazz FM
-logo = http://www.jazzfm.com/wp-content/themes/jazzfm/images/logo.jpg
-
-[drs3]
-name = DRS 3
