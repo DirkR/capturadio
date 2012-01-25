@@ -9,7 +9,6 @@ def capture(stream_url, duration):
 	import tempfile
 	file_name = "%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
 	file = open(file_name, 'w+b')
-	start_time = time.time()
 	not_ready = True
 	try:
 		stream = urllib2.urlopen(stream_url);
@@ -53,7 +52,8 @@ def store_file(src_file, destination, station_name, artist, title):
 		station_name = config.get(station_name, 'name', station_name)
 
 	destination = os.path.expanduser(destination)
-	target_file = "%s/%s/%s/%s_%s.mp3" % (destination, station_name, artist, title, time.strftime("%Y-%m-%d"))
+	time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(start_time))
+	target_file = "%s/%s/%s/%s_%s.mp3" % (destination, station_name, artist, title, time_string)
 	target_file = re.sub("[^\w\d._/ -]", "", target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
 		os.makedirs(os.path.dirname(target_file))
@@ -91,6 +91,8 @@ elif(config.has_section('settings') and config.has_option('settings', 'destinati
 	destination = os.path.expanduser(config.get('settings', 'destination'))
 else:
 	destination = os.getcwd()
+
+start_time = time.time()
 
 file = capture(config.get('stations', station), duration)
 
