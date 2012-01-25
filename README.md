@@ -39,7 +39,7 @@ _CaptuRadio_ needs some information on the commandline to operate correctly.
       -h, --help      show this help message and exit
       -l length       Length of recording in seconds
       -s station      Name of the station, defined in 
-                      ~/.capturadio/capturadiorcrc.
+                      ~/.capturadio/capturadiorc.
       -b broadcast    Title of the broadcast
       -t title        Title of the recording
       -d destination  Destination directory
