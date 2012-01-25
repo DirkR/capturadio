@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+raq#!/usr/bin/env python2.7
 # This script traverses a directory tree and creates a rss file in the root folder
 # containing all found mp3 files as items
 # Original found at
@@ -30,7 +30,7 @@ class Audiofile:
             self.description = string.replace(basename[:-4], collection.dirname, '')
             if (self.description.startswith('/')):
                 self.description = self.description[1:]
-                self.description = string.replace(self.description, '/', ' &raquo; ')
+                self.description = string.replace(self.description, '/', ' - ')
 
             self.playtime = audio.info.length
         except Exception, e:
