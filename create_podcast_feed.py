@@ -1,4 +1,4 @@
-raq#!/usr/bin/env python2.7
+#!/usr/bin/env python2.7
 # This script traverses a directory tree and creates a rss file in the root folder
 # containing all found mp3 files as items
 # Original found at
