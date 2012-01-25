@@ -5,10 +5,10 @@
 # Found at http://snippsnapp.polite.se/wiki?action=browse&diff=0&id=PyPodcastGen
 # and adopted for my needs
 
-import datetime,urlparse,urllib,os
+import datetime, urlparse, urllib, string, os
 import PyRSS2Gen
-import eyeD3
-import string
+from mutagen.mp3 import MP3
+from mutagen.easyid3 import EasyID3
 
 class Audiofile:
     def __init__(self, collection, basename):
@@ -18,33 +18,28 @@ class Audiofile:
         self.path = os.path.join(collection.dirname, basename)
         self.link = urlparse.urljoin(collection.urlbase, urllib.quote(self.basename))
 
-        tag = eyeD3.Tag()
-        tag.link(self.path)
+        audio = MP3(self.path, ID3=EasyID3)
+        print "audio.title: %s" % audio['title'][0]
 
         try:
-            mp3file = eyeD3.Mp3AudioFile(self.path)
-
-            title = tag.getTitle()
+            title = audio['title'][0]
             if title:
                 self.title = title
             else:
                 self.title = basename[:-4]
 
-            description = tag.getComment()
-            if description:
-                self.description = description
-            else:
-                self.description = string.replace(basename[:-4], collection.dirname, '')
-                if (self.description.startswith('/')):
-                    self.description = self.description[1:]
-                    self.description = string.replace(self.description, '/', ' &raquo; ')
+            self.description = string.replace(basename[:-4], collection.dirname, '')
+            if (self.description.startswith('/')):
+                self.description = self.description[1:]
+                self.description = string.replace(self.description, '/', ' &raquo; ')
 
-            self.playtime = mp3file.getPlayTimeString()
+            self.playtime = audio.info.length
         except Exception, e:
             print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
             self.title = basename[:-4]
             self.description = basename[:-4]
             self.playtime = 0
+            raise
 
         self.guid = PyRSS2Gen.Guid(self.link)
         self.size = os.path.getsize(self.path)

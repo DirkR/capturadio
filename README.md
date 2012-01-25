@@ -18,8 +18,6 @@ The following python libraries need to be installed beside Python 2.7 to run Cap
 
 * mutagen -- a Python module to handle audio metadata      
   http://code.google.com/p/mutagen/, tested with version 1.20
-* eyeD3 -- a Python module for processing ID3 tags   
-  http://eyed3.nicfit.net/, version 0.6.18 and above
 * PyRSS2Gen -- a Python library for manipulating RSS feeds   
   http://www.dalkescientific.com/Python/PyRSS2Gen.html, version 1.0.0 and above
 
