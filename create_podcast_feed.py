@@ -19,7 +19,6 @@ class Audiofile:
         self.link = urlparse.urljoin(collection.urlbase, urllib.quote(self.basename))
 
         audio = MP3(self.path, ID3=EasyID3)
-        print "audio.title: %s" % audio['title'][0]
 
         try:
             title = audio['title'][0]
