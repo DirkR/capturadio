@@ -38,7 +38,6 @@ class Audiofile:
             self.title = basename[:-4]
             self.description = basename[:-4]
             self.playtime = 0
-            raise
 
         self.guid = PyRSS2Gen.Guid(self.link)
         self.size = os.path.getsize(self.path)
@@ -111,49 +110,76 @@ class Audiofiles:
                               items = self.rssitems())
         
 def process_folder(path, root_path):
+    import ConfigParser
+
     local_path = string.replace(path, root_path, '')
-    if (local_path.startswith('/')):
-        local_path = local_path[1:]
-
-    title = "Mitschnitte"
     if (local_path != ''):
-        title = title + " - " + string.replace(local_path, '/', ' &raquo; ')
+        if (local_path.startswith('/')):
+            local_path = local_path[1:]
+        if (not local_path.endswith('/')):
+            local_path += '/'
 
-    audiofiles = Audiofiles("http://music.niebegeg.net/" + urllib.quote(local_path) + '/',
-                            title,
-                            "http://music.niebegeg.net/aboutyourpodcast",
-                            "Recordings of internet radio station broadcastings",
-                            "en")
+    if (config.has_section('feed')):
+        feed_title = config.get('feed', 'title', 'Internet radio recordings')
+        feed_url = config.get('feed', 'url', 'http://example.org')
+        if (not feed_url.endswith('/')):
+            feed_url += "/"
+        feed_description = config.get('feed', 'description', 'Recordings of internet radio station broadcastings')
+        feed_about_url = config.get('feed', 'about_url',  feed_url + '/about')
+        feed_language = config.get('feed', 'language',  'en')
+    else:
+        feed_title = 'Internet radio recordings'
+        feed_url = 'http://example.org/'
+        feed_description = 'Recordings of internet radio station broadcastings'
+        feed_about_url = feed_url + 'about'
+        feed_language = 'en'
+
+    if (local_path != ''):
+        feed_title += " - " + string.replace(local_path, '/', ' - ')
+
+    audiofiles = Audiofiles(feed_url + urllib.quote(local_path),
+                            feed_title,
+                            feed_about_url,
+                            feed_description,
+                            feed_language)
     audiofiles.readfolder(path)
-    outfilename = os.path.join(path, "rss.xml")
+
+    if (config.has_section('feed')):
+        rss_file = config.get('feed', 'filename',  'rss.xml')
+    else:
+        rss_file = 'rss.xml'
 
     rss = audiofiles.getrss()
-    rss.write_xml(open(outfilename, "w"))
+    rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
 
 if __name__ == "__main__":
-    #Example usage
     import argparse
+    import ConfigParser
+
+
+    config = ConfigParser.ConfigParser()
+    config.read([os.path.expanduser('~/.capturadio/capturadiorc'), os.path.expanduser('~/.capturadiorc')])
 
     parser = argparse.ArgumentParser(description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
     parser.add_argument('-r', action='store_true', help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
     parser.add_argument('directory', nargs='?', help='The directory to be indexed. Use current directory if ommitted.')
     args = parser.parse_args()
 
-    path = os.getcwd()
 
-    if (args.directory != None):
-        if os.path.exists(args.directory) and os.path.isdir(args.directory):
-            path = args.directory
-            if (path.startswith('./')):
-                path = string.replace(path, './', '', 1)
-            if (not os.path.isabs(path)):
-                path = os.path.join(os.getcwd(), path)
-    root_path = path
-        
+    if (args.directory != None and os.path.exists(args.directory) and os.path.isdir(args.directory)):
+        path = args.directory
+        if (path.startswith('./')):
+            path = string.replace(path, './', '', 1)
+        if (not os.path.isabs(path)):
+            path = os.path.join(os.getcwd(), path)
+    elif(config.has_section('settings') and config.has_option('settings', 'destination')):
+        path = os.path.expanduser(config.get('settings', 'destination'))
+    else:
+        path = os.getcwd()
 
     if (not args.r):
-        process_folder(path, root_path)
+        process_folder(path, path)
     else:
         for dirname, dirnames, filenames in os.walk(path):
-            process_folder(dirname, root_path)
+            process_folder(dirname, path)
