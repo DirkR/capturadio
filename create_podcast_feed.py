@@ -9,6 +9,27 @@ import datetime, urlparse, urllib, string, os
 import PyRSS2Gen
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
+import xml.dom.minidom
+
+def as_utf8(string):
+    return u'%s' % unicode(string, 'utf-8')
+
+# Taken from http://stackoverflow.com/questions/120951/how-can-i-normalize-a-url-in-python
+def url_fix(s, charset='utf-8'):
+    """Sometimes you get an URL by a user that just isn't a real
+    URL because it contains unsafe characters like ' ' and so on.  This
+    function can fix some of the problems in a similar way browsers
+    handle data entered by the user:
+    
+    :param charset: The target charset for the URL if the url was
+                    given as unicode string.
+    """
+    if isinstance(s, unicode):
+        s = s.encode(charset, 'ignore')
+    scheme, netloc, path, qs, anchor = urlparse.urlsplit(s)
+    path = urllib.quote(path, '/%')
+    qs = urllib.quote_plus(qs, ':&=')
+    return urlparse.urlunsplit((scheme, netloc, path, qs, anchor))
 
 class Audiofile:
     def __init__(self, collection, basename):
@@ -16,10 +37,12 @@ class Audiofile:
         if (os.path.isabs(self.basename)):
             self.basename = string.replace(self.basename, '/', '', 1)
         self.path = os.path.join(collection.dirname, basename)
-        self.link = urlparse.urljoin(collection.urlbase, urllib.quote(self.basename))
+        self.link = urlparse.urljoin(collection.urlbase, url_fix(self.basename))
 
         audio = MP3(self.path, ID3=EasyID3)
-
+        import pprint
+        pp = pprint.PrettyPrinter(indent=4)
+        pp.pprint(audio)
         try:
             title = audio['title'][0]
             if title:
@@ -27,11 +50,10 @@ class Audiofile:
             else:
                 self.title = basename[:-4]
 
-            self.description = string.replace(basename[:-4], collection.dirname, '')
-            if (self.description.startswith('/')):
-                self.description = self.description[1:]
-                self.description = string.replace(self.description, '/', ' - ')
-
+            show = audio['album'][0]
+            copyright = audio['copyright'][0]
+            date = audio['date'][0]
+            self.description = u'Show: %s, Episode: %s, Copyright: %s %s' % (show, title, date, copyright)
             self.playtime = audio.info.length
         except Exception, e:
             print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
@@ -67,14 +89,14 @@ class Audiofiles:
     def append(self,audiofile):
         self.data.append(audiofile)
 
-    def readfolder(self,dirname):
-        self.dirname = dirname
+    def readfolder(self, dirname):
+        self.dirname = as_utf8(dirname)
         for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
-                path = os.path.join(dirname,filename)
+                path = as_utf8(os.path.join(dirname,filename))
                 if os.path.exists(path) and os.path.isfile(path) and path.endswith(".mp3"):
-                    if (path.startswith('./')):
-                        path = string.replace(path, './', '', 1)
+                    if (path.startswith(u'./')):
+                        path = path[2:]
                     audiofile = Audiofile(self, path)
                     self.append(audiofile)
 
@@ -138,9 +160,9 @@ def process_folder(path, root_path):
         feed_title += " - " + string.replace(local_path, '/', ' - ')
 
     audiofiles = Audiofiles(feed_url + urllib.quote(local_path),
-                            feed_title,
+                            as_utf8(feed_title),
                             feed_about_url,
-                            feed_description,
+                            as_utf8(feed_description),
                             feed_language)
     audiofiles.readfolder(path)
 
@@ -170,7 +192,7 @@ if __name__ == "__main__":
     if (args.directory != None and os.path.exists(args.directory) and os.path.isdir(args.directory)):
         path = args.directory
         if (path.startswith('./')):
-            path = string.replace(path, './', '', 1)
+            path = path[2:]
         if (not os.path.isabs(path)):
             path = os.path.join(os.getcwd(), path)
     elif(config.has_section('settings') and config.has_option('settings', 'destination')):

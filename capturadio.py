@@ -1,4 +1,6 @@
 #!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
 import urllib2
 import time
 import argparse
@@ -7,7 +9,7 @@ import os
 
 def capture(stream_url, duration):
 	import tempfile
-	file_name = "%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
+	file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
 	file = open(file_name, 'w+b')
 	not_ready = True
 	try:
@@ -22,19 +24,33 @@ def capture(stream_url, duration):
 		print "Could not complete capturing, because an exception occured.", e
 		os.remove(file_name)
 
-def add_metadata(file, station_name, broadcast, title):
+def as_utf8(string):
+	return u'%s' % unicode(string, 'utf-8')
+
+def as_ascii(string):
+	return '%s' % string.decode('ascii', 'ignore')
+
+def add_metadata(file, station_name, show_title, title):
 	from mutagen.mp3 import MP3
 	import mutagen.id3 
 	if (config.has_section(station_name) and config.has_option(station_name, 'name')):
 		station_name = config.get(station_name, 'name', station_name)
 
+	show_title = as_utf8(show_title)
+	title = as_utf8(title)
+	station_name = as_utf8(station_name)
+	date = time.strftime('%Y', time.localtime(start_time))
+	comment = u'Show: %s\nEpisode: %s\nCopyright: %s %s' % (show_title, title, date, station_name)
+
 	audio = MP3(file)
 	# See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
 	audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=[title])
-	audio["TCON"] = mutagen.id3.TCON(encoding=2, text=['Podcast'])
-	audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[time.strftime('%Y')])
-	audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[broadcast])
+	audio["TCON"] = mutagen.id3.TCON(encoding=2, text=[u'Podcast'])
+	audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[date])
+	audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[show_title])
 	audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[duration * 1000])
+	audio["TCOP"] = mutagen.id3.TCOP(encoding=2, text=[station_name])
+	audio["COMM"] = mutagen.id3.COMM(encoding=2, text=[comment])
 
 	# APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
 	if (config.has_section(station_name) and config.has_option(station_name, 'logo')):
@@ -53,8 +69,8 @@ def store_file(src_file, destination, station_name, artist, title):
 
 	destination = os.path.expanduser(destination)
 	time_string = time.strftime("%Y-%m-%d_%H-%M-%S", time.localtime(start_time))
-	target_file = "%s/%s/%s/%s_%s.mp3" % (destination, station_name, artist, title, time_string)
-	target_file = re.sub("[^\w\d._/ -]", "", target_file)
+	target_file = u"%s/%s/%s/%s_%s.mp3" % (as_ascii(destination), as_ascii(station_name), as_ascii(artist), as_ascii(title), time_string)
+	target_file = re.compile(u'[^\w\d._/ -]').sub('', target_file)
 	if (not os.path.isdir(os.path.dirname(target_file))):
 		os.makedirs(os.path.dirname(target_file))
 	shutil.copy2(src_file, target_file)
