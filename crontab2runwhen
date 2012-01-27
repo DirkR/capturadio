@@ -1,0 +1,276 @@
+#!/usr/bin/perl -w
+
+# crontab2runwhen / alpha version (2001-11-28)
+
+# Copyright (c) 2001 Jonas Pasche <jpware@jonaspasche.de>
+# Licensed under the GPL. This software comes with ABSOLUTELY NO WARRANTY.
+
+# This tool reads crontab-style jobs through STDIN or a file, analyzes the
+# jobs and creates an according structure under ~/runwhen for usage with
+# daemontools' svscan.
+
+use Getopt::Std;
+
+our(
+  $opt_a,
+  $opt_f,
+  $opt_d,
+  $opt_h,
+  $opt_i,
+  $opt_q,
+  $opt_l
+);
+
+my (
+  @jobs, $job,
+  $MINUTE, $HOUR, $MONTHDAY, $MONTH, $WEEKDAY,
+  @cmdline, $cmdline
+);
+
+my @fields = ("MINUTE", "HOUR", "MONTHDAY", "MONTH", "WEEKDAY");
+
+my $default_delay = 1;
+my $default_maxinterval = 129600;
+my $default_mininterval = 60;
+
+# Wrong usage?
+
+if( !getopts ('afdhi:ql') ) {
+  print "Try `$0 -h` for more information.\n";
+  exit (1);
+}
+
+# Help text
+
+if( $opt_h ) {
+  print <<HELP;
+Usage: crontab2runwhen [OPTION]...
+Read a list of cron jobs through STDIN, creating a corresponding job structure
+in ~/runwhen. One can easily pipe "crontab -l" output into crontab2runwhen.
+
+  -a        ask for each job
+  -f        force overwriting existing jobs
+  -d        print debug messages
+  -h        display this help and exit
+  -i file   read crontab data from file instead from STDIN
+  -l        create log directories for job logging with multilog
+  -q        be quiet
+HELP
+  exit (0);
+}
+
+# Look for ~/runwhen directory and create one if it is missing
+
+($home) = (getpwuid($>))[7];
+if( !-d "$home/runwhen" || !-w "$home/runwhen" ) {
+  print "debug: home = $home\n" if( $opt_d );
+  mkdir("$home/runwhen", 0700) || die $?;
+  print "Notice: ~/runwhen did not existed; created it\n" unless( $opt_q );
+}
+
+# Read jobs from file or STDIN
+
+if( $opt_i ) {
+  if( !open (IN, $opt_i) ) {
+    print "Could not open $opt_i\n";
+    exit (2);
+  } else {
+    @jobs = <IN>;
+    close (IN);
+  }
+} else {
+  @jobs = <STDIN>;
+}
+
+# Analyze jobs
+
+chomp (@jobs);
+
+foreach $job (@jobs) {
+
+  if( $job =~ /^#/ ) {
+    print "debug: ignored comment line\n" if( $opt_d );
+    next;
+  }
+
+  if( $job =~ /^\s*$/ ) {
+    print "debug: ignored blank line\n" if( $opt_d );
+    next;
+  }
+
+  ($MINUTE, $HOUR, $MONTHDAY, $MONTH, $WEEKDAY, @cmdline) = split(/ /, $job);
+  $cmdline = join(" ", @cmdline);
+
+  $jobname = $cmdline[0];
+  if( $jobname =~ /\/([^\/]+)$/ ) {
+    $jobname = $1;
+  }
+  $jobname = lc($jobname);
+  $jobname =~ s/[^a-z]//g;
+
+  $jobcount++;
+
+  print "Checking job $jobcount ($jobname):\n" unless( $opt_q );
+
+  # Check if all fields are convertable
+
+  $fieldcheck_failed = undef;
+  foreach $field (@fields) {
+    $VAL{$field} = eval("\$" . "$field");
+    if( $VAL{$field} =~ /^\*$/ ) {
+      $VAL{$field} = "";
+      next;
+    }
+    if( $VAL{$field} =~ /^(\d+)$/ ) {
+      if( $field eq "MONTH" || $field eq "MONTHDAY" ) {
+        $VAL{$field} = "=" . $1+1;
+      } else {
+        $VAL{$field} = "=$1";
+      }
+      next;
+    }
+    if( $VAL{$field} =~ /^\*\/(\d+)$/ ) {
+      $VAL{$field} = "/$1";
+      next;
+    }
+    print "  Unsupported value \"$VAL{$field}\" in field \"$field\"\n" unless( $opt_q );
+    $fieldcheck_failed = 1;
+  }
+
+  # Skip if there are broken values
+
+  if( $fieldcheck_failed ) {
+    print "  Could not convert this job\n" unless( $opt_q );
+    next;
+  }
+
+  # Argh, what's that? A job that is a regular file? Let's skip it.
+
+  if( -f "$home/runwhen/$jobname" ) {
+    print "  Warning: ~/runwhen/$jobname already exists as a regular file, skipping\n";
+    next;
+  }
+
+  # Does the user want to confirm each conversion?
+
+  if( $opt_a ) {
+    print "  Convert this job? (yn) ";
+    $yn = <STDIN>;
+    chomp($yn);
+    $yn = lc($yn);
+    if( $yn ne "y" ) {
+      print "    Leaving this job alone\n";
+      next;
+    }
+  }
+
+
+  # There is already a job with this name; skip with "-f" or ask for confirmation
+
+  if( -d "$home/runwhen/$jobname" ) {
+    if( !$opt_f ) {
+      print "  Job already exists, overwrite? (yn) ";
+      $yn = <STDIN>;
+      chomp($yn);
+      $yn = lc($yn);
+      if( $yn ne "y" ) {
+        print "    Not overwriting job\n";
+        next;
+      } else {
+        print "    Overwriting job\n";
+      }
+    } else {
+      print "  Overwriting existing job (through -f)\n" unless( $opt_q );
+    }
+  }
+
+  # Creating directory structure
+
+  mkdir ("$home/runwhen/$jobname", 0700);
+  mkdir ("$home/runwhen/$jobname/env", 0700);
+  print "  - created ~/runwhen/$jobname\n" unless( $opt_q );
+
+  # Output general options
+
+  open (DELAY, ">$home/runwhen/$jobname/env/DELAY");
+  print DELAY $default_delay;
+  close DELAY;
+
+  open (MAXINTERVAL, ">$home/runwhen/$jobname/env/MAXINTERVAL");
+  print MAXINTERVAL $default_maxinterval;
+  close MAXINTERVAL;
+
+  open (MAXINTERVAL_FILE, ">$home/runwhen/$jobname/env/MAXINTERVAL_FILE");
+  print MAXINTERVAL_FILE "did";
+  close MAXINTERVAL_FILE;
+
+  open (MININTERVAL, ">$home/runwhen/$jobname/env/MININTERVAL");
+  print MININTERVAL $default_mininterval;
+  close MININTERVAL;
+
+  open (MININTERVAL_FILE, ">$home/runwhen/$jobname/env/MININTERVAL_FILE");
+  print MININTERVAL_FILE "tried";
+  close MININTERVAL_FILE;
+
+  print "  - created general options\n" unless( $opt_q );
+
+  # Output calendar options
+
+  foreach $field (@fields) {
+
+    open (FIELD, ">$home/runwhen/$jobname/env/$field");
+    print FIELD $VAL{$field};
+    close FIELD;
+
+  }
+
+  print "  - created calendar options\n" unless( $opt_q );
+
+  # Create the "run" and "doit" scripts
+
+  open (RUN, ">$home/runwhen/$jobname/run");
+  print RUN <<RUN;
+#!/bin/sh -e
+exec 2>&1 \\
+envdir ./env \\
+caldelay \\
+maxinterval \\
+mininterval \\
+delayrun \\
+./doit
+RUN
+  close (RUN);
+  chmod (0700, "$home/runwhen/$jobname/run");
+
+  open (DOIT, ">$home/runwhen/$jobname/doit");
+  print DOIT <<DOIT;
+#!/bin/sh -e
+touch "\$MININTERVAL_FILE"
+$cmdline
+touch "\$MAXINTERVAL_FILE"
+DOIT
+  close (DOIT);
+  chmod (0700, "$home/runwhen/$jobname/doit");
+
+  print "  - created the 'run' and 'doit' scripts\n" unless( $opt_q );
+
+  if( $opt_l ) {
+    mkdir ("$home/runwhen/$jobname/log", 0700);
+    print "  - created ~/runwhen/$jobname/log\n" unless( $opt_q );
+    mkdir ("$home/runwhen/$jobname/log/main", 0700);
+    print "  - created ~/runwhen/$jobname/log/main\n" unless( $opt_q );
+    open (RUN, ">$home/runwhen/$jobname/log/run");
+    print RUN <<RUN;
+#!/bin/sh
+exec multilog t ./main
+RUN
+    close (RUN);
+    chmod (0700, "$home/runwhen/$jobname/log/run");
+
+    print "  - created the 'log/run' script\n" unless( $opt_q );
+
+  }
+
+}
+
+print "Done. You should now configure svscan to watch for services in ~/runwhen.\n" unless( $opt_q );
