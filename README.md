@@ -1,6 +1,6 @@
 # CaptuRadio
 
-by Dirk Ruediger <dirk@niebegeg.net>
+by Dirk Ruediger <<dirk@niebegeg.net>>
 
 ## Introduction
 
@@ -39,7 +39,7 @@ _CaptuRadio_ needs some information on the commandline to operate correctly.
       -h, --help      show this help message and exit
       -l length       Length of recording in seconds
       -s station      Name of the station, defined in 
-                      ~/.capturadio/capturadiorcrc.
+                      ~/.capturadio/capturadiorc.
       -b broadcast    Title of the broadcast
       -t title        Title of the recording
       -d destination  Destination directory
@@ -48,7 +48,7 @@ _CaptuRadio_ needs some information on the commandline to operate correctly.
 
 The option `-l length` tells _CaptuRadio_ how many seconds the capturing should last.
 
-The option `-s station` tells _CaptuRadio_ which station should be accessed. The station name has to be defined in `~/.capturadio/capturadiorcrc` (see section `Configuration`)below).
+The option `-s station` tells _CaptuRadio_ which station should be accessed. The station name has to be defined in `~/.capturadio/capturadiorc` (see section `Configuration`)below).
 
 The options `-b show` defines the name of the show and  `-t title` optionally defines the name of the episode. This way you can a show that is broadcasted every night, but has another topic very day of the week. If you omit the option `-t`, then _CaptuRadio_ uses the show name as name of the episode.
 
@@ -56,16 +56,22 @@ The option `-d destination` defines location on the disk where captured mp3 trac
 
 ## Configuration
 
-At startup _CaptuRadio_ reads all configuration data from `~/.capturadio/capturadiorcrc`. If this file does not exist, then you have to create it. _CaptuRadio_ comes with a sample configuration file as template.
+At startup _CaptuRadio_ reads all configuration data from `~/.capturadio/capturadiorc`. If this file does not exist, then you have to create it. _CaptuRadio_ comes with a sample configuration file as template.
 
-The station is defined in `~/.capturadio/capturadiorcrc` in the section `[]stations]`. Every entry consists of a key-value-pair defining the station name and the MP3 stream URL.
+The station is defined in `~/.capturadio/capturadiorc` in 
+the section `[]stations]`. Every entry consists of a key-value-pair
+defining the station name and the MP3 stream URL.
 
     [stations]
     station1 = http://example.org/station1/mp3
     station2 = http://example.net/live/station2
     ...
 
-For every station you can provide an own section in the configuration file. There you can define a name of descriptive the station and the URL of the station logo. If the name is defined, then it is used in the mp3 metadata (ID3) and for folder names when storing the file (see notes above). The logo will be downloaded and embedded into the mp3 file.
+For every station you can provide an own section in the configuration file. 
+There you can define a name of descriptive the station and the URL 
+of the station logo.  If the name is defined, then it is used in the mp3
+metadata (ID3) and for folder names when storing the file (see notes
+above). The logo will be downloaded and embedded into the mp3 file.
 
     [station1]
     name = My favorite music radio station
@@ -73,7 +79,7 @@ For every station you can provide an own section in the configuration file. Ther
 
 ## Usage
 
-To capture a mp3 stream you have to define the station (aka the nickname of the stream and the stream URL, see abowe) in `~/.capturadio/capturadiorcrc`. Now you can run the capturing
+To capture a mp3 stream you have to define the station (aka the nickname of the stream and the stream URL, see abowe) in `~/.capturadio/capturadiorc`. Now you can run the capturing
 
     capturadio.py -l 3300 -s station1 -b "My favorite radio show" -t "Monday talk"
 
@@ -99,6 +105,12 @@ The _CaptuRadio_ code is distributed under GNU GPL license.
 
 ## Version History
 
-Version 0.5 -- 2012-01-24
+#### Version 0.6 -- 2012-01-25
+
+* create_podcast_feed.py also uses the configuration file, there's a section `[feed]` provides information for the RSS file.
+* MP3 files now contain the timestamp in their filename
+* some small fixes
+
+#### Version 0.5 -- 2012-01-24
 
 Initial release.

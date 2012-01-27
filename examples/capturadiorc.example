@@ -1,5 +1,6 @@
 [settings]
 destination = ~/Downloads
+date_pattern = %d.%m.%Y %H:%M
 
 [stations]
 dlf = http://dradio.ic.llnwd.net/stream/dradio_dlf_m_a
