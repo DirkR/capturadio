@@ -53,30 +53,29 @@ class Recorder:
 		self.station_logo = logo
 
 	def capture(self, duration):
-
-		self.start_time = time.time()
-
 		import tempfile
+		self.start_time = time.time()
 		self.file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
-		file = open(self.file_name, 'w+b')
+		self._write_stream_to_file()
+		self._copy_file_to_destination()
+		self._add_metadata()
+
+	def _write_stream_to_file(self):
 		not_ready = True
 		try:
+			file = open(self.file_name, 'w+b')
 			stream = urllib2.urlopen(self.stream_url);
 			while not_ready:
 				file.write(stream.read(10240));
 				if ((time.time() - self.start_time) > duration):
 					not_ready = False
 			file.close
-
-			self._store_file()
-			self._add_metadata()
-
 		except Exception as e:
 			print "Could not complete capturing, because an exception occured.", e
 			os.remove(self.file_name)
 			self.file_name = None
 
-	def _store_file(self):
+	def _copy_file_to_destination(self):
 		import shutil, re
 
 		time_string = format_date(time.localtime(self.start_time))
