@@ -114,23 +114,46 @@ class Recorder:
 		audio["TPE1"] = mutagen.id3.TPE1(encoding=2, text=[station_name])
 		audio["TCOP"] = mutagen.id3.TCOP(encoding=2, text=[station_name])
 		audio["COMM"] = mutagen.id3.COMM(encoding=2, text=[comment])
-
-		# APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
-		if (config.has_section(station_name) and config.has_option(station_name, 'logo')):
-			logo = config.get(station_name, 'logo')
-			imgdata = urlopen(logo).read()
-			img = mutagen.id3.APIC(3, u'image/jpeg', 3, u'Station logo', imgdata)
-			audio.tags.add(img)
-
+		self._add_logo(audio)
 		audio.save()
+
+	def _add_logo(self, audio):
+		from mutagen.id3 import APIC
+		# APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
+		if self.station_logo is not None:
+			request = urllib2.Request(self.station_logo)
+			request.get_method = lambda : 'HEAD'
+			try:
+				response = urllib2.urlopen(request)
+				logo_type = response.info().gettype()
+
+				if logo_type in ['image/jpeg', 'image/png']:
+					img_data  = urllib2.urlopen(self.station_logo).read()
+					img = APIC(
+						encoding = 3, # 3 is for utf-8
+						mime = logo_type,
+						type = 3, # 3 is for the cover image
+						desc = u'Station logo',
+						data = img_data
+					)
+					audio.tags.add(img)
+			except urllib2.HTTPError, e:
+				print e
+
+			import pprint
+			pp = pprint.PrettyPrinter(indent=4)
+			pp.pprint(audio)
+
 
 if __name__ == "__main__":
 
 	config = ConfigParser.ConfigParser()
 	config.read([os.path.expanduser('~/.capturadio/capturadiorc'), os.path.expanduser('~/.capturadiorc')])
 
-	parser = argparse.ArgumentParser(description='Capture internet radio programs broadcasted in mp3 encoding format.',
-	epilog="Here is a list of defined radio stations: %s" % config.options('stations'))
+	parser = argparse.ArgumentParser(
+		description='Capture internet radio programs broadcasted in mp3 encoding format.',
+		epilog = "Here is a list of defined radio stations: %s" % config.options('stations')
+	)
 	parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
 	parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
 	parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
@@ -152,7 +175,7 @@ if __name__ == "__main__":
 		stream_url = config.get('stations', station)
 
 	show_title = args.b
-	title = args.t if (args.t != None) else args.b
+	title = args.t if (args.t is not None) else show_title
 
 	if args.d is not None:
 		destination = os.path.expanduser(args.d)
