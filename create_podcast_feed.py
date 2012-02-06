@@ -104,15 +104,14 @@ class Audiofiles:
     
     """
 
-    def __init__(self,urlbase,title, link, description, language):
-
-
+    def __init__(self, urlbase, title, link, description, language, count = 0):
         self.urlbase = urlbase
         self.title = title
         self.link = link
         self.description = description
         self.language = language
-        
+        self.count = count
+
         self.data = []
 
         self.generator = PyRSS2Gen._generator_name        
@@ -131,7 +130,7 @@ class Audiofiles:
                     audiofile = Audiofile(self, path)
                     self.append(audiofile)
 
-    def rssitems(self,n=10):
+    def rssitems(self, n = 0):
         result = []
         for audiofile in self.data:
 
@@ -148,9 +147,10 @@ class Audiofiles:
         waste = [(i.pubDate,i) for i in result]
         waste.sort()
         waste.reverse()
-        waste = waste[:n]
+        if (n > 0):
+          waste = waste[:n]
         result = [pair[1] for pair in waste]
-        
+
         return result
 
     def getrss(self):
@@ -160,9 +160,9 @@ class Audiofiles:
                               language = self.language,
                               generator = self.generator,
                               lastBuildDate = datetime.datetime.now(),                         
-                              items = self.rssitems())
-        
-def process_folder(path, root_path):
+                              items = self.rssitems(self.count))
+
+def process_folder(path, root_path, items_count = 0):
     import ConfigParser
 
     local_path = string.replace(path, root_path, '')
@@ -194,7 +194,9 @@ def process_folder(path, root_path):
                             as_utf8(feed_title),
                             feed_about_url,
                             as_utf8(feed_description),
-                            feed_language)
+                            feed_language,
+                            items_count)
+
     audiofiles.readfolder(path)
 
     if (config.has_section('feed')):
@@ -216,6 +218,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
     parser.add_argument('-r', action='store_true', help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
+    parser.add_argument('-c', metavar="count", type=int, default=10, help="Number of items to be included into a feed.")
     parser.add_argument('directory', nargs='?', help='The directory to be indexed. Use current directory if ommitted.')
     args = parser.parse_args()
 
@@ -232,7 +235,7 @@ if __name__ == "__main__":
         path = os.getcwd()
 
     if (not args.r):
-        process_folder(path, path)
+        process_folder(path, path, args.c)
     else:
         for dirname, dirnames, filenames in os.walk(path):
-            process_folder(dirname, path)
+            process_folder(dirname, path, args.c)
