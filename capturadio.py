@@ -140,10 +140,6 @@ class Recorder:
 			except urllib2.HTTPError, e:
 				print e
 
-			import pprint
-			pp = pprint.PrettyPrinter(indent=4)
-			pp.pprint(audio)
-
 
 if __name__ == "__main__":
 
