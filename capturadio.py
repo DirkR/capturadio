@@ -6,7 +6,7 @@ import time
 import argparse
 import ConfigParser
 import os
-
+import logging
 
 def as_utf8(string):
 	return u'%s' % unicode(string, 'utf-8')
@@ -29,7 +29,15 @@ def format_date(time_value):
 	return time.strftime(pattern, time_value)
 
 class Recorder:
+	log = None
+
 	def __init__(self, url, show_title, episode_title = ''):
+		logging.basicConfig(
+			filename = os.path.expanduser('~/.capturadio/log'),
+			level = logging.DEBUG,
+		)
+		self.log = logging.getLogger('capturadio')
+
 		self.stream_url = stream_url
 		self.episode_title = episode_title
 		self.show_title = show_title
@@ -53,6 +61,8 @@ class Recorder:
 		self.station_logo = logo
 
 	def capture(self, duration):
+		self.log.info(u'capture "%s" from "%s" for %s seconds to %s' % \
+				(self.episode_title, self.station_name, duration, self.destination))
 		import tempfile
 		self.start_time = time.time()
 		self.file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
@@ -71,7 +81,9 @@ class Recorder:
 					not_ready = False
 			file.close
 		except Exception as e:
-			print "Could not complete capturing, because an exception occured.", e
+			mesage= "Could not complete capturing, because an exception occured.", e
+			self.log.error(message, e)
+			print message
 			os.remove(self.file_name)
 			self.file_name = None
 
@@ -138,7 +150,9 @@ class Recorder:
 					)
 					audio.tags.add(img)
 			except urllib2.HTTPError, e:
-				print e
+				mesage= "Error during capturing"
+				self.log.error(message, e)
+				print message, e
 
 
 if __name__ == "__main__":
@@ -185,6 +199,7 @@ if __name__ == "__main__":
 
 
 	if (config.has_section(station)):
+		station_name = station_logo = None
 		if (config.has_option(station, 'name')):
 			station_name = config.get(station, 'name')
 		if (config.has_option(station, 'logo')):
