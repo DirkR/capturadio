@@ -5,11 +5,16 @@
 # Found at http://snippsnapp.polite.se/wiki?action=browse&diff=0&id=PyPodcastGen
 # and adopted for my needs
 
-import datetime, urlparse, urllib, string, os, time
+import datetime, urlparse, urllib, string, os, time, logging
 import PyRSS2Gen
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 import xml.dom.minidom
+
+logging.basicConfig(
+	filename = os.path.expanduser('~/.capturadio/log'),
+	level = logging.DEBUG,
+)
 
 def format_date(time_value):
 	if (config.has_section('settings') and config.has_option('settings', 'date_pattern')):
@@ -47,6 +52,8 @@ def url_fix(s, charset='utf-8'):
 
 class Audiofile:
 	def __init__(self, collection, basename):
+		self.log = logging.getLogger('create_podcast_feed.Audiofile')
+
 		self.basename = string.replace(basename, collection.dirname, '', 1)
 		if (os.path.isabs(self.basename)):
 			self.basename = string.replace(self.basename, '/', '', 1)
@@ -58,14 +65,12 @@ class Audiofile:
 		try:
 			self.title = audio['title'][0]
 		except KeyError, e:
-#            print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
 			self.title = basename[:-4]
 
 		try:
 			self.show = audio['album'][0]
 		except KeyError, e:
 			self.show = basename[:-4]
-#            print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
 
 		try:
 			self.date = audio['date'][0]
@@ -75,19 +80,16 @@ class Audiofile:
 		try:
 			self.artist = audio['artist'][0]
 		except KeyError, e:
- #           print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
 			self.artist = self.show
 
 		try:
 			self.playtime = audio.info.length
 		except:
- #           print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
 			self.playtime = 0
 
 		try:
 			self.copyright = audio['copyright'][0]
 		except KeyError, e:
- #           print "Skipped metadata for %s, because an exception was thrown: %s" % (self.basename, e)
 			self.copyright = self.artist
 
 		self.description = u'Show: %s, Episode: %s, Copyright: %s %s' % (self.show, self.title, self.date, self.copyright)
@@ -105,6 +107,7 @@ class Audiofiles:
 	"""
 
 	def __init__(self,urlbase,title, link, description, language):
+		self.log = logging.getLogger('create_podcast_feed.Audiofiles')
 
 		self.urlbase = urlbase
 		self.title = title
@@ -120,6 +123,7 @@ class Audiofiles:
 		self.data.append(audiofile)
 
 	def readfolder(self, dirname):
+		self.log.info(u'readfolder: processing %s' % dirname)
 		self.dirname = as_utf8(dirname)
 		for dirname, dirnames, filenames in os.walk(dirname):
 			for filename in filenames:
@@ -150,7 +154,8 @@ class Audiofiles:
 		waste.reverse()
 		waste = waste[:n]
 		result = [pair[1] for pair in waste]
-		
+
+		self.log.debug(u'rssitems: Found %d items' % len(result))
 		return result
 
 	def getrss(self):
@@ -170,7 +175,7 @@ class Audiofiles:
 		return channel
 
 	def _get_logo_url(self, station_name):
-		print u'_get_logo_url: station_name=%s' % station_name
+		self.log.debug(u'_get_logo_url: station_name=%s' % station_name)
 		global station_logo_urls
 		if station_logo_urls is None:
 				station_logo_urls = {} # been here
@@ -182,10 +187,10 @@ class Audiofiles:
 								name = string.lower(config.get(station, 'name'))
 								station_logo_urls[name] = config.get(station, 'logo')
 		if string.lower(station_name) in station_logo_urls:
-			print u'_get_logo_url: found %s' % station_logo_urls[string.lower(station_name)]
+			self.log.debug(u'_get_logo_url: found %s' % station_logo_urls[string.lower(station_name)])
 			return station_logo_urls[string.lower(station_name)]
 		else:
-			print u'_get_logo_url: found noting'
+			self.log.debug(u'_get_logo_url: found noting')
 			return None
 
 def process_folder(path, root_path):
