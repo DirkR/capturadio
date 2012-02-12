@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-# -*- coding: utf-8 -*-
+# -*- coding: utf_8 -*-
 
 import urllib2
 import time
@@ -7,12 +7,6 @@ import argparse
 import ConfigParser
 import os
 import logging
-
-def as_utf8(string):
-	return u'%s' % unicode(string, 'utf-8')
-
-def as_ascii(string):
-	return '%s' % string.decode('ascii', 'ignore')
 
 def format_date(time_value):
 	if (config.has_section('settings') and config.has_option('settings', 'date_pattern')):
@@ -39,8 +33,8 @@ class Recorder:
 		self.log = logging.getLogger('capturadio')
 
 		self.stream_url = stream_url
-		self.episode_title = episode_title
-		self.show_title = show_title
+		self.episode_title = unicode(episode_title, 'utf-8')
+		self.show_title = unicode(show_title, 'utf-8')
 		self.destination = os.getcwd()
 		self.station_name = None
 		self.station_logo = None
@@ -54,13 +48,16 @@ class Recorder:
 			if (not os.path.isabs(destination)):
 			    destination = os.path.join(os.getcwd(), destination)
 
-			self.destination = as_ascii(destination)
+			self.destination = unicode(destination)
 
 	def set_station_details(self, name, logo = None):
-		self.station_name = name
-		self.station_logo = logo
+		self.station_name = unicode(name, 'utf-8')
+		self.station_logo = unicode(logo)
 
 	def capture(self, duration):
+		import pprint
+		pp = pprint.PrettyPrinter(indent=4)
+		pp.pprint([self.episode_title, self.station_name, duration, self.destination])
 		self.log.info(u'capture "%s" from "%s" for %s seconds to %s' % \
 				(self.episode_title, self.station_name, duration, self.destination))
 		import tempfile
@@ -93,9 +90,9 @@ class Recorder:
 		time_string = format_date(time.localtime(self.start_time))
 		target_file = u"%s/%s/%s/%s_%s.mp3" % \
 			(self.destination,
-			 as_ascii(self.station_name if self.station_name is not None else self.station_nick),
-			 as_ascii(self.show_title),
-			 as_ascii(self.episode_title),
+			 self.station_name if self.station_name is not None else self.station_nick,
+			 self.show_title,
+			 self.episode_title,
 			 time_string)
 		target_file = re.compile(u'[^\w\d._/ -]').sub('', target_file)
 		if (not os.path.isdir(os.path.dirname(target_file))):
@@ -110,21 +107,18 @@ class Recorder:
 
 		from mutagen.mp3 import MP3
 		import mutagen.id3
-		show_title = as_utf8(self.show_title)
-		title = as_utf8(self.episode_title)
-		station_name = as_utf8(self.station_name)
 		date = time.strftime('%Y', time.localtime(self.start_time))
-		comment = u'Show: %s\nEpisode: %s\nCopyright: %s %s' % (show_title, title, date, station_name)
+		comment = u'Show: %s\nEpisode: %s\nCopyright: %s %s' % (self.show_title, self.episode_title, date, self.station_name)
 
 		audio = MP3(self.file_name)
 		# See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
-		audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=[title])
+		audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=[self.episode_title])
 		audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[format_date(self.start_time)])
 		audio["TCON"] = mutagen.id3.TCON(encoding=2, text=[u'Podcast'])
-		audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[show_title])
+		audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[self.show_title])
 		audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[duration * 1000])
-		audio["TPE1"] = mutagen.id3.TPE1(encoding=2, text=[station_name])
-		audio["TCOP"] = mutagen.id3.TCOP(encoding=2, text=[station_name])
+		audio["TPE1"] = mutagen.id3.TPE1(encoding=2, text=[self.station_name])
+		audio["TCOP"] = mutagen.id3.TCOP(encoding=2, text=[self.station_name])
 		audio["COMM"] = mutagen.id3.COMM(encoding=2, text=[comment])
 		self._add_logo(audio)
 		audio.save()
