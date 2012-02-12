@@ -60,8 +60,9 @@ class CaptuRadioRSS(PyRSS2Gen.RSS2):
 
 	def publish_extensions(self, handler):
 		# implement this method to embed the <itunes:*> elements into the channel header.
-		if self.image is not None and type(self.image) is 'Image':
-			PyRSS2Gen._opt_element(handler, "itunes:image", self.image.url)
+		if self.image is not None and isinstance(self.image, PyRSS2Gen.Image) and self.image.url is not None:
+			handler.startElement('itunes:image',  {'href': self.image.url})
+			handler.endElement('itunes:image')
 
 class Audiofile:
 	def __init__(self, collection, basename):
