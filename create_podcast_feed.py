@@ -50,6 +50,19 @@ def url_fix(s, charset='utf-8'):
 	qs = urllib.quote_plus(qs, ':&=')
 	return urlparse.urlunsplit((scheme, netloc, path, qs, anchor))
 
+class CaptuRadioRSS(PyRSS2Gen.RSS2):
+	"""This class adds the "itunes" extension (<itunes:image>, etc.) to the rss feed."""
+
+	rss_attrs = {
+		"xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd",
+		"version": "2.0",
+	}
+
+	def publish_extensions(self, handler):
+		# implement this method to embed the <itunes:*> elements into the channel header.
+		if self.image is not None and type(self.image) is 'Image':
+			PyRSS2Gen._opt_element(handler, "itunes:image", self.image.url)
+
 class Audiofile:
 	def __init__(self, collection, basename):
 		self.log = logging.getLogger('create_podcast_feed.Audiofile')
@@ -98,7 +111,6 @@ class Audiofile:
 		self.size = os.path.getsize(self.path)
 		self.enclosure = PyRSS2Gen.Enclosure(self.link, self.playtime, "audio/mpeg")
 		self.pubdate = datetime.datetime.fromtimestamp(os.path.getmtime(self.path))
-
 
 class Audiofiles:
 	"""
@@ -160,7 +172,7 @@ class Audiofiles:
 
 	def getrss(self):
 		items = self.rssitems()
-		channel = PyRSS2Gen.RSS2(title = self.title,
+		channel = CaptuRadioRSS(title = self.title,
 							  link = self.link,
 							  description = self.description,
 							  language = self.language,
