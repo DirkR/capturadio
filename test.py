@@ -46,7 +46,16 @@ class ConfigurationTestCase(unittest.TestCase):
 		self.assertEqual(config.shows['news'].name, 'Latest News')
 		self.assertEqual(config.shows['news'].logo_url, None)
 
-	def testlogoFinder(self):
+	def testFindStationById(self):
+		config = Configuration()
+		station = config.find_station_by_id('dlf')
+		self.assertTrue(isinstance(station, Station))
+		self.assertEqual(station.stream_url, 'http://example.org/dlf')
+		self.assertEqual(station.name, 'Deutschlandfunk')
+		self.assertEqual(station.logo_url, 'http://example.org/dlf.png')
+
+
+	def testLogoFinder(self):
 		config = Configuration()
 		station = config.stations['dlf']
 		config.add_show(station, 'dlf_news', 'Latest News')
