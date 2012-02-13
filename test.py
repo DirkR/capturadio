@@ -38,13 +38,16 @@ class ConfigurationTestCase(unittest.TestCase):
 	def testAddShowToStation(self):
 		config = Configuration()
 		station = config.stations['dlf']
-		config.add_show(station, 'news', 'Latest News')
+		show = config.add_show(station, 'news', 'Latest News', 10)
+		self.assertTrue(isinstance(show, Show))
 
 		self.assertEqual(len(config.shows), 1)
 		for show_id, show in config.shows.items():
 			self.assertTrue(isinstance(show, Show))
 		self.assertEqual(config.shows['news'].name, 'Latest News')
 		self.assertEqual(config.shows['news'].logo_url, None)
+		self.assertEqual(config.shows['news'].station, station)
+		self.assertEqual(config.shows['news'].duration, 10)
 
 	def testFindStationById(self):
 		config = Configuration()
@@ -58,14 +61,14 @@ class ConfigurationTestCase(unittest.TestCase):
 	def testLogoFinder(self):
 		config = Configuration()
 		station = config.stations['dlf']
-		config.add_show(station, 'dlf_news', 'Latest News')
+		config.add_show(station, 'dlf_news', 'Latest News', 10)
 		self.assertEqual(config.find_showlogo_by_id('dlf_news'), 'http://example.org/dlf.png')
 
 		station = config.stations['dkultur']
-		config.add_show(station, 'dkultur_news', 'Latest News')
+		config.add_show(station, 'dkultur_news', 'Latest News', 10)
 		self.assertEqual(config.find_showlogo_by_id('dkultur_news'), 'http://example.org/default.png')
 
-		config.add_show(station, 'dkultur_news2', 'Latest News', 'http://example.org/news.png')
+		config.add_show(station, 'dkultur_news2', 'Latest News', 20, 'http://example.org/news.png')
 		self.assertEqual(config.find_showlogo_by_id('dkultur_news2'), 'http://example.org/news.png')
 
 
