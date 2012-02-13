@@ -14,14 +14,10 @@ about_url = http://music.example.org/about
 description = Recordings of internet radio station broadcastings
 language = en
 filename = rss.xml
-default_logo = http://upload.wikimedia.org/wikipedia/commons/thumb/0/0f/Podcast-icon.svg/500px-Podcast-icon.svg.png
+default_logo_url = http://example.org/pic.png
 default_logo_copyright = Yagraph http://commons.wikimedia.org/wiki/File:Podcast-icon.svg
 
 ; additional settings for station 'dlf'
 [dlf]
 name = Deutschlandfunk
-logo = http://www.dradio.de/images/31064/square/
-
-[dkultur]
-name = Deutschlandradio Kultur
-logo = http://www.dradio.de/images/31064/square/
+logo_url = http://www.dradio.de/images/31064/square/

@@ -1,3 +1,4 @@
+*.pyc
 Deutschlandfunk/
 index.html
 rss.xml

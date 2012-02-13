@@ -4,7 +4,6 @@
 import urllib2
 import time
 import argparse
-import ConfigParser
 import os
 import logging
 
@@ -22,10 +21,124 @@ def format_date(time_value):
 		raise TypeError('time_value has to be a struct_time or a float. "%s" given.' % time_value)
 	return time.strftime(pattern, time_value)
 
+class Configuration:
+	filename = '~/.capturadio/capturadiorc'
+
+	def __init__(self):
+		self.stations = {}
+		self.shows = {}
+		self.default_logo_url = None
+		self.__load_config()
+		self.destination = os.getcwd()
+		self.date_pattern = "%Y-%m-%d %H:%M"
+
+	def __load_config(self):
+		import ConfigParser
+		config = ConfigParser.ConfigParser()
+		config.read([os.path.expanduser(Configuration.filename)])
+
+		if config.has_section('settings'):
+			if config.has_option('settings', 'destination'):
+				self.destination = os.path.expanduser(config.get('settings', 'destination'))
+			if config.has_option('settings', 'date_pattern'):
+				self.date_pattern = os.path.expanduser(config.get('settings', 'date_pattern'))
+
+		if config.has_section('feed'):
+			if config.has_option('feed', 'default_logo_url'):
+				self.default_logo_url = config.get('feed', 'default_logo_url')
+
+		if config.has_section('stations'):
+			for station_id in config.options('stations'):
+				station_stream = config.get('stations', station_id)
+				station_name = station_id
+				station_logo_url = self.default_logo_url
+				if config.has_section(station_id):
+					if config.has_option(station_id, 'name'):
+						station_name = config.get(station_id, 'name')
+					if config.has_option(station_id, 'logo_url'):
+						station_logo_url = config.get(station_id, 'logo_url')
+				self.add_station(station_id, station_stream, station_name, station_logo_url)
+
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__, self.__dict__)
+
+
+	def get_station_ids(self):
+		if self.stations is not None:
+			return self.stations.keys()
+		else:
+			return None
+
+	def set_default_logo_url(self, url):
+		self.default_logo_url = url
+
+	def add_station(self, id, stream_url, name = None, logo_url = None):
+		self.stations[id] = Station(id, stream_url, name, logo_url)
+
+	def add_show(self, station, id, name, logo = None):
+		if not isinstance(station, Station):
+			raise TypeError('station has to be of type "Station"')
+		show = Show(station, id, name, logo)
+		self.shows[id] = show
+
+	def find_station_by_id(self, id):
+		if id in self.stations:
+			return self.stations[id]
+		return None
+
+	def find_show_by_id(self, id):
+		if id in self.shows:
+			return self.shows[id]
+		return None
+
+	def find_showlogo_by_id(self, id):
+		if id not in self.shows:
+			raise "Show is not registered in ShowRegistry"
+		show = self.shows[id]
+		if show.logo_url is not None:
+			return show.logo_url
+
+		station = show.station
+		if station.logo_url is not None:
+			return station.logo_url
+
+		return self.default_logo
+
+
+class Station:
+	"""Describes a radio station, consists of shows."""
+
+	def __init__(self, id, stream_url, name, logo_url = None):
+		self.id = id
+		self.name = name
+		self.stream_url = stream_url
+		self.logo_url = logo_url
+		self.shows = []
+		self.registry = None
+
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__, self.__dict__)
+
+class Show:
+	"""Describes a single show, consists of episodes and belongs to a station"""
+
+	def __init__(self, station, id, name, logo_url = None):
+		if not isinstance(station, Station):
+			raise TypeError('station has to be of type "Station"')
+
+		self.station = station
+		self.id = id
+		self.name = name
+		self.logo_url = logo_url
+		station.shows.append(self)
+
+	def __repr__(self):
+		return "%s(%r)" % (self.__class__, self.__dict__)
+
 class Recorder:
 	log = None
 
-	def __init__(self, url, show_title, episode_title = ''):
+	def __init__(self, config, show, episode_title = ''):
 		logging.basicConfig(
 			filename = os.path.expanduser('~/.capturadio/log'),
 			level = logging.DEBUG,
@@ -55,9 +168,6 @@ class Recorder:
 		self.station_logo = unicode(logo)
 
 	def capture(self, duration):
-		import pprint
-		pp = pprint.PrettyPrinter(indent=4)
-		pp.pprint([self.episode_title, self.station_name, duration, self.destination])
 		self.log.info(u'capture "%s" from "%s" for %s seconds to %s' % \
 				(self.episode_title, self.station_name, duration, self.destination))
 		import tempfile
@@ -151,12 +261,11 @@ class Recorder:
 
 if __name__ == "__main__":
 
-	config = ConfigParser.ConfigParser()
-	config.read([os.path.expanduser('~/.capturadio/capturadiorc'), os.path.expanduser('~/.capturadiorc')])
+	config = Configuration()
 
 	parser = argparse.ArgumentParser(
 		description='Capture internet radio programs broadcasted in mp3 encoding format.',
-		epilog = "Here is a list of defined radio stations: %s" % config.options('stations')
+		epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
 	)
 	parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
 	parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
@@ -171,26 +280,19 @@ if __name__ == "__main__":
 	    print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
 	    exit(1)
 
-	station = args.s
-	if (not config.has_option('stations', station)):
-	    print "Station '%s' is unknown. Use one of these: %s." % (station, config.options('stations'))
+	if args.s not in config.get_station_ids():
+	    print "Station '%s' is unknown. Use one of these: %s." % (args.s, config.get_station_ids())
 	    exit(1)
 	else:
-		stream_url = config.get('stations', station)
+		station = config.find_station_by_id(args.s)
 
-	show_title = args.b
-	title = args.t if (args.t is not None) else show_title
+	title = args.t if (args.t is not None) else args.b
 
 	if args.d is not None:
-		destination = os.path.expanduser(args.d)
-	elif(config.has_section('settings') and config.has_option('settings', 'destination')):
-		destination = os.path.expanduser(config.get('settings', 'destination'))
-	else:
-		destination = os.getcwd()
+		config.destination = os.path.expanduser(args.d)
 
-	recorder = Recorder(url = stream_url, show_title = show_title, episode_title = title)
+	recorder = Recorder(config, show, title)
 	recorder.set_destination(destination)
-
 
 	if (config.has_section(station)):
 		station_name = station_logo = None
