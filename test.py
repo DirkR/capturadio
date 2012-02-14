@@ -9,7 +9,6 @@ class ConfigurationTestCase(unittest.TestCase):
 
 	def setUp(self):
 		Configuration.filename = "./test.capturadiorc"
-		pass
 
 	def tearDown(self):
 		pass
@@ -17,7 +16,7 @@ class ConfigurationTestCase(unittest.TestCase):
 	def testConfiguration(self):
 		config = Configuration()
 
-		self.assertEqual(config.date_pattern, '%Y-%m-%d %H:%M')
+		self.assertEqual(config.date_pattern, '%d.%m.%Y %H:%M')
 		self.assertEqual(config.destination, os.getcwd())
 
 		self.assertEqual(len(config.stations), 2)
@@ -52,6 +51,15 @@ class ConfigurationTestCase(unittest.TestCase):
 	def testFindStationById(self):
 		config = Configuration()
 		station = config.find_station_by_id('dlf')
+		self.assertTrue(isinstance(station, Station))
+		self.assertEqual(station.stream_url, 'http://example.org/dlf')
+		self.assertEqual(station.name, 'Deutschlandfunk')
+		self.assertEqual(station.logo_url, 'http://example.org/dlf.png')
+
+
+	def testFindStationByName(self):
+		config = Configuration()
+		station = config.find_station_by_name('Deutschlandfunk')
 		self.assertTrue(isinstance(station, Station))
 		self.assertEqual(station.stream_url, 'http://example.org/dlf')
 		self.assertEqual(station.name, 'Deutschlandfunk')

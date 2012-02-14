@@ -23,9 +23,10 @@ class Configuration:
 		self.stations = {}
 		self.shows = {}
 		self.default_logo_url = None
-		self.__load_config()
-		self.destination = os.getcwd()
+		self.destination = None
 		self.date_pattern = "%Y-%m-%d %H:%M"
+		self.feed = {}
+		self.__load_config()
 
 	def __load_config(self):
 		import ConfigParser
@@ -41,6 +42,15 @@ class Configuration:
 		if config.has_section('feed'):
 			if config.has_option('feed', 'default_logo_url'):
 				self.default_logo_url = config.get('feed', 'default_logo_url')
+			self.feed['base_url'] = config.get('feed', 'url')
+			if not self.feed['base_url'].endswith('/'):
+				self.feed['base_url'] += '/'
+			self.feed['title'] = config.get('feed', 'title', 'Internet Radio Recordings')
+			self.feed['about_url'] = config.get('feed', 'about_url', 'http://my.example.org/about.html')
+			self.feed['description'] = config.get('feed', 'description', 'Recordings')
+			self.feed['language'] = config.get('feed', 'language', 'en')
+			self.feed['file_name'] = config.get('feed', 'filename', 'rss.xml')
+			self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright', None)
 
 		if config.has_section('stations'):
 			for station_id in config.options('stations'):
@@ -90,6 +100,13 @@ class Configuration:
 		if id in self.stations:
 			return self.stations[id]
 		return None
+
+	def find_station_by_name(self, name):
+		for station in self.stations.values():
+			if station.name == name:
+				return station
+		else:
+			return None
 
 	def find_show_by_id(self, id):
 		if id in self.shows:
