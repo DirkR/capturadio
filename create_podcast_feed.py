@@ -218,8 +218,6 @@ def process_folder(path, root_path):
 		if (not local_path.endswith('/')):
 			local_path += '/'
 
-	print "lp: %s, p=%s, rp=%s" % (local_path, path, root_path)
-
 	audiofiles = Audiofiles(config, local_path)
 	audiofiles.readfolder(path)
 
