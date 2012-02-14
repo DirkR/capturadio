@@ -146,9 +146,9 @@ class Audiofiles:
 	def readfolder(self, dirname):
 		self.log.info(u'readfolder: processing %s' % dirname)
 		self.dirname = dirname
-		for dirname, dirnames, filenames in os.walk(self.dirname):
+		for dirname, dirnames, filenames in os.walk(dirname):
 			for filename in filenames:
-				path = os.path.join(self.dirname, filename)
+				path = os.path.join(dirname, filename)
 				if os.path.exists(path) and os.path.isfile(path) and path.endswith(".mp3"):
 					if (path.startswith(u'./')):
 						path = path[2:]
@@ -217,6 +217,8 @@ def process_folder(path, root_path):
 			local_path = local_path[1:]
 		if (not local_path.endswith('/')):
 			local_path += '/'
+
+	print "lp: %s, p=%s, rp=%s" % (local_path, path, root_path)
 
 	audiofiles = Audiofiles(config, local_path)
 	audiofiles.readfolder(path)
