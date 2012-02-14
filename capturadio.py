@@ -74,7 +74,6 @@ class Configuration:
 			self.destination = unicode(destination)
 
 	def __repr__(self):
-		tratr
 		return "%s(%r)" % (self.__class__, self.__dict__)
 
 
