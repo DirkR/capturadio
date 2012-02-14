@@ -1,0 +1,23 @@
+[settings]
+destination = ./demodata
+date_pattern = %d.%m.%Y %H:%M
+
+[stations]
+dlf = http://example.org/dlf
+dkultur = http://example.org/dkultur
+
+; settings for the Podcast feed
+[feed]
+url = http://my.example.org
+title = Internet Radio Recordings
+about_url = http://my.example.org/about.html
+description = Recordings
+language = en
+filename = rss.xml
+default_logo_url = http://example.org/default.png
+default_logo_copyright = A Creative Commons license
+
+; additional settings for station 'dlf'
+[dlf]
+name = Deutschlandfunk
+logo_url = http://example.org/dlf.png
