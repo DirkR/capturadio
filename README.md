@@ -105,6 +105,14 @@ The _CaptuRadio_ code is distributed under GNU GPL license.
 
 ## Version History
 
+#### Version 0.7 -- 2012-02-14
+
+* Rewritten configuration management
+* URLs of station logos (png or jpeg) and a default logo url can be defined in configuration file.
+* These logos are embeded in the ID3 information (APIC tag) of the mp3 file
+* The logo urls are integrated as `<itunes:image>` elements in the channel
+  header and item description of rss channel files.
+
 #### Version 0.6 -- 2012-01-25
 
 * create_podcast_feed.py also uses the configuration file, there's a section `[feed]` provides information for the RSS file.
