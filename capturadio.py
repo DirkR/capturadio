@@ -74,6 +74,7 @@ class Configuration:
 			self.destination = unicode(destination)
 
 	def __repr__(self):
+		tratr
 		return "%s(%r)" % (self.__class__, self.__dict__)
 
 
@@ -300,6 +301,5 @@ if __name__ == "__main__":
 
 	title = args.t if (args.t is not None) else args.b
 	show = config.add_show(station, title, title, duration)
-	print config
 	recorder = Recorder(config)
 	recorder.capture(show)
