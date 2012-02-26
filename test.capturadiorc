@@ -21,3 +21,10 @@ default_logo_copyright = A Creative Commons license
 [dlf]
 name = Deutschlandfunk
 logo_url = http://example.org/dlf.png
+shows = nachtradio
+
+; Settings for the show "Nachtradio" on station "dlf"
+[nachtradio]
+title = Nachtradio
+duration = 3300
+logo_url = http://example.org/nachtradio.png

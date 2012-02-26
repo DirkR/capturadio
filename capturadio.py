@@ -63,7 +63,23 @@ class Configuration:
 						station_name = config.get(station_id, 'name')
 					if config.has_option(station_id, 'logo_url'):
 						station_logo_url = config.get(station_id, 'logo_url')
-				self.add_station(station_id, station_stream, station_name, station_logo_url)
+				station = self.add_station(station_id, station_stream, station_name, station_logo_url)
+				self._add_shows(config, station)
+
+	def _add_shows(self, config, station):
+		if config.has_section(station.id) and config.has_option(station.id, 'shows'):
+			for show_id in config.get(station.id, 'shows').split():
+				if config.has_section(show_id):
+					if config.has_option(show_id, 'title'):
+						show_title = config.get(show_id, 'title')
+					else:
+						raise Exception('No title option defined for show "%s".' % show_id)
+					if config.has_option(show_id, 'duration'):
+						show_duration = int(config.get(show_id, 'duration'))
+					else:
+						raise Exception('No duration option defined for show "%s".' % show_id)
+					show_logo_url = config.get(show_id, 'logo_url', None)
+					self.add_show(station, show_id, show_title, show_duration, show_logo_url)
 
 	def set_destination(self, destination):
 		if (destination is not None and os.path.exists(destination) and os.path.isdir(destination)):
@@ -84,23 +100,17 @@ class Configuration:
 		else:
 			return None
 
-	def set_default_logo_url(self, url):
-		self.default_logo_url = url
-
 	def add_station(self, id, stream_url, name = None, logo_url = None):
-		self.stations[id] = Station(unicode(id, 'utf-8'), stream_url, unicode(name, 'utf-8'), logo_url)
+		station = Station(unicode(id, 'utf-8'), stream_url, unicode(name, 'utf-8'), logo_url)
+		self.stations[id] = station
+		return station
 
-	def add_show(self, station, id, name, duration, logo = None):
+	def add_show(self, station, id, name, duration, logo_url = None):
 		if not isinstance(station, Station):
 			raise TypeError('station has to be of type "Station"')
-		show = Show(station, unicode(id, 'utf-8'), unicode(name, 'utf-8'), duration, logo)
-		self.shows[id] = show
+		show = Show(station, id, name, duration, logo_url)
+		self.shows[station.id + '_' + id] = show
 		return show
-
-	def find_station_by_id(self, id):
-		if id in self.stations:
-			return self.stations[id]
-		return None
 
 	def find_station_by_name(self, name):
 		for station in self.stations.values():
@@ -116,7 +126,7 @@ class Configuration:
 
 	def find_showlogo_by_id(self, id):
 		if id not in self.shows:
-			raise "Show is not registered in ShowRegistry"
+			raise Exception("Show is not registered in ShowRegistry")
 		show = self.shows[id]
 		if show.logo_url is not None:
 			return show.logo_url
