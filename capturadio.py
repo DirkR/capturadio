@@ -52,6 +52,7 @@ class Configuration:
 			self.feed['file_name'] = config.get('feed', 'filename', 'rss.xml')
 			self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright', None)
 
+		# Read stations
 		if config.has_section('stations'):
 			for station_id in config.options('stations'):
 				station_stream = config.get('stations', station_id)

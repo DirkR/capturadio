@@ -17,7 +17,7 @@ class ConfigurationTestCase(unittest.TestCase):
 		config = Configuration()
 
 		self.assertEqual(config.date_pattern, '%d.%m.%Y %H:%M')
-		self.assertEqual(config.destination, os.getcwd())
+		self.assertEqual(config.destination, './demodata')
 
 		self.assertEqual(len(config.stations), 2)
 		for station_id, station in config.stations.items():
