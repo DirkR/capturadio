@@ -222,7 +222,8 @@ def process_folder(path, root_path):
 	rss_file = config.feed['file_name']
 
 	rss = audiofiles.getrss()
-	rss.write_xml(open(os.path.join(path, rss_file), "w"))
+	if len(rss.items) > 0:
+		rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
 
 if __name__ == "__main__":
