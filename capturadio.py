@@ -35,11 +35,13 @@ class Configuration:
 		config.read([os.path.expanduser(Configuration.filename)])
 
 		if config.has_section('settings'):
-			if config.has_option('settings', 'destination'):
-				self.destination = os.path.expanduser(config.get('settings', 'destination'))
+			self.set_destination(config.get('settings', 'destination', os.getcwd()))
 			if config.has_option('settings', 'date_pattern'):
 				self.date_pattern = os.path.expanduser(config.get('settings', 'date_pattern'))
+		self._read_feed_settings(config)
+		self._add_stations(config)
 
+	def _read_feed_settings(self, config):
 		if config.has_section('feed'):
 			if config.has_option('feed', 'default_logo_url'):
 				self.default_logo_url = config.get('feed', 'default_logo_url')
@@ -54,6 +56,7 @@ class Configuration:
 			self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright', None)
 
 		# Read stations
+	def _add_stations(self, config):
 		if config.has_section('stations'):
 			for station_id in config.options('stations'):
 				station_stream = config.get('stations', station_id)
@@ -85,12 +88,10 @@ class Configuration:
 
 	def set_destination(self, destination):
 		if (destination is not None and os.path.exists(destination) and os.path.isdir(destination)):
-			if (destination.startswith(u'./')):
-			    destination = destination[2:]
-			if (not os.path.isabs(destination)):
-			    destination = os.path.join(os.getcwd(), destination)
-
+			destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
 			self.destination = unicode(destination)
+		else:
+			raise Exception("Could not set destination %s" % destination)
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__, self.__dict__)

@@ -236,7 +236,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	if args.directory is not None:
-		config.set_destination(os.path.expanduser(args.directory))
+		config.set_destination(args.directory)
 
 	path = config.destination
 

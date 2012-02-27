@@ -6,18 +6,22 @@ import os, sys
 from capturadio import Configuration, Station, Show
 
 class ConfigurationTestCase(unittest.TestCase):
+	test_folder = os.path.join(os.getcwd(), 'demodata')
 
 	def setUp(self):
 		Configuration.filename = "./test.capturadiorc"
+		if (os.path.exists(ConfigurationTestCase.test_folder)):
+			os.removedirs(ConfigurationTestCase.test_folder)
+		os.mkdir(ConfigurationTestCase.test_folder, 0755)
 
 	def tearDown(self):
-		pass
+		os.removedirs(ConfigurationTestCase.test_folder)
 
 	def testConfiguration(self):
 		config = Configuration()
 
 		self.assertEqual(config.date_pattern, '%d.%m.%Y %H:%M')
-		self.assertEqual(config.destination, './demodata')
+		self.assertEqual(config.destination, os.path.join(os.getcwd(), 'demodata'))
 
 		self.assertEqual(len(config.stations), 2)
 		for station_id, station in config.stations.items():
