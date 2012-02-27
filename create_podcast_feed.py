@@ -85,7 +85,7 @@ class Audiofile:
 		try:
 			self.date = audio['date'][0]
 		except KeyError, e:
-			self.date = format_date(time.time())
+			self.date = format_date(self.config.date_pattern, time.time())
 
 		try:
 			self.artist = audio['artist'][0]

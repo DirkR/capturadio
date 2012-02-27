@@ -298,6 +298,5 @@ if __name__ == "__main__":
 
 	title = args.t if (args.t is not None) else args.b
 	show = config.add_show(station, title, title, duration)
-	print config
 	recorder = Recorder(config)
 	recorder.capture(show)
