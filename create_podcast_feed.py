@@ -59,28 +59,23 @@ class ItunesRSSItem(PyRSS2Gen.RSSItem):
 			handler.endElement('itunes:image')
 
 class Audiofile:
-	def __init__(self, collection, basename):
-		self.config = collection.config
-
+	def __init__(self, filename):
 		self.log = logging.getLogger('create_podcast_feed.Audiofile')
 
-		self.basename = string.replace(basename, collection.dirname, '', 1)
-		if (os.path.isabs(self.basename)):
-			self.basename = string.replace(self.basename, '/', '', 1)
-		self.path = os.path.join(collection.dirname, basename)
-		self.link = urlparse.urljoin(collection.urlbase, url_fix(self.basename))
+		self.path = filename
+		self.basename = os.path.basename(filename)
 
 		audio = MP3(self.path, ID3=EasyID3)
 
 		try:
 			self.title = audio['title'][0]
 		except KeyError, e:
-			self.title = basename[:-4]
+			self.title = self.basename[:-4]
 
 		try:
 			self.show = audio['album'][0]
 		except KeyError, e:
-			self.show = basename[:-4]
+			self.show = self.basename[:-4]
 
 		try:
 			self.date = audio['date'][0]
@@ -105,9 +100,7 @@ class Audiofile:
 
 		self.description = u'Show: %s, Episode: %s, Copyright: %s %s' % (self.show, self.title, self.date, self.copyright)
 
-		self.guid = PyRSS2Gen.Guid(self.link)
 		self.size = os.path.getsize(self.path)
-		self.enclosure = PyRSS2Gen.Enclosure(self.link, self.playtime, "audio/mpeg")
 		self.pubdate = datetime.datetime.fromtimestamp(os.path.getmtime(self.path))
 
 class Audiofiles:
@@ -116,32 +109,33 @@ class Audiofiles:
 	
 	"""
 
-	def __init__(self, config, local_path = None):
+	files_cache = {}
+
+	def __init__(self, config, local_path = ''):
 		self.log = logging.getLogger('create_podcast_feed.Audiofiles')
+		self.log.info('Create Audiofiles(%s)' % local_path)
 
 		feed_title = config.feed['title']
 		if (local_path != ''):
 			feed_title += " - " + string.replace(local_path, '/', ' - ')
 
-
 		self.config = config
+		self.path = local_path
 		self.title = feed_title
 		self.link = config.feed['about_url']
 		self.description = config.feed['description']
 		self.language =  config.feed['language']
-		if local_path is None:
-			self.urlbase = config.feed['base_url']
-		else:
-			self.urlbase = config.feed['base_url'] + urllib.quote(local_path)
+
+		self.urlbase = config.feed['base_url']
+		if local_path is not '':
+			self.urlbase += urllib.quote(local_path)
+
 		if not self.urlbase.endswith('/'):
 			self.urlbase += '/'
-		
+
 		self.data = []
 
 		self.generator = PyRSS2Gen._generator_name
-
-	def append(self,audiofile):
-		self.data.append(audiofile)
 
 	def readfolder(self, dirname):
 		self.log.info(u'readfolder: processing %s' % dirname)
@@ -150,22 +144,30 @@ class Audiofiles:
 			for filename in filenames:
 				path = os.path.join(dirname, filename)
 				if os.path.exists(path) and os.path.isfile(path) and path.endswith(".mp3"):
-					if (path.startswith(u'./')):
-						path = path[2:]
-					audiofile = Audiofile(self, path)
-					self.append(audiofile)
+					self.data.append(self._get_audiofile(path))
+
+	def _get_audiofile(self, path):
+		self.log.info(u'_get_audiofile(%s)' % path)
+		if path not in Audiofiles.files_cache.keys():
+			audiofile = Audiofile(path)
+			Audiofiles.files_cache[path] = audiofile
+		else:
+			audiofile = Audiofiles.files_cache[path]
+		return audiofile
 
 	def rssitems(self,n=10):
 		result = []
 		for audiofile in self.data:
+			local_path = audiofile.path.replace(self.config.destination, '')
+			media_url = self.config.feed['base_url'] + url_fix(local_path)
 			rssitem = ItunesRSSItem(
 				title = audiofile.title,
-				link = audiofile.link,
-                author = audiofile.artist,
+				link = media_url,
+				author = audiofile.artist,
 				description = audiofile.description,
-				guid = audiofile.guid,
 				pubDate = audiofile.pubdate,
-				enclosure = audiofile.enclosure
+				guid = PyRSS2Gen.Guid(media_url),
+				enclosure = PyRSS2Gen.Enclosure(media_url, audiofile.playtime, "audio/mpeg")
 			)
 			rssitem.image = self._create_image_tag(rssitem)
 			result.append(rssitem)
