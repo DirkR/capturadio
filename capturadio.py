@@ -6,6 +6,7 @@ import time
 import argparse
 import os
 import logging
+import re
 
 def format_date(pattern, time_value):
 	if (type(time_value).__name__ == 'float'):
@@ -68,7 +69,8 @@ class Configuration:
 
 	def _add_shows(self, config, station):
 		if config.has_section(station.id) and config.has_option(station.id, 'shows'):
-			for show_id in config.get(station.id, 'shows').split():
+			show_ids = re.split(',? +', config.get(station.id, 'shows'))
+			for show_id in show_ids:
 				if config.has_section(show_id):
 					if config.has_option(show_id, 'title'):
 						show_title = config.get(show_id, 'title')
@@ -111,31 +113,6 @@ class Configuration:
 		show = Show(station, id, name, duration, logo_url)
 		self.shows[station.id + '_' + id] = show
 		return show
-
-	def find_station_by_name(self, name):
-		for station in self.stations.values():
-			if station.name == name:
-				return station
-		else:
-			return None
-
-	def find_show_by_id(self, id):
-		if id in self.shows:
-			return self.shows[id]
-		return None
-
-	def find_showlogo_by_id(self, id):
-		if id not in self.shows:
-			raise Exception("Show is not registered in ShowRegistry")
-		show = self.shows[id]
-		if show.logo_url is not None:
-			return show.logo_url
-
-		station = show.station
-		if station.logo_url is not None:
-			return station.logo_url
-
-		return self.default_logo
 
 
 class Station:
@@ -278,6 +255,16 @@ class Recorder:
 				self.log.error(message, e)
 				print message, e
 
+def parse_duration(duration_string):
+#	pattern = r"^((?P<h>\d+h)(?iP<m>\d+m)?(?iP<s>\d+s)?|?P<ps>\d+)$"
+	pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
+	matches = re.match(pattern, duration_string)
+	h = matches.group('h')
+	m = matches.group('m')
+	s = matches.group('s')
+	duration = (int(h) * 3600 if h != None else 0) + (int(m) * 60 if m != None else 0) +  + (int(s) if s != None else 0)
+	print matches.groupdict()
+	return duration
 
 if __name__ == "__main__":
 
@@ -287,7 +274,7 @@ if __name__ == "__main__":
 		description='Capture internet radio programs broadcasted in mp3 encoding format.',
 		epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
 	)
-	parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
+	parser.add_argument('-l', metavar='length', required=True, help='Length of recording in seconds')
 	parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
 	parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
 	parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
@@ -295,7 +282,7 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	duration = args.l
+	duration = parse_duration(args.l)
 	if (duration < 1):
 	    print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
 	    exit(1)
