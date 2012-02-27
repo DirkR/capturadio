@@ -37,9 +37,7 @@ class ConfigurationTestCase(unittest.TestCase):
 		self.assertEqual(config.stations['dkultur'].name, 'dkultur')
 		self.assertEqual(config.stations['dkultur'].logo_url, 'http://example.org/default.png')
 
-		print config.shows
-
-		self.assertEqual(len(config.shows), 1)
+		self.assertEqual(len(config.shows), 2)
 		for show_id, show in config.shows.items():
 			self.assertTrue(isinstance(show, Show))
 
@@ -55,7 +53,7 @@ class ConfigurationTestCase(unittest.TestCase):
 		show = config.add_show(station, 'news', 'Latest News', 10)
 		self.assertTrue(isinstance(show, Show))
 
-		self.assertEqual(len(config.shows), 2)
+		self.assertEqual(len(config.shows), 3)
 		for show_id, show in config.shows.items():
 			self.assertTrue(isinstance(show, Show))
 		self.assertEqual(config.shows['dlf_news'].name, 'Latest News')
@@ -63,32 +61,14 @@ class ConfigurationTestCase(unittest.TestCase):
 		self.assertEqual(config.shows['dlf_news'].station, station)
 		self.assertEqual(config.shows['dlf_news'].duration, 10)
 
-	def testFindStationByName(self):
-		config = Configuration()
-		station = config.find_station_by_name('Deutschlandfunk')
-		self.assertTrue(isinstance(station, Station))
-		self.assertEqual(station.stream_url, 'http://example.org/dlf')
-		self.assertEqual(station.name, 'Deutschlandfunk')
-		self.assertEqual(station.logo_url, 'http://example.org/dlf.png')
+	def testParseDuration(self):
+		from capturadio import parse_duration
+		self.assertEqual(parse_duration("10h"), 36000)
+		self.assertEqual(parse_duration("50m"), 3000)
+		self.assertEqual(parse_duration("300s"), 300)
+		self.assertEqual(parse_duration("300"), 300)
+		self.assertEqual(parse_duration("1h15m20"), 4520)
 
-
-	def testLogoFinder(self):
-		config = Configuration()
-		station = config.stations['dlf']
-		config.add_show(station, 'news', 'Latest News', 10)
-		self.assertEqual(config.find_showlogo_by_id('dlf_news'), 'http://example.org/dlf.png')
-
-		station = config.stations['dkultur']
-		config.add_show(station, 'news', 'Latest News', 10)
-		self.assertEqual(config.find_showlogo_by_id('dkultur_news'), 'http://example.org/default.png')
-
-		config.add_show(station, 'news2', 'Latest News', 20, 'http://example.org/news.png')
-		self.assertEqual(config.find_showlogo_by_id('dkultur_news2'), 'http://example.org/news.png')
-
-	def testFindShow(self):
-		pass
-
-		
 #	def assertSpec(self, condition, message):
 #		...
 
