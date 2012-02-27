@@ -69,12 +69,5 @@ class ConfigurationTestCase(unittest.TestCase):
 		self.assertEqual(parse_duration("300"), 300)
 		self.assertEqual(parse_duration("1h15m20"), 4520)
 
-#	def assertSpec(self, condition, message):
-#		...
-
-#from capturadio import Recorder
-#recorder = Recorder()
-#recorder.capture()
-
 if __name__ == "__main__":
 	unittest.main()
