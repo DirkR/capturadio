@@ -87,11 +87,14 @@ class Configuration:
 					self.add_show(station, show_id, show_title, show_duration, show_logo_url)
 
 	def set_destination(self, destination):
-		if (destination is not None and os.path.exists(destination) and os.path.isdir(destination)):
-			destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
-			self.destination = unicode(destination)
-		else:
-			raise Exception("Could not set destination %s" % destination)
+		if destination is not None:
+			destination = os.path.expanduser(destination)
+			if (os.path.exists(destination) and os.path.isdir(destination)):
+				destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
+				self.destination = unicode(destination)
+			return self.destination
+
+		raise Exception("Could not set destination %s" % destination)
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__, self.__dict__)

@@ -35,7 +35,7 @@ def url_fix(s, charset='utf-8'):
 	qs = urllib.quote_plus(qs, ':&=')
 	return urlparse.urlunsplit((scheme, netloc, path, qs, anchor))
 
-class CaptuRadioRSS(PyRSS2Gen.RSS2):
+class ItunesRSS(PyRSS2Gen.RSS2):
 	"""This class adds the "itunes" extension (<itunes:image>, etc.) to the rss feed."""
 
 	rss_attrs = {
@@ -49,7 +49,7 @@ class CaptuRadioRSS(PyRSS2Gen.RSS2):
 			handler.startElement('itunes:image',  {'href': self.image.url})
 			handler.endElement('itunes:image')
 
-class CaptuRadioRSSItem(PyRSS2Gen.RSSItem):
+class ItunesRSSItem(PyRSS2Gen.RSSItem):
 	"""This class adds the "itunes" extension (<itunes:image>, etc.) to the rss feed item."""
 
 	def publish_extensions(self, handler):
@@ -158,7 +158,7 @@ class Audiofiles:
 	def rssitems(self,n=10):
 		result = []
 		for audiofile in self.data:
-			rssitem = CaptuRadioRSSItem(
+			rssitem = ItunesRSSItem(
 				title = audiofile.title,
 				link = audiofile.link,
                 author = audiofile.artist,
@@ -181,13 +181,13 @@ class Audiofiles:
 
 	def getrss(self):
 		items = self.rssitems()
-		channel = CaptuRadioRSS(title = self.title,
-							  link = self.link,
-							  description = self.description,
-							  language = self.language,
-							  generator = self.generator,
-							  lastBuildDate = datetime.datetime.now(),                         
-							  items = items)
+		channel = ItunesRSS(title = self.title,
+							link = self.link,
+							description = self.description,
+							language = self.language,
+							generator = self.generator,
+							lastBuildDate = datetime.datetime.now(),                         
+							items = items)
 		if len(items) > 0:
 			channel.image = self._create_image_tag(items[0])
 		return channel
