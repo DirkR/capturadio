@@ -63,11 +63,18 @@ class ConfigurationTestCase(unittest.TestCase):
 
 	def testParseDuration(self):
 		from capturadio import parse_duration
-		self.assertEqual(parse_duration("10h"), 36000)
-		self.assertEqual(parse_duration("50m"), 3000)
-		self.assertEqual(parse_duration("300s"), 300)
-		self.assertEqual(parse_duration("300"), 300)
+		self.assertEqual(parse_duration("10h"),     36000)
+		self.assertEqual(parse_duration("50m"),     3000)
+		self.assertEqual(parse_duration("300s"),    300)
+		self.assertEqual(parse_duration("300"),     300)
 		self.assertEqual(parse_duration("1h15m20"), 4520)
+
+		self.assertEqual(parse_duration("-50m"),     0)
+		self.assertEqual(parse_duration("-300s"),    0)
+		self.assertEqual(parse_duration("-300"),     0)
+		self.assertEqual(parse_duration("1h-15m20"), 3600)
+		self.assertEqual(parse_duration("trara"),    0)
+		self.assertEqual(parse_duration("12trara"),  12)
 
 if __name__ == "__main__":
 	unittest.main()

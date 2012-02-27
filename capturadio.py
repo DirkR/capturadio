@@ -259,11 +259,10 @@ def parse_duration(duration_string):
 #	pattern = r"^((?P<h>\d+h)(?iP<m>\d+m)?(?iP<s>\d+s)?|?P<ps>\d+)$"
 	pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
 	matches = re.match(pattern, duration_string)
-	h = matches.group('h')
-	m = matches.group('m')
-	s = matches.group('s')
-	duration = (int(h) * 3600 if h != None else 0) + (int(m) * 60 if m != None else 0) +  + (int(s) if s != None else 0)
-	print matches.groupdict()
+	(h, m, s) = (matches.group('h'), matches.group('m'), matches.group('s'))
+	duration = (int(h) * 3600 if h != None else 0) + \
+			   (int(m) * 60 if m != None else 0) + \
+			   (int(s) if s != None else 0)
 	return duration
 
 if __name__ == "__main__":
