@@ -6,6 +6,7 @@ import time
 import argparse
 import os
 import logging
+import re
 
 def format_date(pattern, time_value):
 	if (type(time_value).__name__ == 'float'):
@@ -34,11 +35,13 @@ class Configuration:
 		config.read([os.path.expanduser(Configuration.filename)])
 
 		if config.has_section('settings'):
-			if config.has_option('settings', 'destination'):
-				self.destination = os.path.expanduser(config.get('settings', 'destination'))
+			self.set_destination(config.get('settings', 'destination', os.getcwd()))
 			if config.has_option('settings', 'date_pattern'):
 				self.date_pattern = os.path.expanduser(config.get('settings', 'date_pattern'))
+		self._read_feed_settings(config)
+		self._add_stations(config)
 
+	def _read_feed_settings(self, config):
 		if config.has_section('feed'):
 			if config.has_option('feed', 'default_logo_url'):
 				self.default_logo_url = config.get('feed', 'default_logo_url')
@@ -52,6 +55,8 @@ class Configuration:
 			self.feed['file_name'] = config.get('feed', 'filename', 'rss.xml')
 			self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright', None)
 
+		# Read stations
+	def _add_stations(self, config):
 		if config.has_section('stations'):
 			for station_id in config.options('stations'):
 				station_stream = config.get('stations', station_id)
@@ -62,16 +67,31 @@ class Configuration:
 						station_name = config.get(station_id, 'name')
 					if config.has_option(station_id, 'logo_url'):
 						station_logo_url = config.get(station_id, 'logo_url')
-				self.add_station(station_id, station_stream, station_name, station_logo_url)
+				station = self.add_station(station_id, station_stream, station_name, station_logo_url)
+				self._add_shows(config, station)
+
+	def _add_shows(self, config, station):
+		if config.has_section(station.id) and config.has_option(station.id, 'shows'):
+			show_ids = re.split(',? +', config.get(station.id, 'shows'))
+			for show_id in show_ids:
+				if config.has_section(show_id):
+					if config.has_option(show_id, 'title'):
+						show_title = config.get(show_id, 'title')
+					else:
+						raise Exception('No title option defined for show "%s".' % show_id)
+					if config.has_option(show_id, 'duration'):
+						show_duration = int(config.get(show_id, 'duration'))
+					else:
+						raise Exception('No duration option defined for show "%s".' % show_id)
+					show_logo_url = config.get(show_id, 'logo_url', None)
+					self.add_show(station, show_id, show_title, show_duration, show_logo_url)
 
 	def set_destination(self, destination):
 		if (destination is not None and os.path.exists(destination) and os.path.isdir(destination)):
-			if (destination.startswith(u'./')):
-			    destination = destination[2:]
-			if (not os.path.isabs(destination)):
-			    destination = os.path.join(os.getcwd(), destination)
-
+			destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
 			self.destination = unicode(destination)
+		else:
+			raise Exception("Could not set destination %s" % destination)
 
 	def __repr__(self):
 		return "%s(%r)" % (self.__class__, self.__dict__)
@@ -83,48 +103,17 @@ class Configuration:
 		else:
 			return None
 
-	def set_default_logo_url(self, url):
-		self.default_logo_url = url
-
 	def add_station(self, id, stream_url, name = None, logo_url = None):
-		self.stations[id] = Station(unicode(id, 'utf-8'), stream_url, unicode(name, 'utf-8'), logo_url)
+		station = Station(unicode(id, 'utf-8'), stream_url, unicode(name, 'utf-8'), logo_url)
+		self.stations[id] = station
+		return station
 
-	def add_show(self, station, id, name, duration, logo = None):
+	def add_show(self, station, id, name, duration, logo_url = None):
 		if not isinstance(station, Station):
 			raise TypeError('station has to be of type "Station"')
-		show = Show(station, unicode(id, 'utf-8'), unicode(name, 'utf-8'), duration, logo)
-		self.shows[id] = show
+		show = Show(station, id, name, duration, logo_url)
+		self.shows[station.id + '_' + id] = show
 		return show
-
-	def find_station_by_id(self, id):
-		if id in self.stations:
-			return self.stations[id]
-		return None
-
-	def find_station_by_name(self, name):
-		for station in self.stations.values():
-			if station.name == name:
-				return station
-		else:
-			return None
-
-	def find_show_by_id(self, id):
-		if id in self.shows:
-			return self.shows[id]
-		return None
-
-	def find_showlogo_by_id(self, id):
-		if id not in self.shows:
-			raise "Show is not registered in ShowRegistry"
-		show = self.shows[id]
-		if show.logo_url is not None:
-			return show.logo_url
-
-		station = show.station
-		if station.logo_url is not None:
-			return station.logo_url
-
-		return self.default_logo
 
 
 class Station:
@@ -267,6 +256,15 @@ class Recorder:
 				self.log.error(message, e)
 				print message, e
 
+def parse_duration(duration_string):
+#	pattern = r"^((?P<h>\d+h)(?iP<m>\d+m)?(?iP<s>\d+s)?|?P<ps>\d+)$"
+	pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
+	matches = re.match(pattern, duration_string)
+	(h, m, s) = (matches.group('h'), matches.group('m'), matches.group('s'))
+	duration = (int(h) * 3600 if h != None else 0) + \
+			   (int(m) * 60 if m != None else 0) + \
+			   (int(s) if s != None else 0)
+	return duration
 
 if __name__ == "__main__":
 
@@ -276,7 +274,7 @@ if __name__ == "__main__":
 		description='Capture internet radio programs broadcasted in mp3 encoding format.',
 		epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
 	)
-	parser.add_argument('-l', metavar='length', type=int, required=True, help='Length of recording in seconds')
+	parser.add_argument('-l', metavar='length', required=True, help='Length of recording in seconds')
 	parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
 	parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
 	parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
@@ -284,7 +282,7 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	duration = args.l
+	duration = parse_duration(args.l)
 	if (duration < 1):
 	    print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
 	    exit(1)
