@@ -19,6 +19,7 @@ def format_date(pattern, time_value):
 
 class Configuration:
 	filename = '~/.capturadio/capturadiorc'
+	log =None
 
 	def __init__(self):
 		self.stations = {}
@@ -28,6 +29,7 @@ class Configuration:
 		self.date_pattern = "%Y-%m-%d %H:%M"
 		self.feed = {}
 		self.__load_config()
+		self.log = logging.getLogger('capturadio.Configuration')
 
 	def __load_config(self):
 		import ConfigParser
@@ -115,6 +117,7 @@ class Configuration:
 		if not isinstance(station, Station):
 			raise TypeError('station has to be of type "Station"')
 		show = Show(station, id, name, duration, logo_url)
+		self.log.info(u'station_id=%s, show_id=%s, name=%s' % (station.id, id, unicode(name)))
 		self.shows[station.id + '_' + id] = show
 		return show
 
@@ -297,9 +300,9 @@ if __name__ == "__main__":
 	    print "Station '%s' is unknown. Use one of these: %s." % (args.s, config.get_station_ids())
 	    exit(1)
 	else:
-		station = config.find_station_by_id(args.s)
+		station = config.stations[str.lower(args.s)]
 
-	title = args.t if (args.t is not None) else args.b
+	title = u'%s' % unicode(args.t if (args.t is not None) else args.b, 'utf8')
 	show = config.add_show(station, title, title, duration)
 	recorder = Recorder(config)
 	recorder.capture(show)
