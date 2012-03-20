@@ -5,6 +5,7 @@ date_pattern = %d.%m.%Y %H:%M
 [stations]
 dlf = http://example.org/dlf
 dkultur = http://example.org/dkultur
+wdr2 =  http://example.org/wdr2
 
 ; settings for the Podcast feed
 [feed]
@@ -20,6 +21,7 @@ default_logo_copyright = A Creative Commons license
 ; additional settings for station 'dlf'
 [dlf]
 name = Deutschlandfunk
+link_url = http://example.org/dlf
 logo_url = http://example.org/dlf.png
 shows = nachtradio  weather
 
@@ -27,9 +29,22 @@ shows = nachtradio  weather
 [nachtradio]
 title = Nachtradio
 duration = 3300
+link_url = http://example.org/nachtradio
 logo_url = http://example.org/nachtradio.png
 
 [weather]
 title = Weather forecast
 duration = 300
 logo_url = http://example.org/weather.png
+
+[wdr2]
+title = WDR 2
+link_url = http://example.org/wdr2
+logo_url = http://example.org/wdr2.png
+shows = news
+
+[news]
+title = Latest news
+duration = 300
+link_url = http://example.org/wdr2/news
+logo_url = http://example.org/wdr2/news.png
