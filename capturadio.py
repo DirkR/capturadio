@@ -9,6 +9,8 @@ import logging
 import re
 import sys
 import string
+from mutagen.mp3 import MP3
+import mutagen.id3
 
 def format_date(pattern, time_value):
     if (type(time_value).__name__ == 'float'):
@@ -200,9 +202,8 @@ class Recorder:
             self._add_metadata(show, file_name)
             self.start_time = None
         except Exception as e:
-            message = "Could not complete capturing, because an exception occured.", e
-            self.log.error(message, e.message)
-            print message
+            message = "Could not complete capturing, because an exception occured: %s" % e.message
+            self.log.error(message)
             sys.exit(1)
 
     def _write_stream_to_file(self, show, file_name):
@@ -216,9 +217,8 @@ class Recorder:
                     not_ready = False
             file.close
         except Exception as e:
-            message = "Could not capture show, because an exception occured.", e
-            self.log.error(message, e.message)
-            print message
+            message = "Could not capture show, because an exception occured: %s" % e.message
+            self.log.error("_write_stream_to_file: " . message)
             os.remove(file_name)
 
     def _copy_file_to_destination(self, show, file_name):
@@ -238,8 +238,8 @@ class Recorder:
             shutil.copy2(file_name, target_file)
             return target_file
         except IOError, e:
-            message = "Could not copy tmp file to %s." % target_file
-            self.log.error(message, e.message)
+            message = "Could not copy tmp file to %s: %s" % (target_file, e.message)
+            self.log.error("_copy_file_to_destination: " . message)
             os.remove(file_name)
             raise IOError(message, e)
 
@@ -247,8 +247,6 @@ class Recorder:
         if file_name is None:
             raise "file_name is not set - you cannot add metadata to None"
 
-        from mutagen.mp3 import MP3
-        import mutagen.id3
         year = time.strftime('%Y', time.localtime(self.start_time))
         time_string = format_date(self.config.date_pattern, time.localtime(self.start_time))
         episode_title = u'%s on %s' % (show.name, time_string)
@@ -260,7 +258,7 @@ class Recorder:
         audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[format_date(self.config.date_pattern, self.start_time)])
         audio["TCON"] = mutagen.id3.TCON(encoding=2, text=[u'Podcast'])
         audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[show.name])
-        audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[duration * 1000])
+        audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[show.duration * 1000])
         audio["TPE1"] = mutagen.id3.TPE1(encoding=2, text=[show.station.name])
         audio["TCOP"] = mutagen.id3.TCOP(encoding=2, text=[show.station.name])
         audio["COMM"] = mutagen.id3.COMM(encoding=2, text=[comment])

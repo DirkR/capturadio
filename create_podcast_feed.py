@@ -225,6 +225,13 @@ class Audiofiles:
         return None
 
 def process_folder(path, root_path):
+    logging.basicConfig(
+        filename = os.path.expanduser('~/.capturadio/log'),
+        level = logging.DEBUG,
+    )
+    log = logging.getLogger('create_podcast_feed')
+    log.debug('exec process_folder(path=%s, root_path=%s)' % (path, root_path))
+
     local_path = string.replace(path, root_path, '')
     if (local_path != ''):
         if (local_path.startswith('/')):
