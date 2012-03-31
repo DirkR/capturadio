@@ -90,11 +90,15 @@ class Configuration:
                         raise Exception('No title option defined for show "%s".' % show_id)
 
                     if config.has_option(show_id, 'duration'):
-                        show_duration = int(config.get(show_id, 'duration'))
+                        show_duration = parse_duration(config.get(show_id, 'duration'))
                     else:
                         raise Exception('No duration option defined for show "%s".' % show_id)
 
-                    show_logo_url = config.get(show_id, 'logo_url', None)
+                    if config.has_option(show_id, 'logo_url'):
+                        show_logo_url = config.get(show_id, 'logo_url')
+                    else:
+                        show_logo_url = station.logo_url
+
                     show = self.add_show(station, show_id, show_title, show_duration, show_logo_url)
 
                     if config.has_option(show_id, 'link_url'):
@@ -294,29 +298,40 @@ if __name__ == "__main__":
         description='Capture internet radio programs broadcasted in mp3 encoding format.',
         epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
     )
-    parser.add_argument('-l', metavar='length', required=True, help='Length of recording in seconds')
-    parser.add_argument('-s', metavar='station', required=True, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
-    parser.add_argument('-b', metavar='broadcast', required=True, help='Title of the broadcast')
+    parser.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
+    parser.add_argument('-s', metavar='station', required=False, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
+    parser.add_argument('-b', metavar='broadcast', required=False, help='Title of the broadcast')
     parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
     parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
+    parser.add_argument('-S', metavar='show', required=False, help='ID of the show, has to  be defined in configuration file')
 
     args = parser.parse_args()
 
-    duration = parse_duration(args.l)
-    if (duration < 1):
-        print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
-        exit(1)
-
-    if args.d is not None:
-        config.set_destination(os.path.expanduser(args.d))
-
-    if args.s not in config.get_station_ids():
-        print "Station '%s' is unknown. Use one of these: %s." % (args.s, config.get_station_ids())
-        exit(1)
+    if args.S is not None:
+        if args.S not in config.shows:
+            import string
+            show_ids = map(lambda id: string.split(id, '_', 1)[1], config.shows.keys())
+            print "Show '%s' is unknown. Use one of these: %s." % (args.S, show_ids)
+            exit(1)
+        else:
+          show = config.shows[args.S]
     else:
-        station = config.stations[str.lower(args.s)]
+        duration = parse_duration(args.l)
+        if (duration < 1):
+            print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
+            exit(1)
 
-    title = u'%s' % unicode(args.t if (args.t is not None) else args.b, 'utf8')
-    show = config.add_show(station, title, title, duration)
+        if args.d is not None:
+            config.set_destination(os.path.expanduser(args.d))
+
+        if args.s not in config.get_station_ids():
+            print "Station '%s' is unknown. Use one of these: %s." % (args.s, config.get_station_ids())
+            exit(1)
+        else:
+            station = config.stations[str.lower(args.s)]
+
+        title = u'%s' % unicode(args.t if (args.t is not None) else args.b, 'utf8')
+        show = config.add_show(station, title, title, duration)
+
     recorder = Recorder(config)
     recorder.capture(show)
