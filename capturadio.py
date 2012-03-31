@@ -7,6 +7,8 @@ import argparse
 import os
 import logging
 import re
+import sys
+import string
 
 def format_date(pattern, time_value):
     if (type(time_value).__name__ == 'float'):
@@ -19,13 +21,13 @@ def format_date(pattern, time_value):
 
 class Configuration:
     filename = '~/.capturadio/capturadiorc'
-    log =None
+    log = None
 
     def __init__(self):
         self.stations = {}
         self.shows = {}
         self.default_logo_url = None
-        self.destination = None
+        self.destination = os.getcwd()
         self.date_pattern = "%Y-%m-%d %H:%M"
         self.log = logging.getLogger('capturadio.Configuration')
         self.feed = {}
@@ -136,7 +138,7 @@ class Configuration:
             raise TypeError('station has to be of type "Station"')
         show = Show(station, id, name, duration, logo_url)
         self.log.info(u'station_id=%s, show_id=%s, name=%s' % (station.id, id, unicode(name)))
-        self.shows[station.id + '_' + id] = show
+        self.shows[id] = show
         return show
 
 
@@ -188,14 +190,20 @@ class Recorder:
 
     def capture(self, show):
         self.log.info(u'capture "%s" from "%s" for %s seconds to %s' % \
-                (show.name, show.station.name, duration, config.destination))
+                (show.name, show.station.name, show.duration, config.destination))
         import tempfile
         self.start_time = time.time()
-        file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
-        self._write_stream_to_file(show, file_name)
-        file_name = self._copy_file_to_destination(show, file_name)
-        self._add_metadata(show, file_name)
-        self.start_time = None
+        try:
+            file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
+            self._write_stream_to_file(show, file_name)
+            file_name = self._copy_file_to_destination(show, file_name)
+            self._add_metadata(show, file_name)
+            self.start_time = None
+        except Exception as e:
+            message = "Could not complete capturing, because an exception occured.", e
+            self.log.error(message, e.message)
+            print message
+            sys.exit(1)
 
     def _write_stream_to_file(self, show, file_name):
         not_ready = True
@@ -204,12 +212,12 @@ class Recorder:
             stream = urllib2.urlopen(show.get_stream_url());
             while not_ready:
                 file.write(stream.read(10240));
-                if ((time.time() - self.start_time) > duration):
+                if ((time.time() - self.start_time) > show.duration):
                     not_ready = False
             file.close
         except Exception as e:
-            mesage= "Could not complete capturing, because an exception occured.", e
-            self.log.error(message, e)
+            message = "Could not capture show, because an exception occured.", e
+            self.log.error(message, e.message)
             print message
             os.remove(file_name)
 
@@ -226,9 +234,14 @@ class Recorder:
         target_file = re.compile(u'[^\w\d._/ -]').sub('', target_file)
         if (not os.path.isdir(os.path.dirname(target_file))):
             os.makedirs(os.path.dirname(target_file))
-        shutil.copy2(file_name, target_file)
-
-        return target_file
+        try:
+            shutil.copy2(file_name, target_file)
+            return target_file
+        except IOError, e:
+            message = "Could not copy tmp file to %s." % target_file
+            self.log.error(message, e.message)
+            os.remove(file_name)
+            raise IOError(message, e)
 
     def _add_metadata(self, show, file_name):
         if file_name is None:
@@ -294,23 +307,29 @@ if __name__ == "__main__":
 
     config = Configuration()
 
+    if len(sys.argv) == 1:
+        sys.argv.append('--help')
+
     parser = argparse.ArgumentParser(
         description='Capture internet radio programs broadcasted in mp3 encoding format.',
         epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
     )
-    parser.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
-    parser.add_argument('-s', metavar='station', required=False, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
-    parser.add_argument('-b', metavar='broadcast', required=False, help='Title of the broadcast')
-    parser.add_argument('-t', metavar='title', required=False, help='Title of the recording')
     parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
-    parser.add_argument('-S', metavar='show', required=False, help='ID of the show, has to  be defined in configuration file')
+
+    detailled_group = parser.add_mutually_exclusive_group()
+    detailled_group.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
+    detailled_group.add_argument('-s', metavar='station', required=False, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
+    detailled_group.add_argument('-b', metavar='broadcast', required=False, help='Title of the broadcast')
+    detailled_group.add_argument('-t', metavar='title', required=False, help='Title of the recording')
+
+    show_group = parser.add_mutually_exclusive_group()
+    show_group.add_argument('-S', metavar='show', required=False, help='ID of the show, has to  be defined in configuration file')
 
     args = parser.parse_args()
 
     if args.S is not None:
-        if args.S not in config.shows:
-            import string
-            show_ids = map(lambda id: string.split(id, '_', 1)[1], config.shows.keys())
+        show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
+        if args.S not in config.shows.keys():
             print "Show '%s' is unknown. Use one of these: %s." % (args.S, show_ids)
             exit(1)
         else:
