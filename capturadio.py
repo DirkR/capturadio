@@ -71,7 +71,7 @@ class Configuration:
                 station_logo_url = self.default_logo_url
                 if config.has_section(station_id):
                     if config.has_option(station_id, 'name'):
-                        station_name = config.get(station_id, 'name')
+                        station_name = u'%s' % unicode(config.get(station_id, 'name'), 'utf8')
                     if config.has_option(station_id, 'logo_url'):
                         station_logo_url = config.get(station_id, 'logo_url')
                 station = self.add_station(station_id, station_stream, station_name, station_logo_url)
@@ -89,7 +89,7 @@ class Configuration:
             for show_id in show_ids:
                 if config.has_section(show_id):
                     if config.has_option(show_id, 'title'):
-                        show_title = config.get(show_id, 'title')
+                        show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
                     else:
                         raise Exception('No title option defined for show "%s".' % show_id)
 
@@ -131,7 +131,7 @@ class Configuration:
             return None
 
     def add_station(self, id, stream_url, name = None, logo_url = None):
-        station = Station(unicode(id, 'utf-8'), stream_url, unicode(name, 'utf-8'), logo_url)
+        station = Station(unicode(id, 'utf-8'), stream_url, name, logo_url)
         self.stations[id] = station
         return station
 
@@ -314,13 +314,13 @@ if __name__ == "__main__":
     )
     parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
 
-    detailled_group = parser.add_mutually_exclusive_group()
+    detailled_group = parser.add_argument_group()
     detailled_group.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
     detailled_group.add_argument('-s', metavar='station', required=False, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
     detailled_group.add_argument('-b', metavar='broadcast', required=False, help='Title of the broadcast')
     detailled_group.add_argument('-t', metavar='title', required=False, help='Title of the recording')
 
-    show_group = parser.add_mutually_exclusive_group()
+    show_group = parser.add_argument_group()
     show_group.add_argument('-S', metavar='show', required=False, help='ID of the show, has to  be defined in configuration file')
 
     args = parser.parse_args()
