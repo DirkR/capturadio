@@ -10,12 +10,8 @@ import PyRSS2Gen
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 import xml.dom.minidom
+import re
 from capturadio import Configuration, Station, Show, format_date
-
-logging.basicConfig(
-    filename = os.path.expanduser('~/.capturadio/log'),
-    level = logging.DEBUG,
-)
 
 # Taken from http://stackoverflow.com/questions/120951/how-can-i-normalize-a-url-in-python
 def url_fix(s, charset='utf-8'):
@@ -59,14 +55,15 @@ class ItunesRSSItem(PyRSS2Gen.RSSItem):
             handler.endElement('itunes:image')
 
 class Audiofile:
-    def __init__(self, config, filename):
+    def __init__(self, filename):
         self.log = logging.getLogger('create_podcast_feed.Audiofile')
-        self.config = config
+
+        config = Configuration()
 
         self.path = filename
         self.basename = os.path.basename(filename)
-        local_path = self.path.replace(self.config.destination, '')
-        self.url = self.config.feed['base_url'] + url_fix(local_path)
+        local_path = self.path.replace(config.destination, '')
+        self.url = config.feed['base_url'] + url_fix(local_path)
 
         audio = MP3(self.path, ID3=EasyID3)
 
@@ -83,7 +80,7 @@ class Audiofile:
         try:
             self.date = audio['date'][0]
         except KeyError, e:
-            self.date = format_date(self.config.date_pattern, time.time())
+            self.date = format_date(config.date_pattern, time.time())
 
         try:
             self.artist = audio['artist'][0]
@@ -114,15 +111,16 @@ class Audiofiles:
 
     files_cache = {}
 
-    def __init__(self, config, local_path = ''):
+    def __init__(self, local_path = ''):
         self.log = logging.getLogger('create_podcast_feed.Audiofiles')
         self.log.info('Create Audiofiles(%s)' % local_path)
+
+        config = Configuration()
 
         feed_title = config.feed['title']
         if (local_path != ''):
             feed_title += " - " + string.replace(local_path, '/', ' - ')
 
-        self.config = config
         self.path = local_path
         self.title = feed_title
         self.link = config.feed['about_url']
@@ -142,6 +140,9 @@ class Audiofiles:
 
     def readfolder(self, dirname):
         self.log.info(u'readfolder: processing %s' % dirname)
+
+        config = Configuration()
+
         self.dirname = dirname
         for dirname, dirnames, filenames in os.walk(dirname):
             for filename in filenames:
@@ -150,25 +151,25 @@ class Audiofiles:
                     self.data.append(self._get_audiofile(path))
 
     def _get_audiofile(self, path):
-        self.log.info(u'_get_audiofile(%s)' % path)
+        self.log.info(u'Enter _get_audiofile(%s)' % path)
         if path not in Audiofiles.files_cache.keys():
-            audiofile = Audiofile(self.config, path)
-            Audiofiles.files_cache[path] = audiofile
+            audio_file = Audiofile(path)
+            Audiofiles.files_cache[path] = audio_file
         else:
-            audiofile = Audiofiles.files_cache[path]
-        return audiofile
+            audio_file = Audiofiles.files_cache[path]
+        return audio_file
 
     def rssitems(self,n=10):
         result = []
-        for audiofile in self.data:
+        for audio_file in self.data:
             rssitem = ItunesRSSItem(
-                title = audiofile.title,
-                link = audiofile.url,
-                author = audiofile.artist,
-                description = audiofile.description,
-                pubDate = audiofile.pubdate,
-                guid = PyRSS2Gen.Guid(audiofile.url),
-                enclosure = PyRSS2Gen.Enclosure(audiofile.url, audiofile.playtime, "audio/mpeg")
+                title = audio_file.title,
+                link = audio_file.url,
+                author = audio_file.artist,
+                description = audio_file.description,
+                pubDate = audio_file.pubdate,
+                guid = PyRSS2Gen.Guid(audio_file.url),
+                enclosure = PyRSS2Gen.Enclosure(audio_file.url, audio_file.playtime, "audio/mpeg")
             )
             rssitem.image = self._create_image_tag(rssitem)
             result.append(rssitem)
@@ -179,7 +180,7 @@ class Audiofiles:
         waste = waste[:n]
         result = [pair[1] for pair in waste]
 
-        self.log.debug(u'rssitems: Found %d items' % len(result))
+        self.log.debug(u'  rssitems: Found %d items' % len(result))
         return result
 
     def getrss(self):
@@ -198,37 +199,32 @@ class Audiofiles:
     def _create_image_tag(self, rssitem):
         logo_url = self._get_logo_url(rssitem.author)
         link_url = self._get_link_url(rssitem.author)
+        config = Configuration()
 
         if logo_url is not None:
             return PyRSS2Gen.Image(url = logo_url, title = rssitem.author,
                     link = link_url)
         else:
-            return PyRSS2Gen.Image(url = self.config.default_logo_url,
+            return PyRSS2Gen.Image(url = config.default_logo_url,
                     title = rssitem.author, link = link_url)
 
     def _get_link_url(self, station_name):
-        self.log.debug(u'_get_link_url: station_name=%s' % station_name)
-        for id, station in self.config.stations.items():
+        for id, station in config.stations.items():
             if station_name == station.name:
-                self.log.debug(u'_get_link_url: found %s' % station.link_url)
+                self.log.debug(u'    %s: found %s' % (station_name, station.link_url))
                 return station.link_url
-        self.log.debug(u'_get_link_url: found noting')
+        self.log.debug(u'    %s: found noting' % station_name)
         return None
 
     def _get_logo_url(self, station_name):
-        self.log.debug(u'_get_logo_url: station_name=%s' % station_name)
-        for id, station in self.config.stations.items():
+        for id, station in config.stations.items():
             if station_name == station.name:
-                self.log.debug(u'_get_logo_url: found %s' % station.logo_url)
+                self.log.debug(u'    %s: found %s' % (station_name, station.logo_url))
                 return station.logo_url
-        self.log.debug(u'_get_logo_url: found noting')
+        self.log.debug(u'    %s: found noting' % station_name)
         return None
 
 def process_folder(path, root_path):
-    logging.basicConfig(
-        filename = os.path.expanduser('~/.capturadio/log'),
-        level = logging.DEBUG,
-    )
     log = logging.getLogger('create_podcast_feed')
     log.debug('exec process_folder(path=%s, root_path=%s)' % (path, root_path))
 
@@ -239,15 +235,21 @@ def process_folder(path, root_path):
         if (not local_path.endswith('/')):
             local_path += '/'
 
-    audiofiles = Audiofiles(config, local_path)
-    audiofiles.readfolder(path)
+    audio_files = Audiofiles(local_path)
+    audio_files.readfolder(path)
 
     rss_file = config.feed['file_name']
 
-    rss = audiofiles.getrss()
+    rss = audio_files.getrss()
     if len(rss.items) > 0:
         rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
+def excluded_folder(dirname, patterns = ['.git', '.bzr', 'svn', '.hg']):
+    for p in patterns:
+        pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
+        if re.match(pattern, dirname) is not None:
+            return True
+    return False
 
 if __name__ == "__main__":
     import argparse
@@ -273,4 +275,6 @@ if __name__ == "__main__":
         process_folder(path, path)
     else:
         for dirname, dirnames, filenames in os.walk(path):
-            process_folder(dirname, path)
+            if not excluded_folder(dirname):
+                logging.debug('dirname=%s, dirnames=%s, filenames=%s' % (dirname, dirnames, filenames))
+                process_folder(dirname, path)

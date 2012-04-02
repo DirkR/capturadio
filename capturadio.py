@@ -8,37 +8,50 @@ import os
 import logging
 import re
 import sys
-import string
 from mutagen.mp3 import MP3
 import mutagen.id3
 
 def format_date(pattern, time_value):
-    if (type(time_value).__name__ == 'float'):
+    if type(time_value).__name__ == 'float':
         time_value = time.localtime(time_value)
-    elif (type(time_value).__name__ == 'struct_time'):
+    elif type(time_value).__name__ == 'struct_time':
         pass
     else:
         raise TypeError('time_value has to be a struct_time or a float. "%s" given.' % time_value)
     return time.strftime(pattern, time_value)
 
-class Configuration:
+class Configuration: # implements Borg pattern
+
     filename = '~/.capturadio/capturadiorc'
-    log = None
+    _shared_state = {}
 
     def __init__(self):
-        self.stations = {}
-        self.shows = {}
-        self.default_logo_url = None
-        self.destination = os.getcwd()
-        self.date_pattern = "%Y-%m-%d %H:%M"
-        self.log = logging.getLogger('capturadio.Configuration')
-        self.feed = {}
-        self.__load_config()
 
-    def __load_config(self):
+        self.__dict__ = self._shared_state
+
+        if len(self._shared_state) == 0:
+            logging.basicConfig(
+                filename = os.path.expanduser('~/.capturadio/log'),
+                format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+                level = logging.DEBUG,
+            )
+
+            self.stations= {}
+            self.shows= {}
+            self.default_logo_url= None
+            self.destination= os.getcwd()
+            self.filename = Configuration.filename
+            self.date_pattern= "%Y-%m-%d %H:%M"
+            self.log= logging.getLogger('capturadio.config')
+            self.feed= {}
+            self._load_config()
+
+
+    def _load_config(self):
+        self.log.debug("Enter _load_config")
         import ConfigParser
         config = ConfigParser.ConfigParser()
-        config.read([os.path.expanduser(Configuration.filename)])
+        config.read([os.path.expanduser(self._shared_state['filename'])])
 
         if config.has_section('settings'):
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
@@ -63,11 +76,11 @@ class Configuration:
 
         # Read stations
     def _add_stations(self, config):
+        self.log.debug("Enter _add_stations")
         if config.has_section('stations'):
             for station_id in config.options('stations'):
                 station_stream = config.get('stations', station_id)
                 station_name = station_id
-                station_url = self.default_logo_url
                 station_logo_url = self.default_logo_url
                 if config.has_section(station_id):
                     if config.has_option(station_id, 'name'):
@@ -114,7 +127,7 @@ class Configuration:
     def set_destination(self, destination):
         if destination is not None:
             destination = os.path.expanduser(destination)
-            if (os.path.exists(destination) and os.path.isdir(destination)):
+            if os.path.exists(destination) and os.path.isdir(destination):
                 destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
                 self.destination = unicode(destination)
             return self.destination
@@ -133,13 +146,14 @@ class Configuration:
     def add_station(self, id, stream_url, name = None, logo_url = None):
         station = Station(unicode(id, 'utf-8'), stream_url, name, logo_url)
         self.stations[id] = station
+        self.log.info(u'  %s' % station)
         return station
 
     def add_show(self, station, id, name, duration, logo_url = None):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
         show = Show(station, id, name, duration, logo_url)
-        self.log.info(u'station_id=%s, show_id=%s, name=%s' % (station.id, id, unicode(name)))
+        self.log.info(u'    %s' % show)
         self.shows[id] = show
         return show
 
@@ -158,6 +172,9 @@ class Station:
     def __repr__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
+    def __str__(self):
+        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))
+
 class Show:
     """Describes a single show, consists of episodes and belongs to a station"""
 
@@ -175,22 +192,21 @@ class Show:
     def __repr__(self):
         return "%s(%r)" % (self.__class__, self.__dict__)
 
+    def __str__(self):
+        return 'Show(id=%s, name=%s, duration=%d station_id=%s)' % (self.id, unicode(self.name), self.duration, self.station.id)
+
     def get_stream_url(self):
         return self.station.stream_url
 
 class Recorder:
-    log = None
 
-    def __init__(self, config):
-        logging.basicConfig(
-            filename = os.path.expanduser('~/.capturadio/log'),
-            level = logging.DEBUG,
-        )
-        self.log = logging.getLogger('capturadio')
-        self.config = config
+    def __init__(self):
+        self.log = logging.getLogger('capturadio.recorder')
         self.start_time = None
 
     def capture(self, show):
+        config = Configuration()
+
         self.log.info(u'capture "%s" from "%s" for %s seconds to %s' % \
                 (show.name, show.station.name, show.duration, config.destination))
         import tempfile
@@ -202,7 +218,7 @@ class Recorder:
             self._add_metadata(show, file_name)
             self.start_time = None
         except Exception as e:
-            message = "Could not complete capturing, because an exception occured: %s" % e.message
+            message = "Could not complete capturing, because an exception occured: %s" % e
             self.log.error(message)
             sys.exit(1)
 
@@ -210,36 +226,37 @@ class Recorder:
         not_ready = True
         try:
             file = open(file_name, 'w+b')
-            stream = urllib2.urlopen(show.get_stream_url());
+            stream = urllib2.urlopen(show.get_stream_url())
             while not_ready:
-                file.write(stream.read(10240));
-                if ((time.time() - self.start_time) > show.duration):
+                file.write(stream.read(10240))
+                if time.time() - self.start_time > duration:
                     not_ready = False
-            file.close
+            file.close()
         except Exception as e:
             message = "Could not capture show, because an exception occured: %s" % e.message
-            self.log.error("_write_stream_to_file: " . message)
+            self.log.error("_write_stream_to_file: %s" % message)
             os.remove(file_name)
 
     def _copy_file_to_destination(self, show, file_name):
         import shutil, re
+        config = Configuration()
 
-        time_string = format_date(self.config.date_pattern, time.localtime(self.start_time))
+        time_string = format_date(config.date_pattern, time.localtime(self.start_time))
         target_file = u"%s/%s/%s/%s_%s.mp3" % \
-            (self.config.destination,
+            (config.destination,
              show.station.name,
              show.name,
              show.name,
              time_string)
         target_file = re.compile(u'[^\w\d._/ -]').sub('', target_file)
-        if (not os.path.isdir(os.path.dirname(target_file))):
+        if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
         try:
             shutil.copy2(file_name, target_file)
             return target_file
         except IOError, e:
             message = "Could not copy tmp file to %s: %s" % (target_file, e.message)
-            self.log.error("_copy_file_to_destination: " . message)
+            self.log.error("_copy_file_to_destination: %s" % message)
             os.remove(file_name)
             raise IOError(message, e)
 
@@ -247,15 +264,17 @@ class Recorder:
         if file_name is None:
             raise "file_name is not set - you cannot add metadata to None"
 
+        config = Configuration()
+
         year = time.strftime('%Y', time.localtime(self.start_time))
-        time_string = format_date(self.config.date_pattern, time.localtime(self.start_time))
+        time_string = format_date(config.date_pattern, time.localtime(self.start_time))
         episode_title = u'%s on %s' % (show.name, time_string)
         comment = u'Show: %s\nEpisode: %s\nCopyright: %s %s' % (show.name, episode_title, year, show.station.name)
 
         audio = MP3(file_name)
         # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
         audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=[episode_title])
-        audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[format_date(self.config.date_pattern, self.start_time)])
+        audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[format_date(config.date_pattern, self.start_time)])
         audio["TCON"] = mutagen.id3.TCON(encoding=2, text=[u'Podcast'])
         audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[show.name])
         audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[show.duration * 1000])
@@ -296,14 +315,15 @@ def parse_duration(duration_string):
     pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
     matches = re.match(pattern, duration_string)
     (h, m, s) = (matches.group('h'), matches.group('m'), matches.group('s'))
-    duration = (int(h) * 3600 if h != None else 0) + \
-               (int(m) * 60 if m != None else 0) + \
-               (int(s) if s != None else 0)
+    duration = (int(h) * 3600 if h is not None else 0) + \
+               (int(m) * 60 if m is not None else 0) + \
+               (int(s) if s is not None else 0)
     return duration
 
 if __name__ == "__main__":
 
     config = Configuration()
+    config.log.debug(config.shows.keys())
 
     if len(sys.argv) == 1:
         sys.argv.append('--help')
@@ -330,11 +350,10 @@ if __name__ == "__main__":
         if args.S not in config.shows.keys():
             print "Show '%s' is unknown. Use one of these: %s." % (args.S, show_ids)
             exit(1)
-        else:
-          show = config.shows[args.S]
+        show = config.shows[args.S]
     else:
         duration = parse_duration(args.l)
-        if (duration < 1):
+        if duration < 1:
             print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
             exit(1)
 
@@ -344,11 +363,10 @@ if __name__ == "__main__":
         if args.s not in config.get_station_ids():
             print "Station '%s' is unknown. Use one of these: %s." % (args.s, config.get_station_ids())
             exit(1)
-        else:
-            station = config.stations[str.lower(args.s)]
+        station = config.stations[str.lower(args.s)]
 
         title = u'%s' % unicode(args.t if (args.t is not None) else args.b, 'utf8')
         show = config.add_show(station, title, title, duration)
 
-    recorder = Recorder(config)
+    recorder = Recorder()
     recorder.capture(show)
