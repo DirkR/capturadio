@@ -8,6 +8,7 @@ import os
 import logging
 import re
 import sys
+import pprint
 from mutagen.mp3 import MP3
 import mutagen.id3
 
@@ -52,11 +53,10 @@ class Configuration: # implements Borg pattern
         import ConfigParser
         config = ConfigParser.ConfigParser()
         config.read([os.path.expanduser(self._shared_state['filename'])])
-
         if config.has_section('settings'):
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
-                self.date_pattern = os.path.expanduser(config.get('settings', 'date_pattern'))
+                self.date_pattern = config.get('settings', 'date_pattern')
         self._read_feed_settings(config)
         self._add_stations(config)
 
@@ -73,6 +73,10 @@ class Configuration: # implements Borg pattern
             self.feed['language'] = config.get('feed', 'language', 'en')
             self.feed['file_name'] = config.get('feed', 'filename', 'rss.xml')
             self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright', None)
+            if config.has_option('feed', 'default_link_url'):
+                self.default_link_url = config.get('feed', 'default_link_url')
+            else:
+                self.feed['default_link_url'] = 'http://www.podcast.de/'
 
         # Read stations
     def _add_stations(self, config):
@@ -129,13 +133,13 @@ class Configuration: # implements Borg pattern
             destination = os.path.expanduser(destination)
             if os.path.exists(destination) and os.path.isdir(destination):
                 destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
-                self.destination = unicode(destination)
-            return self.destination
+                self._shared_state['destination'] = unicode(destination)
+            return destination
 
         raise Exception("Could not set destination %s" % destination)
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__, self.__dict__)
+        return pprint.pformat(list(self))
 
     def get_station_ids(self):
         if self.stations is not None:
@@ -170,10 +174,16 @@ class Station:
         self.registry = None
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__, self.__dict__)
+        return pprint.pformat(list(self))
 
     def __str__(self):
         return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))
+
+    def get_link_url(self):
+        if 'link_url' in self.__dict__:
+            return self.link_url
+        else:
+            return config['feed']
 
 class Show:
     """Describes a single show, consists of episodes and belongs to a station"""
@@ -190,10 +200,16 @@ class Show:
         station.shows.append(self)
 
     def __repr__(self):
-        return "%s(%r)" % (self.__class__, self.__dict__)
+        return pprint.pformat(list(self))
 
     def __str__(self):
         return 'Show(id=%s, name=%s, duration=%d station_id=%s)' % (self.id, unicode(self.name), self.duration, self.station.id)
+
+    def get_link_url(self):
+        if 'link_url' in self.__dict__:
+            return self.link_url
+        else:
+            return self.station.get_link_url()
 
     def get_stream_url(self):
         return self.station.stream_url

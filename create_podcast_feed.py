@@ -74,6 +74,12 @@ class Audiofile:
 
         try:
             self.show = audio['album'][0]
+
+            for s in config.shows.values():
+                if unicode(s.id) == self.show:
+                    self.link = s.get_link_url()
+
+
         except KeyError, e:
             self.show = self.basename[:-4]
 
@@ -164,7 +170,7 @@ class Audiofiles:
         for audio_file in self.data:
             rssitem = ItunesRSSItem(
                 title = audio_file.title,
-                link = audio_file.url,
+                link = audio_file.link,
                 author = audio_file.artist,
                 description = audio_file.description,
                 pubDate = audio_file.pubdate,
