@@ -76,7 +76,7 @@ class Audiofile:
             self.show = audio['album'][0]
 
             for s in config.shows.values():
-                if unicode(s.id) == self.show:
+                if unicode(s.name) == self.show:
                     self.link = s.get_link_url()
 
 
@@ -170,7 +170,7 @@ class Audiofiles:
         for audio_file in self.data:
             rssitem = ItunesRSSItem(
                 title = audio_file.title,
-                link = audio_file.link,
+                link = audio_file.link if 'link' in audio_file.__dict__ else 'http://www.podcast.de/',
                 author = audio_file.artist,
                 description = audio_file.description,
                 pubDate = audio_file.pubdate,
