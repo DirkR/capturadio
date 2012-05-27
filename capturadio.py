@@ -236,22 +236,25 @@ class Recorder:
         except Exception as e:
             message = "Could not complete capturing, because an exception occured: %s" % e
             self.log.error(message)
-            sys.exit(1)
+            raise e
 
     def _write_stream_to_file(self, show, file_name):
         not_ready = True
+        self.log.info("write %s to %s" % (show.get_stream_url(), file_name))
         try:
             file = open(file_name, 'w+b')
             stream = urllib2.urlopen(show.get_stream_url())
             while not_ready:
                 file.write(stream.read(10240))
-                if time.time() - self.start_time > duration:
+                if time.time() - self.start_time > show.duration:
                     not_ready = False
             file.close()
         except Exception as e:
             message = "Could not capture show, because an exception occured: %s" % e.message
             self.log.error("_write_stream_to_file: %s" % message)
             os.remove(file_name)
+            raise e
+
 
     def _copy_file_to_destination(self, show, file_name):
         import shutil, re
