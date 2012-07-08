@@ -1,5 +1,5 @@
 [settings]
-destination = ./demodata
+destination = ./tests/demodata ; path relative to runtime dir
 date_pattern = %d.%m.%Y %H:%M
 
 [stations]

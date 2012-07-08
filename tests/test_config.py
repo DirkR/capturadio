@@ -2,15 +2,17 @@
 # -*- coding: utf-8 -*-
 
 import unittest, os, sys
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('..'))
 
 from capturadio import Configuration, Station, Show
 
 class ConfigurationTestCase(unittest.TestCase):
-    test_folder = os.path.join(os.getcwd(), 'demodata')
+    test_folder = os.path.join(os.path.dirname(__file__), 'demodata')
 
     def setUp(self):
-        Configuration.filename = "./test.capturadiorc"
+        Configuration.filename = os.path.join(os.path.dirname(__file__), 'test.capturadiorc')
         if (os.path.exists(ConfigurationTestCase.test_folder)):
             os.removedirs(ConfigurationTestCase.test_folder)
         os.mkdir(ConfigurationTestCase.test_folder, 0755)
@@ -22,7 +24,7 @@ class ConfigurationTestCase(unittest.TestCase):
         config = Configuration()
 
         self.assertEqual(config.date_pattern, '%d.%m.%Y %H:%M')
-        self.assertEqual(config.destination, os.path.join(os.getcwd(), 'demodata'))
+        self.assertEqual(config.destination, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'demodata'))
 
         self.assertEqual(len(config.stations), 3)
         for station_id, station in config.stations.items():
@@ -73,7 +75,7 @@ class ConfigurationTestCase(unittest.TestCase):
         self.assertEqual(config.shows['news'].duration, 10)
 
     def testParseDuration(self):
-        from capturadio import parse_duration
+        from capturadio.util import parse_duration
 
         self.assertEqual(parse_duration("10h"), 36000)
         self.assertEqual(parse_duration("50m"), 3000)
@@ -90,23 +92,26 @@ class ConfigurationTestCase(unittest.TestCase):
 
 
 class ExcludedFoldersTest(unittest.TestCase):
-
     def testExcludedFolders(self):
-        folders_and_results = {
-            '/var/.git': True,
-            '/var/.git/tra/ra': True,
-            '/var/tmp/.hg': True,
-            '/var/tmp/.hg/git': True,
-            '/var/tmp/.bzr': True,
-            '/var/tmp/.bzr/git/tra': True,
-            '/var/git': False,
-            '/var/git/tra/ra': False,
-            }
+        excluded_folders = [
+            '/var/.git',
+            '/var/.git/tra/ra',
+            '/var/tmp/.hg',
+            '/var/tmp/.hg/git',
+            '/var/tmp/.bzr',
+            '/var/tmp/.bzr/git/tra',
+            ]
+        included_folders = [
+            '/var/git',
+            '/var/git/tra/ra',
+            ]
 
         from create_podcast_feed import excluded_folder
 
-        for (folder, result) in folders_and_results:
-            self.assertEqual(excluded_folder(folder), result)
+        for folder in excluded_folders:
+            self.assertEqual(excluded_folder(folder), True)
+        for folder in included_folders:
+            self.assertEqual(excluded_folder(folder), False)
 
-    if __name__ == "__main__":
-        unittest.main()
+if __name__ == "__main__":
+    unittest.main()

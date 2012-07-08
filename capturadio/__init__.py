@@ -1,25 +1,16 @@
-#!/usr/bin/env python2.7
-# -*- coding: utf_8 -*-
+__author__ = 'dirk'
 
 import urllib2
 import time
-import argparse
 import os
 import logging
 import re
-import sys
 import pprint
 from mutagen.mp3 import MP3
 import mutagen.id3
 
-def format_date(pattern, time_value):
-    if type(time_value).__name__ == 'float':
-        time_value = time.localtime(time_value)
-    elif type(time_value).__name__ == 'struct_time':
-        pass
-    else:
-        raise TypeError('time_value has to be a struct_time or a float. "%s" given.' % time_value)
-    return time.strftime(pattern, time_value)
+version = (0, 7, 0)
+version_string = ".".join(map(str, version))
 
 class Configuration: # implements Borg pattern
 
@@ -27,38 +18,47 @@ class Configuration: # implements Borg pattern
     _shared_state = {}
 
     def __init__(self):
-
         self.__dict__ = self._shared_state
 
         if len(self._shared_state) == 0:
             logging.basicConfig(
-                filename = os.path.expanduser('~/.capturadio/log'),
-                format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-                level = logging.DEBUG,
+                filename=os.path.expanduser('~/.capturadio/log'),
+                format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+                level=logging.DEBUG,
             )
 
-            self.stations= {}
-            self.shows= {}
-            self.default_logo_url= None
-            self.destination= os.getcwd()
+            self.stations = {}
+            self.shows = {}
+            self.default_logo_url = None
+            self.destination = os.getcwd()
             self.filename = Configuration.filename
-            self.date_pattern= "%Y-%m-%d %H:%M"
-            self.log= logging.getLogger('capturadio.config')
-            self.feed= {}
+            self.date_pattern = "%Y-%m-%d %H:%M"
+            self.log = logging.getLogger('capturadio.config')
+            self.feed = {}
             self._load_config()
 
 
     def _load_config(self):
         self.log.debug("Enter _load_config")
         import ConfigParser
+
         config = ConfigParser.ConfigParser()
-        config.read([os.path.expanduser(self._shared_state['filename'])])
+        config.changed_settings = False # track changes
+
+        config_file = os.path.expanduser(self._shared_state['filename'])
+        config.read(config_file)
         if config.has_section('settings'):
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
                 self.date_pattern = config.get('settings', 'date_pattern')
         self._read_feed_settings(config)
         self._add_stations(config)
+
+        if config.changed_settings:
+            new_file = open(config_file + '.new', 'w')
+            config.write(new_file)
+            new_file.close()
+            print "WARNING: Saved a updated version of config file as '%s.new'." % (config_file)
 
     def _read_feed_settings(self, config):
         if config.has_section('feed'):
@@ -78,7 +78,9 @@ class Configuration: # implements Borg pattern
             else:
                 self.feed['default_link_url'] = 'http://www.podcast.de/'
 
-        # Read stations
+                # Read stations
+
+
     def _add_stations(self, config):
         self.log.debug("Enter _add_stations")
         if config.has_section('stations'):
@@ -92,6 +94,19 @@ class Configuration: # implements Borg pattern
                     if config.has_option(station_id, 'logo_url'):
                         station_logo_url = config.get(station_id, 'logo_url')
                 station = self.add_station(station_id, station_stream, station_name, station_logo_url)
+                if config.has_option(station_id, 'shows'):
+                    show_ids = re.split(r',? +', config.get(station_id, 'shows'))
+                    for show_id in show_ids:
+                        if config.has_section(show_id):
+                            config.set(show_id, 'station', station_id)
+                            print "WARNING: removed legacy setting 'shows' for show '%s' of station '%s' in configuration file." % (
+                                show_id, station_id)
+                        else:
+                            config.add_section(show_id)
+                            config.set(show_id, 'station', station_id)
+                            print "WARNING: added show section '%s' in configuration file." % (show_id)
+                    config.remove_option(station_id, 'shows')
+                    config.changed_settings = True
 
                 if config.has_option(station_id, 'link_url'):
                     station.link_url = config.get(station_id, 'link_url')
@@ -100,32 +115,36 @@ class Configuration: # implements Borg pattern
 
                 self._add_shows(config, station)
 
+
     def _add_shows(self, config, station):
-        if config.has_section(station.id) and config.has_option(station.id, 'shows'):
-            show_ids = re.split(',? +', config.get(station.id, 'shows'))
-            for show_id in show_ids:
-                if config.has_section(show_id):
-                    if config.has_option(show_id, 'title'):
-                        show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
-                    else:
-                        raise Exception('No title option defined for show "%s".' % show_id)
+        from capturadio.util import parse_duration
 
-                    if config.has_option(show_id, 'duration'):
-                        show_duration = parse_duration(config.get(show_id, 'duration'))
-                    else:
-                        raise Exception('No duration option defined for show "%s".' % show_id)
+        ignore_sections = ['settings', 'stations']
+        ignore_sections.append(self.stations.keys())
+        for section_name in config.sections():
+            if section_name not in ignore_sections and config.has_option(section_name, 'station'):
+                show_id = section_name
+                if config.has_option(show_id, 'title'):
+                    show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
+                else:
+                    raise Exception('No title option defined for show "%s".' % show_id)
 
-                    if config.has_option(show_id, 'logo_url'):
-                        show_logo_url = config.get(show_id, 'logo_url')
-                    else:
-                        show_logo_url = station.logo_url
+                if config.has_option(show_id, 'duration'):
+                    show_duration = parse_duration(config.get(show_id, 'duration'))
+                else:
+                    raise Exception('No duration option defined for show "%s".' % show_id)
 
-                    show = self.add_show(station, show_id, show_title, show_duration, show_logo_url)
+                if config.has_option(show_id, 'logo_url'):
+                    show_logo_url = config.get(show_id, 'logo_url')
+                else:
+                    show_logo_url = station.logo_url
 
-                    if config.has_option(show_id, 'link_url'):
-                        show.link_url = config.get(show_id, 'link_url')
-                    else:
-                        show.link_url = station.link_url
+                show = self.add_show(station, show_id, show_title, show_duration, show_logo_url)
+
+                if config.has_option(show_id, 'link_url'):
+                    show.link_url = config.get(show_id, 'link_url')
+                else:
+                    show.link_url = station.link_url
 
 
     def set_destination(self, destination):
@@ -147,13 +166,13 @@ class Configuration: # implements Borg pattern
         else:
             return None
 
-    def add_station(self, id, stream_url, name = None, logo_url = None):
+    def add_station(self, id, stream_url, name=None, logo_url=None):
         station = Station(unicode(id, 'utf-8'), stream_url, name, logo_url)
         self.stations[id] = station
         self.log.info(u'  %s' % station)
         return station
 
-    def add_show(self, station, id, name, duration, logo_url = None):
+    def add_show(self, station, id, name, duration, logo_url=None):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
         show = Show(station, id, name, duration, logo_url)
@@ -165,7 +184,7 @@ class Configuration: # implements Borg pattern
 class Station:
     """Describes a radio station, consists of shows."""
 
-    def __init__(self, id, stream_url, name, logo_url = None):
+    def __init__(self, id, stream_url, name, logo_url=None):
         self.id = id
         self.name = name
         self.stream_url = stream_url
@@ -185,10 +204,11 @@ class Station:
         else:
             return config['feed']
 
+
 class Show:
     """Describes a single show, consists of episodes and belongs to a station"""
 
-    def __init__(self, station, id, name, duration, logo_url = None):
+    def __init__(self, station, id, name, duration, logo_url=None):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
 
@@ -203,7 +223,8 @@ class Show:
         return pprint.pformat(list(self))
 
     def __str__(self):
-        return 'Show(id=%s, name=%s, duration=%d station_id=%s)' % (self.id, unicode(self.name), self.duration, self.station.id)
+        return 'Show(id=%s, name=%s, duration=%d station_id=%s)' % (
+            self.id, unicode(self.name), self.duration, self.station.id)
 
     def get_link_url(self):
         if 'link_url' in self.__dict__:
@@ -214,8 +235,8 @@ class Show:
     def get_stream_url(self):
         return self.station.stream_url
 
-class Recorder:
 
+class Recorder:
     def __init__(self):
         self.log = logging.getLogger('capturadio.recorder')
         self.start_time = None
@@ -223,9 +244,11 @@ class Recorder:
     def capture(self, show):
         config = Configuration()
 
-        self.log.info(u'capture "%s" from "%s" for %s seconds to %s' % \
-                (show.name, show.station.name, show.duration, config.destination))
+        self.log.info(u'capture "%s" from "%s" for %s seconds to %s' %\
+                      (show.name, show.station.name, show.duration, config.destination))
+
         import tempfile
+
         self.start_time = time.time()
         try:
             file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
@@ -258,15 +281,17 @@ class Recorder:
 
     def _copy_file_to_destination(self, show, file_name):
         import shutil, re
+        from capturadio.util import format_date
+
         config = Configuration()
 
         time_string = format_date(config.date_pattern, time.localtime(self.start_time))
-        target_file = u"%s/%s/%s/%s_%s.mp3" % \
-            (config.destination,
-             show.station.name,
-             show.name,
-             show.name,
-             time_string)
+        target_file = u"%s/%s/%s/%s_%s.mp3" %\
+                      (config.destination,
+                       show.station.name,
+                       show.name,
+                       show.name,
+                       time_string)
         target_file = re.compile(u'[^\w\d._/ -]').sub('', target_file)
         if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
@@ -280,6 +305,8 @@ class Recorder:
             raise IOError(message, e)
 
     def _add_metadata(self, show, file_name):
+        from capturadio.util import format_date
+
         if file_name is None:
             raise "file_name is not set - you cannot add metadata to None"
 
@@ -309,83 +336,22 @@ class Recorder:
         url = show.station.logo_url
         if url is not None:
             request = urllib2.Request(url)
-            request.get_method = lambda : 'HEAD'
+            request.get_method = lambda: 'HEAD'
             try:
                 response = urllib2.urlopen(request)
                 logo_type = response.info().gettype()
 
                 if logo_type in ['image/jpeg', 'image/png']:
-                    img_data  = urllib2.urlopen(url).read()
+                    img_data = urllib2.urlopen(url).read()
                     img = APIC(
-                        encoding = 3, # 3 is for utf-8
-                        mime = logo_type,
-                        type = 3, # 3 is for the cover image
-                        desc = u'Station logo',
-                        data = img_data
+                        encoding=3, # 3 is for utf-8
+                        mime=logo_type,
+                        type=3, # 3 is for the cover image
+                        desc=u'Station logo',
+                        data=img_data
                     )
                     audio.tags.add(img)
             except urllib2.HTTPError, e:
                 message = "Error during capturing %s" % url
                 self.log.error(message, e)
                 print message, e
-
-def parse_duration(duration_string):
-#   pattern = r"^((?P<h>\d+h)(?iP<m>\d+m)?(?iP<s>\d+s)?|?P<ps>\d+)$"
-    pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
-    matches = re.match(pattern, duration_string)
-    (h, m, s) = (matches.group('h'), matches.group('m'), matches.group('s'))
-    duration = (int(h) * 3600 if h is not None else 0) + \
-               (int(m) * 60 if m is not None else 0) + \
-               (int(s) if s is not None else 0)
-    return duration
-
-if __name__ == "__main__":
-
-    config = Configuration()
-    config.log.debug(config.shows.keys())
-
-    if len(sys.argv) == 1:
-        sys.argv.append('--help')
-
-    parser = argparse.ArgumentParser(
-        description='Capture internet radio programs broadcasted in mp3 encoding format.',
-        epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
-    )
-    parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
-
-    detailled_group = parser.add_argument_group()
-    detailled_group.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
-    detailled_group.add_argument('-s', metavar='station', required=False, help='Name of the station, defined in ~/.capturadio/capturadiorc.')
-    detailled_group.add_argument('-b', metavar='broadcast', required=False, help='Title of the broadcast')
-    detailled_group.add_argument('-t', metavar='title', required=False, help='Title of the recording')
-
-    show_group = parser.add_argument_group()
-    show_group.add_argument('-S', metavar='show', required=False, help='ID of the show, has to  be defined in configuration file')
-
-    args = parser.parse_args()
-
-    if args.S is not None:
-        show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
-        if args.S not in config.shows.keys():
-            print "Show '%s' is unknown. Use one of these: %s." % (args.S, show_ids)
-            exit(1)
-        show = config.shows[args.S]
-    else:
-        duration = parse_duration(args.l)
-        if duration < 1:
-            print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
-            exit(1)
-
-        if args.d is not None:
-            config.set_destination(os.path.expanduser(args.d))
-
-        if args.s not in config.get_station_ids():
-            print "Station '%s' is unknown. Use one of these: %s." % (args.s, config.get_station_ids())
-            exit(1)
-        station = config.stations[str.lower(args.s)]
-
-        title = u'%s' % unicode(args.t if (args.t is not None) else args.b, 'utf8')
-        show = config.add_show(station, title, title, duration)
-
-    recorder = Recorder()
-    recorder.capture(show)
