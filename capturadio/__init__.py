@@ -43,7 +43,10 @@ class Configuration: # implements Borg pattern
         import ConfigParser
 
         config = ConfigParser.ConfigParser()
-        config.read([os.path.expanduser(self._shared_state['filename'])])
+        config.changed_settings = False # track changes
+
+        config_file = os.path.expanduser(self._shared_state['filename'])
+        config.read(config_file)
         if config.has_section('settings'):
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
@@ -51,6 +54,11 @@ class Configuration: # implements Borg pattern
         self._read_feed_settings(config)
         self._add_stations(config)
 
+        if config.changed_settings:
+            new_file = open(config_file + '.new', 'w')
+            config.write(new_file)
+            new_file.close()
+            print "WARNING: Saved a updated version of config file as '%s.new'." % (config_file)
 
     def _read_feed_settings(self, config):
         if config.has_section('feed'):
@@ -86,6 +94,19 @@ class Configuration: # implements Borg pattern
                     if config.has_option(station_id, 'logo_url'):
                         station_logo_url = config.get(station_id, 'logo_url')
                 station = self.add_station(station_id, station_stream, station_name, station_logo_url)
+                if config.has_option(station_id, 'shows'):
+                    show_ids = re.split(r',? +', config.get(station_id, 'shows'))
+                    for show_id in show_ids:
+                        if config.has_section(show_id):
+                            config.set(show_id, 'station', station_id)
+                            print "WARNING: removed legacy setting 'shows' for show '%s' of station '%s' in configuration file." % (
+                                show_id, station_id)
+                        else:
+                            config.add_section(show_id)
+                            config.set(show_id, 'station', station_id)
+                            print "WARNING: added show section '%s' in configuration file." % (show_id)
+                    config.remove_option(station_id, 'shows')
+                    config.changed_settings = True
 
                 if config.has_option(station_id, 'link_url'):
                     station.link_url = config.get(station_id, 'link_url')
@@ -98,31 +119,32 @@ class Configuration: # implements Borg pattern
     def _add_shows(self, config, station):
         from capturadio.util import parse_duration
 
-        if config.has_section(station.id) and config.has_option(station.id, 'shows'):
-            show_ids = re.split(',? +', config.get(station.id, 'shows'))
-            for show_id in show_ids:
-                if config.has_section(show_id):
-                    if config.has_option(show_id, 'title'):
-                        show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
-                    else:
-                        raise Exception('No title option defined for show "%s".' % show_id)
+        ignore_sections = ['settings', 'stations']
+        ignore_sections.append(self.stations.keys())
+        for section_name in config.sections():
+            if section_name not in ignore_sections and config.has_option(section_name, 'station'):
+                show_id = section_name
+                if config.has_option(show_id, 'title'):
+                    show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
+                else:
+                    raise Exception('No title option defined for show "%s".' % show_id)
 
-                    if config.has_option(show_id, 'duration'):
-                        show_duration = parse_duration(config.get(show_id, 'duration'))
-                    else:
-                        raise Exception('No duration option defined for show "%s".' % show_id)
+                if config.has_option(show_id, 'duration'):
+                    show_duration = parse_duration(config.get(show_id, 'duration'))
+                else:
+                    raise Exception('No duration option defined for show "%s".' % show_id)
 
-                    if config.has_option(show_id, 'logo_url'):
-                        show_logo_url = config.get(show_id, 'logo_url')
-                    else:
-                        show_logo_url = station.logo_url
+                if config.has_option(show_id, 'logo_url'):
+                    show_logo_url = config.get(show_id, 'logo_url')
+                else:
+                    show_logo_url = station.logo_url
 
-                    show = self.add_show(station, show_id, show_title, show_duration, show_logo_url)
+                show = self.add_show(station, show_id, show_title, show_duration, show_logo_url)
 
-                    if config.has_option(show_id, 'link_url'):
-                        show.link_url = config.get(show_id, 'link_url')
-                    else:
-                        show.link_url = station.link_url
+                if config.has_option(show_id, 'link_url'):
+                    show.link_url = config.get(show_id, 'link_url')
+                else:
+                    show.link_url = station.link_url
 
 
     def set_destination(self, destination):
@@ -202,7 +224,7 @@ class Show:
 
     def __str__(self):
         return 'Show(id=%s, name=%s, duration=%d station_id=%s)' % (
-        self.id, unicode(self.name), self.duration, self.station.id)
+            self.id, unicode(self.name), self.duration, self.station.id)
 
     def get_link_url(self):
         if 'link_url' in self.__dict__:
@@ -215,8 +237,6 @@ class Show:
 
 
 class Recorder:
-    import time
-
     def __init__(self):
         self.log = logging.getLogger('capturadio.recorder')
         self.start_time = None
