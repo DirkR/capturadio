@@ -11,7 +11,7 @@ from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
 import xml.dom.minidom
 import re
-from capturadio import Configuration, Station, Show, format_date
+from recorder import Configuration, Station, Show, format_date
 
 # Taken from http://stackoverflow.com/questions/120951/how-can-i-normalize-a-url-in-python
 def url_fix(s, charset='utf-8'):

@@ -4,7 +4,7 @@
 import unittest, os, sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from capturadio import Configuration, Station, Show
+from recorder import Configuration, Station, Show
 
 class ConfigurationTestCase(unittest.TestCase):
     test_folder = os.path.join(os.getcwd(), 'demodata')
@@ -73,7 +73,7 @@ class ConfigurationTestCase(unittest.TestCase):
         self.assertEqual(config.shows['news'].duration, 10)
 
     def testParseDuration(self):
-        from capturadio import parse_duration
+        from recorder import parse_duration
 
         self.assertEqual(parse_duration("10h"), 36000)
         self.assertEqual(parse_duration("50m"), 3000)
