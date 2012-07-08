@@ -5,54 +5,15 @@
 # Found at http://snippsnapp.polite.se/wiki?action=browse&diff=0&id=PyPodcastGen
 # and adopted for my needs
 
-import datetime, urlparse, urllib, string, os, time, logging
+import datetime, urllib, string, os, time, logging
 import PyRSS2Gen
 from mutagen.mp3 import MP3
 from mutagen.easyid3 import EasyID3
-import xml.dom.minidom
 import re
-from recorder import Configuration, Station, Show, format_date
-
-# Taken from http://stackoverflow.com/questions/120951/how-can-i-normalize-a-url-in-python
-def url_fix(s, charset='utf-8'):
-    """Sometimes you get an URL by a user that just isn't a real
-    URL because it contains unsafe characters like ' ' and so on.  This
-    function can fix some of the problems in a similar way browsers
-    handle data entered by the user:
-    
-    :param charset: The target charset for the URL if the url was
-                    given as unicode string.
-    """
-    if isinstance(s, unicode):
-        s = s.encode(charset, 'ignore')
-
-    scheme, netloc, path, qs, anchor = urlparse.urlsplit(s)
-    path = urllib.quote(path, '/%')
-    qs = urllib.quote_plus(qs, ':&=')
-    return urlparse.urlunsplit((scheme, netloc, path, qs, anchor))
-
-class ItunesRSS(PyRSS2Gen.RSS2):
-    """This class adds the "itunes" extension (<itunes:image>, etc.) to the rss feed."""
-
-    rss_attrs = {
-        "xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd",
-        "version": "2.0",
-    }
-
-    def publish_extensions(self, handler):
-        # implement this method to embed the <itunes:*> elements into the channel header.
-        if self.image is not None and isinstance(self.image, PyRSS2Gen.Image) and self.image.url is not None:
-            handler.startElement('itunes:image',  {'href': self.image.url})
-            handler.endElement('itunes:image')
-
-class ItunesRSSItem(PyRSS2Gen.RSSItem):
-    """This class adds the "itunes" extension (<itunes:image>, etc.) to the rss feed item."""
-
-    def publish_extensions(self, handler):
-        # implement this method to embed the <itunes:*> elements into the channel header.
-        if self.image is not None and isinstance(self.image, PyRSS2Gen.Image) and self.image.url is not None:
-            handler.startElement('itunes:image',  {'href': self.image.url})
-            handler.endElement('itunes:image')
+from capturadio import Configuration
+from capturadio import version_string as capturadio_version
+from capturadio.rss import ItunesRSS, ItunesRSSItem
+from capturadio.util import format_date, url_fix
 
 class Audiofile:
     def __init__(self, filename):
@@ -142,7 +103,7 @@ class Audiofiles:
 
         self.data = []
 
-        self.generator = PyRSS2Gen._generator_name
+        self.generator = 'CaptuRadio v%s' % capturadio_version
 
     def readfolder(self, dirname):
         self.log.info(u'readfolder: processing %s' % dirname)
