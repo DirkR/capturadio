@@ -64,11 +64,12 @@ class Audiofile:
         except KeyError, e:
             self.copyright = self.artist
 
-
-        self.description = u'Show: %s, Episode: %s, Copyright: %s %s' % (self.show, self.title, self.date, self.copyright)
+        self.description = u'Show: %s, Episode: %s, Copyright: %s %s' % (
+            self.show, self.title, self.date, self.copyright)
 
         self.size = os.path.getsize(self.path)
         self.pubdate = datetime.datetime.fromtimestamp(os.path.getmtime(self.path))
+
 
 class Audiofiles:
     """
@@ -78,7 +79,7 @@ class Audiofiles:
 
     files_cache = {}
 
-    def __init__(self, local_path = ''):
+    def __init__(self, local_path=''):
         self.log = logging.getLogger('create_podcast_feed.Audiofiles')
         self.log.info('Create Audiofiles(%s)' % local_path)
 
@@ -92,7 +93,7 @@ class Audiofiles:
         self.title = feed_title
         self.link = config.feed['about_url']
         self.description = config.feed['description']
-        self.language =  config.feed['language']
+        self.language = config.feed['language']
 
         self.urlbase = config.feed['base_url']
         if local_path is not '':
@@ -126,22 +127,22 @@ class Audiofiles:
             audio_file = Audiofiles.files_cache[path]
         return audio_file
 
-    def rssitems(self,n=10):
+    def rssitems(self, n=10):
         result = []
         for audio_file in self.data:
             rssitem = ItunesRSSItem(
-                title = audio_file.title,
-                link = audio_file.link if 'link' in audio_file.__dict__ else 'http://www.podcast.de/',
-                author = audio_file.artist,
-                description = audio_file.description,
-                pubDate = audio_file.pubdate,
-                guid = PyRSS2Gen.Guid(audio_file.url),
-                enclosure = PyRSS2Gen.Enclosure(audio_file.url, audio_file.playtime, "audio/mpeg")
+                title=audio_file.title,
+                link=audio_file.link if 'link' in audio_file.__dict__ else 'http://www.podcast.de/',
+                author=audio_file.artist,
+                description=audio_file.description,
+                pubDate=audio_file.pubdate,
+                guid=PyRSS2Gen.Guid(audio_file.url),
+                enclosure=PyRSS2Gen.Enclosure(audio_file.url, audio_file.playtime, "audio/mpeg")
             )
             rssitem.image = self._create_image_tag(rssitem)
             result.append(rssitem)
 
-        waste = [(i.pubDate,i) for i in result]
+        waste = [(i.pubDate, i) for i in result]
         waste.sort()
         waste.reverse()
         waste = waste[:n]
@@ -152,15 +153,28 @@ class Audiofiles:
 
     def getrss(self):
         items = self.rssitems()
-        channel = ItunesRSS(title = self.title,
-                            link = self.link,
-                            description = self.description,
-                            language = self.language,
-                            generator = self.generator,
-                            lastBuildDate = datetime.datetime.now(),                         
-                            items = items)
-        if len(items) > 0:
-            channel.image = self._create_image_tag(items[0])
+        config = Configuration()
+
+        image = PyRSS2Gen.Image(
+            url=config.default_logo_url,
+            title=config.feed['title'],
+            link=config.feed['about_url'],
+            description=u"%s\n\nLogo: %s" % (
+                config.feed['description'],
+                config.feed['logo_copyright']
+                )
+        )
+
+        channel = ItunesRSS(title=self.title,
+            link=self.link,
+            description=self.description,
+            language=self.language,
+            generator=self.generator,
+            lastBuildDate=datetime.datetime.now(),
+            items=items,
+            image=image
+        )
+
         return channel
 
     def _create_image_tag(self, rssitem):
@@ -169,11 +183,11 @@ class Audiofiles:
         config = Configuration()
 
         if logo_url is not None:
-            return PyRSS2Gen.Image(url = logo_url, title = rssitem.author,
-                    link = link_url)
+            return PyRSS2Gen.Image(url=logo_url, title=rssitem.author,
+                link=link_url)
         else:
-            return PyRSS2Gen.Image(url = config.default_logo_url,
-                    title = rssitem.author, link = link_url)
+            return PyRSS2Gen.Image(url=config.default_logo_url,
+                title=rssitem.author, link=link_url)
 
     def _get_link_url(self, station_name):
         for id, station in config.stations.items():
@@ -190,6 +204,7 @@ class Audiofiles:
                 return station.logo_url
         self.log.debug(u'    %s: found noting' % station_name)
         return None
+
 
 def process_folder(path, root_path):
     log = logging.getLogger('create_podcast_feed')
@@ -211,7 +226,8 @@ def process_folder(path, root_path):
     if len(rss.items) > 0:
         rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
-def excluded_folder(dirname, patterns = ['.git', '.bzr', 'svn', '.hg']):
+
+def excluded_folder(dirname, patterns=['.git', '.bzr', 'svn', '.hg']):
     for p in patterns:
         pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
         if re.match(pattern, dirname) is not None:
@@ -224,13 +240,13 @@ if __name__ == "__main__":
     config = Configuration()
 
     parser = argparse.ArgumentParser(
-            description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
+        description='Generate a rss file containing all mp3 files in this directory and all sub directories.')
     parser.add_argument('-r',
-            action='store_true',
-            help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
+        action='store_true',
+        help="Put an rss file into every subfolder, that contains all episodes in all of it's subfolders.")
     parser.add_argument('directory',
-            nargs='?',
-            help='The directory to be indexed. Use current directory if ommitted.')
+        nargs='?',
+        help='The directory to be indexed. Use current directory if ommitted.')
     args = parser.parse_args()
 
     if args.directory is not None:

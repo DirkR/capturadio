@@ -1,7 +1,5 @@
 import PyRSS2Gen
 
-__author__ = 'dirk'
-
 class ItunesRSS(PyRSS2Gen.RSS2):
     """This class adds the "itunes" extension (<itunes:image>, etc.) to the rss feed."""
 

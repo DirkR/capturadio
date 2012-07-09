@@ -39,13 +39,13 @@ class Configuration: # implements Borg pattern
 
 
     def _load_config(self):
-        self.log.debug("Enter _load_config")
+        config_file = os.path.expanduser(self._shared_state['filename'])
+        self.log.debug("Enter _load_config(%s)" % config_file)
         import ConfigParser
 
         config = ConfigParser.ConfigParser()
         config.changed_settings = False # track changes
 
-        config_file = os.path.expanduser(self._shared_state['filename'])
         config.read(config_file)
         if config.has_section('settings'):
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
