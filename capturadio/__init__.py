@@ -119,10 +119,8 @@ class Configuration: # implements Borg pattern
     def _add_shows(self, config, station):
         from capturadio.util import parse_duration
 
-        ignore_sections = ['settings', 'stations']
-        ignore_sections.append(self.stations.keys())
         for section_name in config.sections():
-            if section_name not in ignore_sections and config.has_option(section_name, 'station'):
+            if config.has_option(section_name, 'station') and config.get(section_name, 'station') == station.id:
                 show_id = section_name
                 if config.has_option(show_id, 'title'):
                     show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
@@ -223,7 +221,7 @@ class Show:
         return pprint.pformat(list(self))
 
     def __str__(self):
-        return 'Show(id=%s, name=%s, duration=%d station_id=%s)' % (
+        return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
             self.id, unicode(self.name), self.duration, self.station.id)
 
     def get_link_url(self):
