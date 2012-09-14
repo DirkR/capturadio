@@ -7,7 +7,7 @@
 
 import datetime, urllib, string, os, time, logging
 import PyRSS2Gen
-from mutagen.mp3 import MP3
+from mutagen.mp3 import MP3, HeaderNotFoundError
 from mutagen.easyid3 import EasyID3
 import re
 from capturadio import Configuration
@@ -26,7 +26,10 @@ class Audiofile:
         local_path = self.path.replace(config.destination, '')
         self.url = config.feed['base_url'] + url_fix(local_path)
 
-        audio = MP3(self.path, ID3=EasyID3)
+        try:
+          audio = MP3(self.path, ID3=EasyID3)
+        except HeaderNotFoundError, e:
+          raise IndexError('Could not find MPEG header in file "%s"' % self.path)
 
         try:
             self.title = audio['title'][0]
@@ -140,6 +143,7 @@ class Audiofiles:
                 enclosure=PyRSS2Gen.Enclosure(audio_file.url, audio_file.playtime, "audio/mpeg")
             )
             rssitem.image = self._create_image_tag(rssitem)
+            rssitem.length = str(datetime.timedelta(seconds=audio_file.playtime))
             result.append(rssitem)
 
         waste = [(i.pubDate, i) for i in result]
