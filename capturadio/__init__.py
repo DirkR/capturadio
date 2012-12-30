@@ -156,8 +156,8 @@ class Configuration: # implements Borg pattern
 
         raise Exception("Could not set destination %s" % destination)
 
-#    def __repr__(self):
-#        return pprint.pformat(list(self))
+    def __repr__(self):
+        return pprint.pformat(list(self))
 
     def get_station_ids(self):
         if self.stations is not None:
