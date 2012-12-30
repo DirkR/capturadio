@@ -285,7 +285,7 @@ class Recorder:
 
     def _copy_file_to_destination(self, show, file_name):
         import shutil, re
-        from capturadio.util import format_date
+        from capturadio.util import format_date, slugify
 
         config = Configuration()
 
@@ -296,8 +296,7 @@ class Recorder:
                        show.name,
                        show.name,
                        time_string)
-        target_file = target_file.replace(' ', '_').lower()
-        target_file = re.compile(u'[^\w\d._/ -]').sub('', target_file)
+        target_file = slugify(target_file)
         if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
         try:
