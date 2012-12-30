@@ -119,6 +119,9 @@ class Configuration: # implements Borg pattern
                 else:
                     station.link_url = self.feed['base_url']
 
+                if config.has_option(station_id, 'date_pattern'):
+                    station.date_pattern = config.get(station_id, 'date_pattern')
+
                 self._add_shows(config, station)
 
 
@@ -149,6 +152,9 @@ class Configuration: # implements Borg pattern
                     show.link_url = config.get(show_id, 'link_url')
                 else:
                     show.link_url = station.link_url
+
+                if config.has_option(show_id, 'date_pattern'):
+                    show.date_pattern = config.get(show_id, 'date_pattern')
 
 
     def set_destination(self, destination):
@@ -205,8 +211,13 @@ class Station:
     def get_link_url(self):
         if 'link_url' in self.__dict__:
             return self.link_url
+
+    def get_date_pattern(self):
+        if 'date_pattern' in self.__dict__:
+            return self.date_pattern
         else:
-            return config['feed']
+            config = Configuration()
+            return config.date_pattern
 
 
 class Show:
@@ -235,6 +246,12 @@ class Show:
             return self.link_url
         else:
             return self.station.get_link_url()
+
+    def get_date_pattern(self):
+        if 'date_pattern' in self.__dict__:
+            return self.date_pattern
+        else:
+            return self.station.get_date_pattern()
 
     def get_stream_url(self):
         return self.station.stream_url
