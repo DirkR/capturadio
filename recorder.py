@@ -4,22 +4,19 @@
 import argparse
 import sys, os
 from capturadio import Configuration, Station, Show, Recorder
+from capturadio.util import parse_duration
 
 if __name__ == "__main__":
 
-    config = Configuration()
-
-    config.log.debug(config.shows.keys())
-    from capturadio.util import parse_duration
 
     if len(sys.argv) == 1:
         sys.argv.append('--help')
 
     parser = argparse.ArgumentParser(
         description='Capture internet radio programs broadcasted in mp3 encoding format.',
-        epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
     )
     parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
+    parser.add_argument('-C', metavar='configfile', required=False, help='Configuration file')
 
     detailled_group = parser.add_argument_group()
     detailled_group.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
