@@ -13,7 +13,7 @@ version = (0, 7, 0)
 version_string = ".".join(map(str, version))
 
 class Configuration: # implements Borg pattern
-    configuration_folder = os.path.expanduser('~/.capturadio'),
+    configuration_folder = os.path.expanduser('~/.capturadio')
     filename = 'capturadiorc'
 
     _shared_state = {}
@@ -22,10 +22,14 @@ class Configuration: # implements Borg pattern
         self.__dict__ = self._shared_state
 
         if len(self._shared_state) == 0:
+
+            if not os.path.exists(Configuration.configuration_folder):
+                raise IOError("Configuration folder '%s' does not exist." %
+                        unicode(Configuration.configuration_folder))
+
             self.filename = os.path.join(Configuration.configuration_folder, Configuration.filename)
-            logfile = os.path.join(Configuration.configuration_folder, 'log')
             logging.basicConfig(
-                filename = logfile,
+                filename = os.path.join(Configuration.configuration_folder, 'log'),
                 format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
                 level = logging.DEBUG,
             )

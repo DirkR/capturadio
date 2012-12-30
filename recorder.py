@@ -4,22 +4,19 @@
 import argparse
 import sys, os
 from capturadio import Configuration, Station, Show, Recorder
+from capturadio.util import parse_duration
 
 if __name__ == "__main__":
 
-    config = Configuration()
-
-    config.log.debug(config.shows.keys())
-    from capturadio.util import parse_duration
 
     if len(sys.argv) == 1:
         sys.argv.append('--help')
 
     parser = argparse.ArgumentParser(
         description='Capture internet radio programs broadcasted in mp3 encoding format.',
-        epilog = "Here is a list of defined radio stations: %s" % config.get_station_ids()
     )
     parser.add_argument('-d', metavar='destination', required=False, help='Destination directory')
+    parser.add_argument('-C', metavar='configfile', required=False, help='Configuration file')
 
     detailled_group = parser.add_argument_group()
     detailled_group.add_argument('-l', metavar='length', required=False, help='Length of recording in seconds')
@@ -32,12 +29,28 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.C is not None:
+        if not os.path.exists(os.path.expanduser(args.C)):
+            raise IOError('Configuration file "%s" does not exist' % args.C)
+        Configuration.configuration_folder = os.path.dirname(os.path.expanduser(args.C))
+        Configuration.filename = os.path.basename(os.path.expanduser(args.C))
+
+    config = Configuration()
+
     if args.S is not None:
         show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
         if args.S not in config.shows.keys():
             print "Show '%s' is unknown. Use one of these: %s." % (args.S, show_ids)
             exit(1)
         show = config.shows[args.S]
+        if args.t is not None:
+            show.name = u'%s' % unicode(args.t, 'utf8')
+        if args.l is not None:
+            duration = parse_duration(args.l)
+            if duration < 1:
+                print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
+                exit(1)
+            show.duration = duration
     else:
         duration = parse_duration(args.l)
         if duration < 1:
