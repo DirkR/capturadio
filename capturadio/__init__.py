@@ -290,13 +290,11 @@ class Recorder:
         config = Configuration()
 
         time_string = format_date(config.date_pattern, time.localtime(self.start_time))
-        target_file = u"%s/%s/%s/%s_%s.mp3" %\
-                      (config.destination,
-                       show.station.name,
-                       show.name,
-                       show.name,
-                       time_string)
-        target_file = slugify(target_file)
+        target_file = u"%(station)s/%(show)s/%(show)s_%(time)s.mp3" %\
+               { 'station' : show.station.name,
+                 'show': show.name,
+                 'time': time_string }
+        target_file = os.path.join(config.destination, slugify(target_file))
         if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
         try:
