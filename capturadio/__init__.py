@@ -23,9 +23,8 @@ class Configuration: # implements Borg pattern
 
         if len(self._shared_state) == 0:
             self.filename = os.path.join(Configuration.configuration_folder, Configuration.filename)
-            logfile = os.path.join(Configuration.configuration_folder, 'log')
             logging.basicConfig(
-                filename = logfile,
+                filename = os.path.join(Configuration.configuration_folder, 'log'),
                 format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
                 level = logging.DEBUG,
             )
@@ -157,8 +156,8 @@ class Configuration: # implements Borg pattern
 
         raise Exception("Could not set destination %s" % destination)
 
-    def __repr__(self):
-        return pprint.pformat(list(self))
+#    def __repr__(self):
+#        return pprint.pformat(list(self))
 
     def get_station_ids(self):
         if self.stations is not None:
