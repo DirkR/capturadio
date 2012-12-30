@@ -25,7 +25,7 @@ class ConfigurationTestCase(unittest.TestCase):
     def testConfiguration(self):
         config = Configuration()
 
-        self.assertEqual(config.date_pattern, '%d.%m.%Y %H:%M')
+        self.assertEqual(config.date_pattern, '%d.%m.%Y')
         self.assertEqual(config.destination, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'demodata'))
 
         self.assertEqual(len(config.stations), 3)
@@ -38,7 +38,7 @@ class ConfigurationTestCase(unittest.TestCase):
         self.assertEqual(config.stations['dlf'].name, 'Deutschlandfunk')
         self.assertEqual(config.stations['dlf'].logo_url, 'http://example.org/dlf.png')
         self.assertEqual(config.stations['dlf'].link_url, 'http://example.org/dlf')
-        self.assertEqual(config.stations['dlf'].date_pattern, '%d.%m.%Y')
+        self.assertEqual(config.stations['dlf'].date_pattern, '%d.%m.%Y %H:%M')
 
         self.assertTrue('dkultur' in config.stations.keys())
         self.assertEqual(config.stations['dkultur'].stream_url, 'http://example.org/dkultur')
@@ -46,15 +46,14 @@ class ConfigurationTestCase(unittest.TestCase):
         self.assertEqual(config.stations['dkultur'].logo_url, 'http://example.org/default.png')
         self.assertEqual(config.stations['dkultur'].link_url, 'http://my.example.org/')
         self.assertFalse('date_pattern' in config.stations['dkultur'].__dict__)
-        self.assertEqual(config.stations['dkultur'].get_date_pattern(), '%d.%m.%Y %H:%M')
+        self.assertEqual(config.stations['dkultur'].get_date_pattern(), '%d.%m.%Y')
 
         self.assertTrue('wdr2' in config.stations.keys())
         self.assertEqual(config.stations['wdr2'].stream_url, 'http://example.org/wdr2')
         self.assertEqual(config.stations['wdr2'].name, 'wdr2')
         self.assertEqual(config.stations['wdr2'].logo_url, 'http://example.org/wdr2.png')
         self.assertEqual(config.stations['wdr2'].link_url, 'http://example.org/wdr2')
-        self.assertEqual(config.stations['wdr2'].date_pattern, '%d.%m.%Y')
-        self.assertEqual(config.stations['wdr2'].get_date_pattern(), '%d.%m.%Y')
+        self.assertFalse('date_pattern' in config.stations['wdr2'].__dict__)
 
         self.assertEqual(len(config.shows), 3)
         for show_id, show in config.shows.items():
@@ -66,7 +65,7 @@ class ConfigurationTestCase(unittest.TestCase):
         self.assertEqual(show.logo_url, 'http://example.org/nachtradio.png')
         self.assertEqual(show.link_url, 'http://example.org/nachtradio')
         self.assertEqual(show.duration, 3300)
-        self.assertEqual(show.get_date_pattern(), '%d.%m.%Y')
+        self.assertEqual(show.get_date_pattern(), '%d.%m.%Y %H:%M')
 
         show = config.shows['news']
 #        self.assertEqual(show.logo_url, 'http://example.org/nachtradio.png')
