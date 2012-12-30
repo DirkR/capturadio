@@ -13,7 +13,7 @@ version = (0, 7, 0)
 version_string = ".".join(map(str, version))
 
 class Configuration: # implements Borg pattern
-    configuration_folder = os.path.expanduser('~/.capturadio'),
+    configuration_folder = os.path.expanduser('~/.capturadio')
     filename = 'capturadiorc'
 
     _shared_state = {}
