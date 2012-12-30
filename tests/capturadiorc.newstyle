@@ -21,7 +21,6 @@ default_logo_copyright = A Creative Commons license
 name = Deutschlandfunk
 link_url = http://example.org/dlf
 logo_url = http://example.org/dlf.png
-date_pattern = %d.%m.%Y
 
 [nachtradio]
 title = Nachtradio
@@ -40,7 +39,6 @@ station = dlf
 title = WDR 2
 link_url = http://example.org/wdr2
 logo_url = http://example.org/wdr2.png
-date_pattern = %d.%m.%Y
 
 [news]
 title = Latest news
@@ -48,4 +46,4 @@ duration = 300
 link_url = http://example.org/wdr2/news
 logo_url = http://example.org/wdr2/news.png
 station = wdr2
-date_pattern = %Y-%m-%d
+

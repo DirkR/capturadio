@@ -42,3 +42,15 @@ def url_fix(s, charset='utf-8'):
     path = urllib.quote(path, '/%')
     qs = urllib.quote_plus(qs, ':&=')
     return urlparse.urlunsplit((scheme, netloc, path, qs, anchor))
+
+
+# taken from http://stackoverflow.com/a/295466/981739
+def slugify(value):
+    """
+    Normalizes string, converts to lowercase, removes non-alpha characters,
+    and converts spaces to hyphens.
+    """
+    import unicodedata, re
+    value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
+    value = unicode(re.sub('[-\s]+', '_', value).strip().lower())
+    return value
