@@ -22,6 +22,11 @@ class Configuration: # implements Borg pattern
         self.__dict__ = self._shared_state
 
         if len(self._shared_state) == 0:
+
+            if not os.path.exists(Configuration.configuration_folder):
+                raise IOError("Configuration folder '%s' does not exist." %
+                        unicode(Configuration.configuration_folder))
+
             self.filename = os.path.join(Configuration.configuration_folder, Configuration.filename)
             logging.basicConfig(
                 filename = os.path.join(Configuration.configuration_folder, 'log'),

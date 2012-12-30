@@ -32,12 +32,28 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    if args.C is not None:
+        if not os.path.exists(os.path.expanduser(args.C)):
+            raise IOError('Configuration file "%s" does not exist' % args.C)
+        Configuration.configuration_folder = os.path.dirname(os.path.expanduser(args.C))
+        Configuration.filename = os.path.basename(os.path.expanduser(args.C))
+
+    config = Configuration()
+
     if args.S is not None:
         show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
         if args.S not in config.shows.keys():
             print "Show '%s' is unknown. Use one of these: %s." % (args.S, show_ids)
             exit(1)
         show = config.shows[args.S]
+        if args.t is not None:
+            show.name = u'%s' % unicode(args.t, 'utf8')
+        if args.l is not None:
+            duration = parse_duration(args.l)
+            if duration < 1:
+                print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
+                exit(1)
+            show.duration = duration
     else:
         duration = parse_duration(args.l)
         if duration < 1:
