@@ -71,7 +71,7 @@ class ConfigurationTestCase(unittest.TestCase):
 
         self.assertTrue(filecmp.cmp(
             os.path.join(Configuration.configuration_folder, 'capturadiorc.oldstyle.new'),
-            os.path.join(Configuration.configuration_folder, 'capturadiorc')
+            os.path.join(Configuration.configuration_folder, 'capturadiorc.newstyle')
         ))
 
 
