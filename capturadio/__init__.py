@@ -2,7 +2,7 @@ __author__ = 'dirk'
 
 import urllib2
 import time
-import os
+import os, os.path
 import logging
 import re
 import pprint
@@ -13,25 +13,27 @@ version = (0, 7, 0)
 version_string = ".".join(map(str, version))
 
 class Configuration: # implements Borg pattern
+    configuration_folder = os.path.expanduser('~/.capturadio'),
+    filename = 'capturadiorc'
 
-    filename = '~/.capturadio/capturadiorc'
     _shared_state = {}
 
     def __init__(self):
         self.__dict__ = self._shared_state
 
         if len(self._shared_state) == 0:
+            self.filename = os.path.join(Configuration.configuration_folder, Configuration.filename)
+            logfile = os.path.join(Configuration.configuration_folder, 'log')
             logging.basicConfig(
-                filename=os.path.expanduser('~/.capturadio/log'),
-                format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-                level=logging.DEBUG,
+                filename = logfile,
+                format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+                level = logging.DEBUG,
             )
 
             self.stations = {}
             self.shows = {}
             self.default_logo_url = None
             self.destination = os.getcwd()
-            self.filename = Configuration.filename
             self.date_pattern = "%Y-%m-%d %H:%M"
             self.log = logging.getLogger('capturadio.config')
             self.feed = {}
