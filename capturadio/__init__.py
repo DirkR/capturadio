@@ -39,6 +39,10 @@ class Configuration: # implements Borg pattern
             self.default_logo_url = None
             self.destination = os.getcwd()
             self.date_pattern = "%Y-%m-%d %H:%M"
+            self.comment_pattern = '''Show: %(show)s
+Date: %(date)s
+Website: %(link_url)s
+Copyright: %(year)s %(station)s'''
             self.log = logging.getLogger('capturadio.config')
             self.feed = {}
             self._load_config()
@@ -57,6 +61,10 @@ class Configuration: # implements Borg pattern
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
                 self.date_pattern = config.get('settings', 'date_pattern')
+            if config.has_option('settings', 'comment_pattern'):
+                pattern = config.get('settings', 'comment_pattern')
+                pattern = re.sub(r'%([a-z_][a-z_]+)', r'%(\1)s', pattern)
+                self.comment_pattern = pattern
         self._read_feed_settings(config)
         self._add_stations(config)
 
@@ -331,14 +339,18 @@ class Recorder:
 
         config = Configuration()
 
-        year = time.strftime('%Y', time.gmtime())
         time_string = format_date(config.date_pattern, time.localtime(self.start_time))
-        episode_title = u'%s on %s' % (show.name, time_string)
-        comment = u'Show: %s\nEpisode: %s\nCopyright: %s %s' % (show.name, episode_title, year, show.station.name)
+        comment = config.comment_pattern % {
+                'show': show.name,
+                'date': time_string,
+                'year': time.strftime('%Y', time.gmtime()),
+                'station': show.station.name,
+                'link_url': show.link_url
+        }
 
         audio = MP3(file_name)
         # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
-        audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=[episode_title])
+        audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=["%s, %s" % (show.name, time_string)])
         audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[format_date(config.date_pattern, self.start_time)])
         audio["TCON"] = mutagen.id3.TCON(encoding=2, text=[u'Podcast'])
         audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[show.name])
