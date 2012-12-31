@@ -345,7 +345,7 @@ class Recorder:
                 'date': time_string,
                 'year': time.strftime('%Y', time.gmtime()),
                 'station': show.station.name,
-                'link_url': show.link_url
+                'link_url': show.get_link_url()
         }
 
         audio = MP3(file_name)
