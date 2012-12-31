@@ -331,7 +331,7 @@ class Recorder:
 
         config = Configuration()
 
-        year = time.strftime('%Y', time.localtime(self.start_time))
+        year = time.strftime('%Y', time.gmtime())
         time_string = format_date(config.date_pattern, time.localtime(self.start_time))
         episode_title = u'%s on %s' % (show.name, time_string)
         comment = u'Show: %s\nEpisode: %s\nCopyright: %s %s' % (show.name, episode_title, year, show.station.name)
