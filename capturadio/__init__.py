@@ -61,6 +61,10 @@ Copyright: %(year)s %(station)s'''
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
                 self.date_pattern = config.get('settings', 'date_pattern')
+            if config.has_option('settings', 'comment_pattern'):
+                pattern = config.get('settings', 'comment_pattern')
+                pattern = re.sub(r'%([a-z_][a-z_]+)', r'%(\1)s', pattern)
+                self.comment_pattern = pattern
         self._read_feed_settings(config)
         self._add_stations(config)
 

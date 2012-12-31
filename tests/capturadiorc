@@ -1,6 +1,10 @@
 [settings]
 destination = ./tests/demodata
 date_pattern = %d.%m.%Y
+comment_pattern:  Show: %show
+  Date: %date
+  Website: %link_url
+  Copyright: %year %station
 
 [stations]
 dlf = http://example.org/dlf
