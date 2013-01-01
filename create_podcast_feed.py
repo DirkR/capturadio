@@ -33,12 +33,12 @@ class Audiofile:
 
 
         try:
-            self.title = audio['TIT2'].text[0]
+            self.title = u"%s" % audio['TIT2']
         except KeyError, e:
             self.title = self.basename[:-4]
 
         try:
-            self.show = audio['album'][0]
+            self.show = u"%s" % audio['TALB']
 
             for s in config.shows.values():
                 if unicode(s.name) == self.show:
@@ -49,12 +49,12 @@ class Audiofile:
             self.show = self.basename[:-4]
 
         try:
-            self.date = audio['date'][0]
+            self.date = u"%s" % audio['TDRC']
         except KeyError, e:
             self.date = format_date(config.date_pattern, time.time())
 
         try:
-            self.artist = audio['artist'][0]
+            self.artist = u"%s" % audio['TPE1']
         except KeyError, e:
             self.artist = self.show
 
@@ -64,18 +64,18 @@ class Audiofile:
             self.playtime = 0
 
         try:
-            self.copyright = audio['copyright'][0]
+            self.copyright = u"%s" % audio['TCOP']
         except KeyError, e:
             self.copyright = self.artist
 
         try:
-            self.description = audio["COMM:desc:'eng'"].text[0]
+            self.description = u"%s" % audio["COMM:desc:'eng'"]
         except:
             self.description = u'Show: %s<br>Episode: %s<br>Copyright: %s %s' % (
                     self.show, self.title, self.date[:4], self.copyright)
 
         try:
-            self.link = audio['TCOM'][0]
+            self.link = u"%s" % audio['TCOM']
         except:
             self.link = u'http://www.podcast.de/'
 
