@@ -27,12 +27,13 @@ class Audiofile:
         self.url = config.feed['base_url'] + url_fix(local_path)
 
         try:
-          audio = MP3(self.path, ID3=EasyID3)
+          audio = MP3(self.path)
         except HeaderNotFoundError, e:
           raise IndexError('Could not find MPEG header in file "%s"' % self.path)
 
+
         try:
-            self.title = audio['title'][0]
+            self.title = audio['TIT2'].text[0]
         except KeyError, e:
             self.title = self.basename[:-4]
 
