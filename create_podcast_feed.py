@@ -27,12 +27,13 @@ class Audiofile:
         self.url = config.feed['base_url'] + url_fix(local_path)
 
         try:
-          audio = MP3(self.path, ID3=EasyID3)
+          audio = MP3(self.path)
         except HeaderNotFoundError, e:
           raise IndexError('Could not find MPEG header in file "%s"' % self.path)
 
+
         try:
-            self.title = audio['title'][0]
+            self.title = audio['TIT2'].text[0]
         except KeyError, e:
             self.title = self.basename[:-4]
 
@@ -67,8 +68,16 @@ class Audiofile:
         except KeyError, e:
             self.copyright = self.artist
 
-        self.description = u'Show: %s, Episode: %s, Copyright: %s %s' % (
-            self.show, self.title, self.date, self.copyright)
+        try:
+            self.description = audio["COMM:desc:'eng'"].text[0]
+        except:
+            self.description = u'Show: %s<br>Episode: %s<br>Copyright: %s %s' % (
+                    self.show, self.title, self.date[:4], self.copyright)
+
+        try:
+            self.link = audio['TCOM'][0]
+        except:
+            self.link = u'http://www.podcast.de/'
 
         self.size = os.path.getsize(self.path)
         self.pubdate = datetime.datetime.fromtimestamp(os.path.getmtime(self.path))
