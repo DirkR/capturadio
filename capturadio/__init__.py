@@ -7,7 +7,7 @@ import logging
 import re
 import pprint
 from mutagen.mp3 import MP3
-import mutagen.id3
+from mutagen.id3 import TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM
 
 version = (0, 7, 0)
 version_string = ".".join(map(str, version))
@@ -350,14 +350,16 @@ class Recorder:
 
         audio = MP3(file_name)
         # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
-        audio["TIT2"] = mutagen.id3.TIT2(encoding=2, text=["%s, %s" % (show.name, time_string)])
-        audio["TDRC"] = mutagen.id3.TDRC(encoding=2, text=[format_date(config.date_pattern, self.start_time)])
-        audio["TCON"] = mutagen.id3.TCON(encoding=2, text=[u'Podcast'])
-        audio["TALB"] = mutagen.id3.TALB(encoding=2, text=[show.name])
-        audio["TLEN"] = mutagen.id3.TLEN(encoding=2, text=[show.duration * 1000])
-        audio["TPE1"] = mutagen.id3.TPE1(encoding=2, text=[show.station.name])
-        audio["TCOP"] = mutagen.id3.TCOP(encoding=2, text=[show.station.name])
-        audio["COMM"] = mutagen.id3.COMM(encoding=2, text=[comment])
+
+        audio["TIT2"] = TIT2(encoding=2, text=["%s, %s" % (show.name, time_string)])
+        audio["TDRC"] = TDRC(encoding=2, text=[format_date('%Y-%m-%d %H:%M', self.start_time)])
+        audio["TCON"] = TCON(encoding=2, text=[u'Podcast'])
+        audio["TALB"] = TALB(encoding=2, text=[show.name])
+        audio["TLEN"] = TLEN(encoding=2, text=[show.duration * 1000])
+        audio["TPE1"] = TPE1(encoding=2, text=[show.station.name])
+        audio["TCOP"] = TCOP(encoding=2, text=[show.station.name])
+        audio["COMM"] = COMM(encoding=2, lang='eng', desc='desc', text=comment)
+        audio["TCOM"] = TCOM(encoding=2, text=[show.get_link_url()])
         self._add_logo(show, audio)
         audio.save()
 
