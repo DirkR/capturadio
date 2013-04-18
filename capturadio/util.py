@@ -52,5 +52,5 @@ def slugify(value):
     """
     import unicodedata, re
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub('[-\s]+', '_', value).strip().lower())
+    value = unicode(re.sub('[-,;\s]+', '_', value).strip().lower())
     return value
