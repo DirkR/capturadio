@@ -29,7 +29,7 @@ class Audiofile:
         try:
           audio = MP3(self.path)
         except HeaderNotFoundError, e:
-          raise IndexError('Could not find MPEG header in file "%s"' % self.path)
+          self.log.error('Could not find MPEG header in file "%s"' % self.path)
 
 
         try:
