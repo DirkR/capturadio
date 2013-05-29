@@ -384,8 +384,7 @@ class Recorder:
                     )
                     audio.add(img)
             except urllib2.HTTPError, e:
-                message = "Error during capturing %s" % url
-                self.log.error(message, e)
-                print message, e
+                message = "Error during capturing %s - %s" % (url, e)
+                self.log.error(message)
             except Exception, e:
                 raise e
