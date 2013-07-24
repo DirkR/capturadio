@@ -278,8 +278,8 @@ class Recorder:
         import tempfile
 
         self.start_time = time.time()
+        file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
         try:
-            file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
             self._write_stream_to_file(show, file_name)
             file_name = self._copy_file_to_destination(show, file_name)
             self._add_metadata(show, file_name)
@@ -288,6 +288,10 @@ class Recorder:
             message = "Could not complete capturing, because an exception occured: %s" % e
             self.log.error(message)
             raise e
+        finally:
+            if os.path.exists(file_name):
+                os.remove(file_name)
+
 
     def _write_stream_to_file(self, show, file_name):
         not_ready = True
