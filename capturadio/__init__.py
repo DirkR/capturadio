@@ -186,14 +186,14 @@ Copyright: %(year)s %(station)s'''
     def add_station(self, id, stream_url, name=None, logo_url=None):
         station = Station(unicode(id, 'utf-8'), stream_url, name, logo_url)
         self.stations[id] = station
-        self.log.info(u'  %s' % station)
+        self.log.debug(u'  %s' % station)
         return station
 
     def add_show(self, station, id, name, duration, logo_url=None):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
         show = Show(station, id, name, duration, logo_url)
-        self.log.info(u'    %s' % show)
+        self.log.debug(u'    %s' % show)
         self.shows[id] = show
         return show
 
