@@ -6,6 +6,7 @@ import os, os.path
 import logging
 import re
 import pprint
+import tempfile
 from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM
 
 version = (0, 7, 0)
@@ -37,6 +38,7 @@ class Configuration: # implements Borg pattern
             self.shows = {}
             self.default_logo_url = None
             self.destination = os.getcwd()
+            self.tempdir = tempfile.gettempdir()
             self.date_pattern = "%Y-%m-%d %H:%M"
             self.comment_pattern = '''Show: %(show)s
 Date: %(date)s
@@ -60,6 +62,10 @@ Copyright: %(year)s %(station)s'''
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
                 self.date_pattern = config.get('settings', 'date_pattern')
+            if config.has_option('settings', 'tempdir'):
+                self.tempdir = os.path.abspath(os.path.expanduser(config.get('settings', 'tempdir')))
+                if not os.path.exists(self.tempdir):
+                    os.makedirs(self.tempdir)
             if config.has_option('settings', 'comment_pattern'):
                 pattern = config.get('settings', 'comment_pattern')
                 pattern = re.sub(r'%([a-z_][a-z_]+)', r'%(\1)s', pattern)
@@ -275,14 +281,12 @@ class Recorder:
         self.log.info(u'capture "%s" from "%s" for %s seconds to %s' %\
                       (show.name, show.station.name, show.duration, config.destination))
 
-        import tempfile
-
         self.start_time = time.time()
-        file_name = u"%s/capturadio_%s.mp3" % (tempfile.gettempdir(), os.getpid())
+        file_name = u"%s/capturadio_%s.mp3" % (config.tempdir, os.getpid())
         try:
             self._write_stream_to_file(show, file_name)
-            file_name = self._copy_file_to_destination(show, file_name)
-            self._add_metadata(show, file_name)
+            final_file_name = self._copy_file_to_destination(show, file_name)
+            self._add_metadata(show, final_file_name)
             self.start_time = None
         except Exception as e:
             message = "Could not complete capturing, because an exception occured: %s" % e
@@ -291,7 +295,6 @@ class Recorder:
         finally:
             if os.path.exists(file_name):
                 os.remove(file_name)
-
 
     def _write_stream_to_file(self, show, file_name):
         not_ready = True
@@ -326,7 +329,8 @@ class Recorder:
         if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
         try:
-            shutil.copy2(file_name, target_file)
+            shutil.copyfile(file_name, target_file)
+            self.log.info(u"file copied from %s to %s" % (file_name, target_file))
             return target_file
         except IOError, e:
             message = "Could not copy tmp file to %s: %s" % (target_file, e.message)
