@@ -29,7 +29,7 @@ class Audiofile:
         try:
           audio = MP3(self.path)
         except HeaderNotFoundError, e:
-          raise IndexError('Could not find MPEG header in file "%s"' % self.path)
+          self.log.error('Could not find MPEG header in file "%s"' % self.path)
 
 
         try:
@@ -164,8 +164,8 @@ class Audiofiles:
         self.log.debug(u'  rssitems: Found %d items' % len(result))
         return result
 
-    def getrss(self):
-        items = self.rssitems()
+    def getrss(self, n=10):
+        items = self.rssitems(n)
         config = Configuration()
 
         image = PyRSS2Gen.Image(
@@ -235,7 +235,7 @@ def process_folder(path, root_path):
 
     rss_file = config.feed['file_name']
 
-    rss = audio_files.getrss()
+    rss = audio_files.getrss(20)
     if len(rss.items) > 0:
         rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
