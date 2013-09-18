@@ -5,7 +5,7 @@ import time
 import os, os.path
 import logging
 import re
-import pprint
+from pprint import pprint, pformat
 import tempfile
 from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM
 
@@ -18,39 +18,49 @@ class Configuration: # implements Borg pattern
 
     _shared_state = {}
 
-    def __init__(self):
-        self.__dict__ = self._shared_state
+    def __init__(self, **kwargs):
+      if kwargs.has_key('reset') and kwargs['reset']:
+          Configuration._shared_state = {}
+          del kwargs['reset']
+      self.__dict__ = Configuration._shared_state
+      if len(self.__dict__) == 0:
+        if kwargs.has_key('folder'):
+          self.folder = kwargs['folder']
+        else:
+          self.folder = Configuration.configuration_folder
+        if not os.path.exists(self.folder):
+          raise IOError("Configuration folder '%s' doesn't exist." % unicode(self.folder))
 
-        if len(self._shared_state) == 0:
+        if kwargs.has_key('filename'):
+          self.filename = os.path.join(self.folder, kwargs['filename'])
+        else:
+          self.filename = os.path.join(self.folder, Configuration.filename)
 
-            if not os.path.exists(Configuration.configuration_folder):
-                raise IOError("Configuration folder '%s' does not exist." %
-                        unicode(Configuration.configuration_folder))
+        logging.basicConfig(
+            filename = os.path.join(self.folder, 'log'),
+            format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+            level = logging.DEBUG,
+        )
 
-            self.filename = os.path.join(Configuration.configuration_folder, Configuration.filename)
-            logging.basicConfig(
-                filename = os.path.join(Configuration.configuration_folder, 'log'),
-                format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-                level = logging.DEBUG,
-            )
-
-            self.stations = {}
-            self.shows = {}
-            self.default_logo_url = None
-            self.destination = os.getcwd()
-            self.tempdir = tempfile.gettempdir()
-            self.date_pattern = "%Y-%m-%d %H:%M"
-            self.comment_pattern = '''Show: %(show)s
+        self.stations = {}
+        self.shows = {}
+        self.default_logo_url = None
+        if kwargs.has_key('destination'):
+          self.destination = kwargs['destination']
+        else:
+          self.destination = os.getcwd()
+        self.tempdir = tempfile.gettempdir()
+        self.date_pattern = "%Y-%m-%d %H:%M"
+        self.comment_pattern = '''Show: %(show)s
 Date: %(date)s
 Website: %(link_url)s
 Copyright: %(year)s %(station)s'''
-            self.log = logging.getLogger('capturadio.config')
-            self.feed = {}
-            self._load_config()
-
+        self.log = logging.getLogger('capturadio.config')
+        self.feed = {}
+        self._load_config()
 
     def _load_config(self):
-        config_file = os.path.expanduser(self._shared_state['filename'])
+        config_file = os.path.expanduser(self.filename)
         self.log.debug("Enter _load_config(%s)" % config_file)
         import ConfigParser
 
@@ -72,7 +82,6 @@ Copyright: %(year)s %(station)s'''
                 self.comment_pattern = pattern
         self._read_feed_settings(config)
         self._add_stations(config)
-
         if config.changed_settings:
             new_file = open(config_file + '.new', 'w')
             config.write(new_file)
@@ -175,13 +184,13 @@ Copyright: %(year)s %(station)s'''
             destination = os.path.expanduser(destination)
             if os.path.exists(destination) and os.path.isdir(destination):
                 destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
-                self._shared_state['destination'] = unicode(destination)
+                self.destination = unicode(destination)
             return destination
 
         raise Exception("Could not set destination %s" % destination)
 
     def __repr__(self):
-        return pprint.pformat(list(self))
+        return pformat(list(self))
 
     def get_station_ids(self):
         if self.stations is not None:
@@ -216,7 +225,7 @@ class Station:
         self.registry = None
 
     def __repr__(self):
-        return pprint.pformat(list(self))
+        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))
 
     def __str__(self):
         return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))
@@ -248,7 +257,8 @@ class Show:
         station.shows.append(self)
 
     def __repr__(self):
-        return pprint.pformat(list(self))
+        return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
+            self.id, unicode(self.name), self.duration, self.station.id)
 
     def __str__(self):
         return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
