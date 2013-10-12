@@ -331,7 +331,7 @@ class Recorder:
         self.log.info("write %s to %s" % (stream_url, file_name))
         try:
             file = open(file_name, 'w+b')
-            stream = urllib2.urlopen(stream_url)
+            stream = urlopen(stream_url)
             while not_ready:
                 file.write(stream.read(10240))
                 if time.time() - self.start_time > duration:
