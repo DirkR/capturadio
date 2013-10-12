@@ -15,8 +15,6 @@ sys.path.insert(0, os.path.abspath('.'))
 
 from capturadio import Configuration, Station, Show
 
-test_folder = os.path.join(os.path.dirname(__file__), 'demodata')
-
 @pytest.fixture
 def test_folder(request, tmpdir):
   olddir = tmpdir.chdir()
