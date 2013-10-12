@@ -25,8 +25,6 @@ from capturadio.util import parse_duration
 
 if __name__ == "__main__":
     args = docopt(__doc__, version=version_string)
-    print(args)
-    #sys.exit(0)
 
     if len(sys.argv) == 1:
         sys.argv.append('--help')
