@@ -48,6 +48,10 @@ if __name__ == "__main__":
       print('No stations defined, add stations at first!')
       sys.exit(0)
 
+    if len(config.shows) == 0:
+      print('No shows defined, add shows at first!')
+      sys.exit(0)
+
     if args['--show'] is not None:
         show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
         if args['--show'] not in config.shows.keys():
