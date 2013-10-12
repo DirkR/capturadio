@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 """
-Tests for the captiradio.Configuration class.
+Tests for the capturadio.Configuration class.
 It also contains tests for capturadio.Show and capturadio.Station,
 as they are greated and managed with the Configuration class.
 """
