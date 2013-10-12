@@ -12,7 +12,7 @@ import pytest
 from fixtures import test_folder
 
 
-from capturadio import Configuration, Recorder
+from capturadio import Configuration, Recorder, Show, Station
 
 @pytest.mark.xfail
 def test_write_file(test_folder):
@@ -28,7 +28,6 @@ def test_write_file(test_folder):
 def test_copy_file_to_destination(test_folder):
     config = Configuration(reset = True, folder=str(test_folder))
     folder = test_folder.mkdir('casts')
-    assert test_folder
     config.set_destination(str(folder))
     source_file = folder.join('output.mp3')
     source_file.write('')
@@ -38,3 +37,17 @@ def test_copy_file_to_destination(test_folder):
     recorder._copy_file_to_destination(source, target)
     assert os.path.exists(target)
     assert os.path.isfile(target)
+
+@pytest.mark.xfail
+def test_add_metadata(test_folder):
+    import time
+    config = Configuration(reset = True, folder=str(test_folder))
+    config.set_destination(str(test_folder))
+    media_file = test_folder.join('mystation', 'myshow', 'myepisode.pm3')
+    station = config.stations['dlf']
+    show = Show(station, 'me', 'Me', 2)
+    recorder = Recorder()
+    recorder.start_time = time.time()
+    recorder._copy_file_to_destination(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), str(media_file))
+    recorder._add_metadata(show, str(media_file))
+    assert os.path.exists(str(media_file))
