@@ -8,6 +8,7 @@ import re
 from pprint import pprint, pformat
 import tempfile
 from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM
+from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 7, 0)
 version_string = ".".join(map(str, version))
@@ -148,7 +149,6 @@ Copyright: %(year)s %(station)s'''
 
 
     def _add_shows(self, config, station):
-        from capturadio.util import parse_duration
 
         for section_name in config.sections():
             if config.has_option(section_name, 'station') and config.get(section_name, 'station') == station.id:
@@ -349,8 +349,6 @@ class Recorder:
             raise IOError(message, e)
 
     def _add_metadata(self, show, file_name):
-        from capturadio.util import format_date
-
         if file_name is None:
             raise "file_name is not set - you cannot add metadata to None"
 
