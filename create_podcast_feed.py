@@ -7,8 +7,14 @@
 
 import datetime, urllib, string, os, time, logging
 import PyRSS2Gen
-from mutagen.mp3 import MP3, HeaderNotFoundError
-from mutagen.easyid3 import EasyID3
+try:
+  # Python 2.x
+  from mutagen.mp3 import MP3, HeaderNotFoundError
+  from mutagen.easyid3 import EasyID3
+except ImportError:
+  # Python 3.x
+  from mutagenx.mp3 import MP3, HeaderNotFoundError
+  from mutagenx.easyid3 import EasyID3
 import re
 from capturadio import Configuration
 from capturadio import version_string as capturadio_version
@@ -29,12 +35,12 @@ class Audiofile:
 
         try:
           audio = MP3(self.path)
-        except HeaderNotFoundError, e:
+        except HeaderNotFoundError as e:
           self.log.error('Could not find MPEG header in file "%s"' % self.path)
 
         try:
             self.title = u"%s" % audio['TIT2']
-        except KeyError, e:
+        except KeyError as e:
             self.title = self.basename[:-4]
 
         try:
@@ -45,17 +51,17 @@ class Audiofile:
                     self.link = s.get_link_url()
 
 
-        except KeyError, e:
+        except KeyError as e:
             self.show = self.basename[:-4]
 
         try:
             self.date = u"%s" % audio['TDRC']
-        except KeyError, e:
+        except KeyError as e:
             self.date = format_date(config.date_pattern, time.time())
 
         try:
             self.artist = u"%s" % audio['TPE1']
-        except KeyError, e:
+        except KeyError as e:
             self.artist = self.show
 
         try:
@@ -65,7 +71,7 @@ class Audiofile:
 
         try:
             self.copyright = u"%s" % audio['TCOP']
-        except KeyError, e:
+        except KeyError as e:
             self.copyright = self.artist
 
         try:
@@ -85,8 +91,8 @@ class Audiofile:
 
 class Audiofiles:
     """
-    A collection of audiofiles and some metadata, used as the basis for at 
-    
+    A collection of audiofiles and some metadata, used as the basis for at
+
     """
 
     files_cache = {}

@@ -1,13 +1,26 @@
 __author__ = 'dirk'
-
-import urllib2
+try:
+    # For Python 3.0 and later
+    from urllib.request import urlopen, HTTPError, Request
+except ImportError:
+    # Fall back to Python 2's urllib2
+    from urllib2 import urlopen, HTTPError, Request
 import time
 import os, os.path
 import logging
 import re
 from pprint import pprint, pformat
 import tempfile
-from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM
+try:
+  # Python 2.x
+  from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+except ImportError:
+  # Python 3.x
+  from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+try:
+  from ConfigParser import ConfigParser
+except ImportError:
+  from configparser import ConfigParser
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 7, 0)
@@ -20,19 +33,19 @@ class Configuration: # implements Borg pattern
     _shared_state = {}
 
     def __init__(self, **kwargs):
-      if kwargs.has_key('reset') and kwargs['reset']:
+      if 'reset' in kwargs and kwargs['reset']:
           Configuration._shared_state = {}
           del kwargs['reset']
       self.__dict__ = Configuration._shared_state
       if len(self.__dict__) == 0:
-        if kwargs.has_key('folder'):
+        if 'folder' in kwargs:
           self.folder = kwargs['folder']
         else:
           self.folder = Configuration.configuration_folder
         if not os.path.exists(self.folder):
           raise IOError("Configuration folder '%s' doesn't exist." % unicode(self.folder))
 
-        if kwargs.has_key('filename'):
+        if 'filename' in kwargs:
           self.filename = os.path.join(self.folder, kwargs['filename'])
         else:
           self.filename = os.path.join(self.folder, Configuration.filename)
@@ -46,7 +59,7 @@ class Configuration: # implements Borg pattern
         self.stations = {}
         self.shows = {}
         self.default_logo_url = None
-        if kwargs.has_key('destination'):
+        if 'destination' in kwargs:
           self.destination = kwargs['destination']
         else:
           self.destination = os.getcwd()
@@ -63,9 +76,8 @@ Copyright: %(year)s %(station)s'''
     def _load_config(self):
         config_file = os.path.expanduser(self.filename)
         self.log.debug("Enter _load_config(%s)" % config_file)
-        import ConfigParser
 
-        config = ConfigParser.ConfigParser()
+        config = ConfigParser()
         config.changed_settings = False # track changes
 
         config.read(config_file)
@@ -87,7 +99,7 @@ Copyright: %(year)s %(station)s'''
             new_file = open(config_file + '.new', 'w')
             config.write(new_file)
             new_file.close()
-            print "WARNING: Saved a updated version of config file as '%s.new'." % (config_file)
+            print("WARNING: Saved a updated version of config file as '%s.new'." % (config_file))
 
     def _read_feed_settings(self, config):
         if config.has_section('feed'):
@@ -128,12 +140,12 @@ Copyright: %(year)s %(station)s'''
                     for show_id in show_ids:
                         if config.has_section(show_id):
                             config.set(show_id, 'station', station_id)
-                            print "WARNING: removed legacy setting 'shows' for show '%s' of station '%s' in configuration file." % (
-                                show_id, station_id)
+                            print("WARNING: removed legacy setting 'shows' for show '%s' of station '%s' in configuration file." % (
+                                show_id, station_id))
                         else:
                             config.add_section(show_id)
                             config.set(show_id, 'station', station_id)
-                            print "WARNING: added show section '%s' in configuration file." % (show_id)
+                            print("WARNING: added show section '%s' in configuration file." % (show_id))
                     config.remove_option(station_id, 'shows')
                     config.changed_settings = True
 
@@ -341,7 +353,7 @@ class Recorder:
             shutil.copyfile(file_name, target_file)
             self.log.info(u"file copied from %s to %s" % (file_name, target_file))
             return target_file
-        except IOError, e:
+        except IOError as e:
             message = "Could not copy tmp file to %s: %s" % (target_file, e.message)
             self.log.error("_copy_file_to_destination: %s" % message)
             os.remove(file_name)
@@ -378,18 +390,17 @@ class Recorder:
         audio.save(file_name)
 
     def _add_logo(self, show, audio):
-        from mutagen.id3 import APIC
         # APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
         url = show.station.logo_url
         if url is not None:
-            request = urllib2.Request(url)
+            request = Request(url)
             request.get_method = lambda: 'HEAD'
             try:
-                response = urllib2.urlopen(request)
+                response = urlopen(request)
                 logo_type = response.info().gettype()
 
                 if logo_type in ['image/jpeg', 'image/png']:
-                    img_data = urllib2.urlopen(url).read()
+                    img_data = urlopen(url).read()
                     img = APIC(
                         encoding=3, # 3 is for utf-8
                         mime=logo_type,
@@ -398,8 +409,8 @@ class Recorder:
                         data=img_data
                     )
                     audio.add(img)
-            except urllib2.HTTPError, e:
+            except HTTPError as e:
                 message = "Error during capturing %s - %s" % (url, e)
                 self.log.error(message)
-            except Exception, e:
+            except Exception as e:
                 raise e
