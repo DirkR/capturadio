@@ -245,6 +245,28 @@ station = wdr2
       os.path.join(config.folder, 'capturadiorc.newstyle')
   )
 
+def test_change_destination(test_folder):
+  config = Configuration(reset=True, folder=str(test_folder))
+  new_folder = str(test_folder.mkdir('destination'))
+  config.set_destination(new_folder)
+  assert config.destination == new_folder
+
+def test_station_ids(test_folder):
+  config = Configuration(reset=True, folder=str(test_folder))
+  assert ['dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+
+def test_add_station(test_folder):
+  config = Configuration(reset=True, folder=str(test_folder))
+  config.add_station('me', 'http://example.org/stream', 'Me', 'http://example.org/logo.png')
+  assert ['me', 'dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+
+  station = config.stations['me']
+  assert isinstance(station, Station)
+  assert station.name == 'Me'
+  assert station.id   == 'me'
+  assert station.logo_url == 'http://example.org/logo.png'
+  assert station.stream_url == 'http://example.org/stream'
+  assert station.shows == []
 
 def test_add_show_to_station(test_folder):
   config = Configuration(reset=True, folder=str(test_folder))
