@@ -84,5 +84,5 @@ if __name__ == "__main__":
     try:
       recorder = Recorder()
       recorder.capture(show)
-    except Exception, e:
-      print('Unable to capture recording: %s' % e.reason)
+    except Exception as e:
+      print('Unable to capture recording: %s' % e) #.message)

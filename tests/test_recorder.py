@@ -38,7 +38,6 @@ def test_copy_file_to_destination(test_folder):
     assert os.path.exists(target)
     assert os.path.isfile(target)
 
-@pytest.mark.xfail
 def test_add_metadata(test_folder):
     import time
     config = Configuration(reset = True, folder=str(test_folder))
@@ -50,4 +49,18 @@ def test_add_metadata(test_folder):
     recorder.start_time = time.time()
     recorder._copy_file_to_destination(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), str(media_file))
     recorder._add_metadata(show, str(media_file))
-    assert os.path.exists(str(media_file))
+    try:
+      # Python 2.x
+      from mutagen.mp3 import MP3
+    except ImportError:
+      # Python 3.x
+      from mutagenx.mp3 import MP3
+
+    audio = MP3(str(media_file))
+    #assert 'tit' == audio['TIT2'].text[0]
+    assert 'Podcast' == audio['TCON'].text[0]
+    assert 'Deutschlandfunk' == audio['TPE1'].text[0]
+    assert 'Deutschlandfunk' == audio['TCOP'].text[0]
+    assert 'Me' == audio['TALB'].text[0]
+    assert 'http://example.org/dlf' == audio['TCOM'].text[0]
+    assert u'2000' == audio['TLEN'].text[0]
