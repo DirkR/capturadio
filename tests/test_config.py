@@ -1,6 +1,12 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
+"""
+Tests for the captiradio.Configuration class.
+It also contains tests for capturadio.Show and capturadio.Station,
+as they are greated and managed with the Configuration class.
+"""
+
 import os, sys
 import pytest
 from pprint import pprint, pformat
