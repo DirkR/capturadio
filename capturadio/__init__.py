@@ -182,12 +182,12 @@ Copyright: %(year)s %(station)s'''
     def set_destination(self, destination):
         if destination is not None:
             destination = os.path.expanduser(destination)
-            if os.path.exists(destination) and os.path.isdir(destination):
-                destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
-                self.destination = unicode(destination)
-            return destination
-
-        raise Exception("Could not set destination %s" % destination)
+            if not os.path.isdir(destination):
+                os.makedirs(destination)
+            destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
+            self.destination = unicode(destination)
+            return self.destination
+        #raise Exception("Could not set destination %s" % destination)
 
     def __repr__(self):
         return pformat(list(self))
