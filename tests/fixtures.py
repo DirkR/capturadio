@@ -64,3 +64,10 @@ date_pattern = %Y-%m-%d
 '''.format(str(tmpdir)))
   return tmpdir
 
+@pytest.fixture
+def config(request, test_folder):
+  from capturadio import Configuration
+  __config = Configuration(reset = True, folder=str(test_folder))
+  return __config
+
+

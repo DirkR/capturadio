@@ -9,14 +9,13 @@ import sys, os
 sys.path.insert(0, os.path.abspath('.'))
 
 import pytest
-from fixtures import test_folder
+from fixtures import test_folder, config
 
 
 from capturadio import Configuration, Recorder, Show, Station
 
 @pytest.mark.xfail
-def test_write_file(test_folder):
-    config = Configuration(reset = True, folder=str(test_folder))
+def test_write_file(test_folder, config):
     recorder = Recorder()
     folder = test_folder.mkdir('casts')
     file_name = os.path.join(str(folder), 'output.mp3')
@@ -25,11 +24,8 @@ def test_write_file(test_folder):
     assert os.path.exists(file_name)
 
 # TODO: Create fixtures for source file, target file, etc.
-def test_copy_file_to_destination(test_folder):
-    config = Configuration(reset = True, folder=str(test_folder))
-    folder = test_folder.mkdir('casts')
-    config.set_destination(str(folder))
-    source_file = folder.join('output.mp3')
+def test_copy_file_to_destination(config, test_folder):
+    source_file = test_folder.join('output.mp3')
     source_file.write('')
     source = str(source_file)
     target = str(test_folder.join('mystation', 'myshow', 'myepisode.pm3'))
@@ -38,10 +34,8 @@ def test_copy_file_to_destination(test_folder):
     assert os.path.exists(target)
     assert os.path.isfile(target)
 
-def test_add_metadata(test_folder):
+def test_add_metadata(config, test_folder):
     import time
-    config = Configuration(reset = True, folder=str(test_folder))
-    config.set_destination(str(test_folder))
     media_file = test_folder.join('mystation', 'myshow', 'myepisode.pm3')
     station = config.stations['dlf']
     show = Show(station, 'me', 'Me', 2)
