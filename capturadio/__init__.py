@@ -294,8 +294,16 @@ class Recorder:
         self.start_time = time.time()
         file_name = u"%s/capturadio_%s.mp3" % (config.tempdir, os.getpid())
         try:
-            self._write_stream_to_file(show, file_name)
-            final_file_name = self._copy_file_to_destination(show, file_name)
+            self._write_stream_to_file(show.get_stream_url(), file_name, show.duration)
+
+            time_string = format_date(config.date_pattern, time.localtime(self.start_time))
+            target_file = u"%(station)s/%(show)s/%(show)s_%(time)s.mp3" %\
+                   { 'station' : show.station.name,
+                     'show': show.name,
+                     'time': time_string,
+                   }
+            target_file = os.path.join(config.destination, slugify(target_file))
+            final_file_name = self._copy_file_to_destination(file_name, target_file)
             self._add_metadata(show, final_file_name)
             self.start_time = None
         except Exception as e:
@@ -306,15 +314,15 @@ class Recorder:
             if os.path.exists(file_name):
                 os.remove(file_name)
 
-    def _write_stream_to_file(self, show, file_name):
+    def _write_stream_to_file(self, stream_url, file_name, duration):
         not_ready = True
-        self.log.info("write %s to %s" % (show.get_stream_url(), file_name))
+        self.log.info("write %s to %s" % (stream_url, file_name))
         try:
             file = open(file_name, 'w+b')
-            stream = urllib2.urlopen(show.get_stream_url())
+            stream = urllib2.urlopen(stream_url)
             while not_ready:
                 file.write(stream.read(10240))
-                if time.time() - self.start_time > show.duration:
+                if time.time() - self.start_time > duration:
                     not_ready = False
             file.close()
         except Exception as e:
@@ -324,18 +332,9 @@ class Recorder:
             raise e
 
 
-    def _copy_file_to_destination(self, show, file_name):
+    def _copy_file_to_destination(self, file_name, target_file):
         import shutil, re
-        from capturadio.util import format_date, slugify
 
-        config = Configuration()
-
-        time_string = format_date(config.date_pattern, time.localtime(self.start_time))
-        target_file = u"%(station)s/%(show)s/%(show)s_%(time)s.mp3" %\
-               { 'station' : show.station.name,
-                 'show': show.name,
-                 'time': time_string }
-        target_file = os.path.join(config.destination, slugify(target_file))
         if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
         try:
