@@ -5,7 +5,7 @@
 Tests for the capturadio.Recorder class.
 """
 
-import sys, os
+import sys, os, time
 sys.path.insert(0, os.path.abspath('.'))
 
 import pytest
@@ -14,9 +14,15 @@ from fixtures import test_folder, config
 
 from capturadio import Configuration, Recorder, Show, Station
 
-@pytest.mark.xfail
-def test_write_file(test_folder, config):
+def test_write_file(test_folder, config, monkeypatch):
+    def mockreturn(path):
+        return open(os.path.join(os.path.dirname(__file__), 'testfilse.mp3'), 'r')
+    import capturadio
+    monkeypatch.setattr(capturadio, 'urlopen', mockreturn)
+
     recorder = Recorder()
+    recorder.start_time = time.time()
+
     folder = test_folder.mkdir('casts')
     file_name = os.path.join(str(folder), 'output.mp3')
     stream_url = 'http://example.org/stream.mp3'
