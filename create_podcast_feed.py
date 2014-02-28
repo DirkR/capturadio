@@ -22,6 +22,7 @@ class Audiofile:
         config = Configuration()
 
         self.path = filename
+        self.filesize =  str(os.path.getsize(filename))
         self.basename = os.path.basename(filename)
         local_path = self.path.replace(config.destination, '')
         self.url = config.feed['base_url'] + url_fix(local_path)
@@ -30,7 +31,6 @@ class Audiofile:
           audio = MP3(self.path)
         except HeaderNotFoundError, e:
           self.log.error('Could not find MPEG header in file "%s"' % self.path)
-
 
         try:
             self.title = u"%s" % audio['TIT2']
@@ -59,8 +59,8 @@ class Audiofile:
             self.artist = self.show
 
         try:
-            self.playtime = audio.info.length
-        except:
+            self.playtime = int(u'%s' % audio['TLEN']) / 1000
+        except Exception, e:
             self.playtime = 0
 
         try:
@@ -149,10 +149,10 @@ class Audiofiles:
                 description=audio_file.description,
                 pubDate=audio_file.pubdate,
                 guid=PyRSS2Gen.Guid(audio_file.url),
-                enclosure=PyRSS2Gen.Enclosure(audio_file.url, audio_file.playtime, "audio/mpeg")
+                enclosure=PyRSS2Gen.Enclosure(audio_file.url, audio_file.filesize, "audio/mpeg")
             )
             rssitem.image = self._create_image_tag(rssitem)
-            rssitem.length = str(datetime.timedelta(seconds=audio_file.playtime))
+            rssitem.duration = str(datetime.timedelta(seconds=audio_file.playtime))
             result.append(rssitem)
 
         waste = [(i.pubDate, i) for i in result]

@@ -20,8 +20,8 @@ class ItunesRSSItem(PyRSS2Gen.RSSItem):
 
     def publish_extensions(self, handler):
         # implement this method to embed the <itunes:*> elements into the channel header.
-        if self.length is not None:
-            PyRSS2Gen._opt_element(handler, "itunes:duration", self.length)
+        if self.duration is not None:
+            PyRSS2Gen._opt_element(handler, "itunes:duration", self.duration)
         if self.image is not None and isinstance(self.image, PyRSS2Gen.Image) and self.image.url is not None:
             handler.startElement('itunes:image',  {'href': self.image.url})
             handler.endElement('itunes:image')
