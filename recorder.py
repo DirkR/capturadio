@@ -52,6 +52,14 @@ Examples:
 
 
 def config_show(args):
+    """Usage:
+    recorder config show
+
+Show program settings.
+
+    """
+    config = Configuration()
+
     for key in ['destination', 'date_pattern', 'comment_pattern', 'folder',
                 'filename', 'tempdir', 'default_logo_url']:
         val = Configuration._shared_state[key]
