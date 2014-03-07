@@ -41,14 +41,14 @@ Examples:
         sys.exit(0)
     args = args[0]
     if args[0] in config.shows:
-        pass
-    print ' '.join(args[0])
-    return
-    try:
-        recorder = Recorder()
-        recorder.capture(show)
-    except Exception as e:
-        print('Unable to capture recording: %s' % e)
+        show = config.shows[args[0]]
+        try:
+            recorder = Recorder()
+            recorder.capture(show)
+        except Exception as e:
+            print('Unable to capture recording: %s' % e)
+    else:
+        print('Unknown show %r' % args[0])
 
 
 def config_show(args):
