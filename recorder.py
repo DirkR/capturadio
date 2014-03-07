@@ -13,7 +13,45 @@ config_locations = [
 ]
 
 
-def config_show(*args):
+def show_capture(*args):
+    """Usage:
+    recorder show capture [--duration=<duration>] [options]
+
+Capture a show.
+
+Options:
+    --duration,-d=<duration> Set the duration, overrides show setting
+
+Examples:
+    1. Capture an episode of the show 'nighttalk'
+        recorder show capture nighttalk
+
+    2. Capture an episode of the show 'nighttalk', but only 35 minutes
+        recorder show capture nighttalk -d 35m
+
+    """
+
+    config = Configuration()
+    if len(config.stations) == 0:
+        print('No stations defined, add stations at first!')
+        sys.exit(0)
+
+    if len(config.shows) == 0:
+        print('No shows defined, add shows at first!')
+        sys.exit(0)
+    args = args[0]
+    if args[0] in config.shows:
+        pass
+    print ' '.join(args[0])
+    return
+    try:
+        recorder = Recorder()
+        recorder.capture(show)
+    except Exception as e:
+        print('Unable to capture recording: %s' % e)
+
+
+def config_show(args):
     for key in ['destination', 'date_pattern', 'comment_pattern', 'folder',
                 'filename', 'tempdir', 'default_logo_url']:
         val = Configuration._shared_state[key]
@@ -25,17 +63,34 @@ def config_show(*args):
         print u"feed_%s: %s" % (key, val)
 
 
+def help(argv):
+    if len(argv) == 1:
+        cmd = argv[0]
+        try:
+            print(globals()[cmd].__doc__)
+        except KeyError:
+            exit("%r is not a tag command. See 'tag help'." % cmd)
+    else:
+        docopt(main.__doc__, argv='-h')
+
+
 def main(argv=None):
-    """capturadio - Capture internet radio programs broadcasted
-    in mp3 encoding format.
+    """
+capturadio - Capture internet radio programs broadcasted in mp3 encoding format.
 
-    Usage:
+Usage:
+    recorder.py help <command> <action>
     recorder.py <command> <action> [<options>...]
-    recorder.py help ( config | station | show | capture )
 
-    Options:
-    -h, --help                       show this screen and exit
-"""
+General Options:
+    -h, --help        show this screen and exit
+    --version         Show version and exit.
+
+Commands:
+    show capture      Capture an episode of a show
+    config show       Show configuration
+
+See 'recorder.py help <command>' for more information on a specific command."""
 
     args = docopt(main.__doc__,
                   version=version_string,
@@ -47,7 +102,6 @@ def main(argv=None):
 
     for location in config_locations:
         if os.path.exists(location):
-            print location
             Configuration.configuration_folder = os.path.dirname(location)
             Configuration.filename = os.path.basename(location)
             break
@@ -62,13 +116,18 @@ def main(argv=None):
         sys.exit(1)
 
     try:
-        cmd = r'%s_%s' % (args['<command>'], args['<action>'])
+        if args['help']:
+            cmd = 'help'
+            options = [ r'%s_%s' % (args['<command>'], args['<action>']) ]
+        else:
+            cmd = r'%s_%s' % (args['<command>'], args['<action>'])
+            options = args['<options>']
         method = globals()[cmd]
         assert callable(method)
     except (KeyError, AssertionError):
         exit("%r is not a recorder command. See 'recorder help'." % cmd.replace('_', ' '))
 
-    method(args['<options>'])
+    method(options)
 
 #    if len(config.stations) == 0:
 #        print('No stations defined, add stations at first!')
@@ -109,11 +168,6 @@ def main(argv=None):
 #        title = u'%s' % unicode(args['--title'] if (args['--title'] is not None) else args['--broadcast'], 'utf8')
 #        show = config.add_show(station, title, title, duration)
 #
-#    try:
-#        recorder = Recorder()
-#        recorder.capture(show)
-#    except Exception as e:
-#        print('Unable to capture recording: %s' % e)
 #
 
 if __name__ == "__main__":
