@@ -143,46 +143,21 @@ See 'recorder.py help <command>' for more information on a specific command."""
 
     method(options)
 
-#    if len(config.stations) == 0:
-#        print('No stations defined, add stations at first!')
-#        sys.exit(0)
-#
-#    if len(config.shows) == 0:
-#        print('No shows defined, add shows at first!')
-#        sys.exit(0)
-#
-#    if args['--show'] is not None:
 #        show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
 #        if args['--show'] not in config.shows.keys():
 #            print "Show '%s' is unknown. Use one of these: %s." % (args['--show'], ', '.join(show_ids))
 #            exit(1)
-#        show = config.shows[args['--show']]
-#        if args['--title'] is not None:
-#            show.name = u'%s' % unicode(args['--title'], 'utf8')
-#        if args['--length'] is not None:
-#            duration = parse_duration(args['--length'])
-#            if duration < 1:
-#                print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
-#                exit(1)
-#            show.duration = duration
-#    else:
 #        duration = parse_duration(args['--length'])
 #        if duration < 1:
 #            print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
 #            exit(1)
 #
-#        if args['--destination'] is not None:
-#            config.set_destination(os.path.expanduser(args['--destination']))
-#
 #        if args['--station'] not in config.get_station_ids():
 #            print "Station '%s' is unknown. Use one of these: %s." % (args['--station'], ', '.join(config.get_station_ids()))
 #            exit(1)
-#        station = config.stations[str.lower(args['--station'])]
 #
 #        title = u'%s' % unicode(args['--title'] if (args['--title'] is not None) else args['--broadcast'], 'utf8')
 #        show = config.add_show(station, title, title, duration)
-#
-#
 
 if __name__ == "__main__":
     main()
