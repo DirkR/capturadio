@@ -143,17 +143,9 @@ See 'recorder.py help <command>' for more information on a specific command."""
 
     method(options)
 
-#        show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
-#        if args['--show'] not in config.shows.keys():
-#            print "Show '%s' is unknown. Use one of these: %s." % (args['--show'], ', '.join(show_ids))
-#            exit(1)
 #        duration = parse_duration(args['--length'])
 #        if duration < 1:
 #            print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
-#            exit(1)
-#
-#        if args['--station'] not in config.get_station_ids():
-#            print "Station '%s' is unknown. Use one of these: %s." % (args['--station'], ', '.join(config.get_station_ids()))
 #            exit(1)
 #
 #        title = u'%s' % unicode(args['--title'] if (args['--title'] is not None) else args['--broadcast'], 'utf8')
