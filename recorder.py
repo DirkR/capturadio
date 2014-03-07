@@ -62,13 +62,19 @@ Show program settings.
 
     for key in ['destination', 'date_pattern', 'comment_pattern', 'folder',
                 'filename', 'tempdir', 'default_logo_url']:
-        val = Configuration._shared_state[key]
+        val = config._shared_state[key]
         if key == 'comment_pattern':
             val = val.replace('\n', '\n      ')
         print u"%s: %s" % (key, val)
 
-    for key, val in Configuration._shared_state['feed'].items():
+    for key, val in config._shared_state['feed'].items():
         print u"feed_%s: %s" % (key, val)
+
+    show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
+    station_ids = map(lambda id: id.encode('ascii'), config.stations.keys())
+    print('stations: %s' % ', '.join(station_ids) if len(station_ids) else 'No stations defined')
+    print('shows: %s' % ', '.join(show_ids) if len(show_ids) else 'No shows defined')
+
 
 
 def help(argv):
