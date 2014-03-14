@@ -2,7 +2,6 @@ import datetime as dt
 import urllib
 import os
 import time
-import re
 import logging
 import PyRSS2Gen
 try:
@@ -117,14 +116,6 @@ class Audiofiles:
         rss = self.getrss(20)
         if len(rss.items) > 0:
             rss.write_xml(open(os.path.join(path, rss_file), "w"))
-
-    @staticmethod
-    def excluded_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):
-        for p in patterns:
-            pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
-            if re.match(pattern, dirname) is not None:
-                return True
-        return False
 
     def read_folder(self, dirname):
         self.log.info(u'readfolder: processing %s' % dirname)

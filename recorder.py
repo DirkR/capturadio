@@ -2,9 +2,12 @@
 # -*- coding: utf_8 -*-
 import sys
 import os
+import re
 from docopt import docopt
 from capturadio import Configuration, Recorder, version_string
+from capturadio.rss import Audiofiles
 from capturadio.util import find_configuration
+
 
 def show_capture(*args):
     """Usage:
@@ -69,6 +72,27 @@ Show program settings.
     print('shows: %s' % ', '.join(show_ids) if len(show_ids) else 'No shows defined')
 
 
+def ignore_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):
+    for p in patterns:
+        pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
+        if re.match(pattern, dirname) is not None:
+            return True
+    return False
+
+
+def feed_update(args):
+    """Usage:
+    recorder feed update
+
+Generate rss feed files.
+
+    """
+    config = Configuration()
+    path = config.destination
+    for dirname, dirnames, filenames in os.walk(path):
+        if not ignore_folder(dirname):
+            Audiofiles.process_folder(dirname, path)
+
 
 def help(argv):
     if len(argv) == 1:
@@ -83,7 +107,7 @@ def help(argv):
 
 def main(argv=None):
     """
-capturadio - Capture internet radio programs broadcasted in mp3 encoding format.
+capturadio - Capture internet radio broadcasts in mp3 encoding format.
 
 Usage:
     recorder.py help <command> <action>
@@ -96,6 +120,7 @@ General Options:
 Commands:
     show capture      Capture an episode of a show
     config show       Show configuration
+    feed update       Update rss feed files
 
 See 'recorder.py help <command>' for more information on a specific command."""
 
@@ -127,7 +152,8 @@ See 'recorder.py help <command>' for more information on a specific command."""
         method = globals()[cmd]
         assert callable(method)
     except (KeyError, AssertionError):
-        exit("%r is not a recorder command. See 'recorder help'." % cmd.replace('_', ' '))
+        exit("%r is not a recorder command. See 'recorder help'." %
+             cmd.replace('_', ' '))
 
     method(options)
 
@@ -137,7 +163,10 @@ See 'recorder.py help <command>' for more information on a specific command."""
 #            Use a value greater 1.""" % duration)
 #            exit(1)
 #
-#        title = u'%s' % unicode(args['--title'] if (args['--title'] is not None) else args['--broadcast'], 'utf8')
+#        title = u'%s' % unicode(
+#            args['--title'] if (args['--title'] is not None) else args['--broadcast'],
+#            'utf8'
+#        )
 #        show = config.add_show(station, title, title, duration)
 
 if __name__ == "__main__":
