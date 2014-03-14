@@ -54,3 +54,17 @@ def slugify(value):
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
     value = unicode(re.sub('[-,;\s]+', '_', value).strip().lower())
     return value
+
+
+def find_configuration():
+    import os
+    config_locations = [
+        os.path.join(os.getcwd(), 'capturadiorc'),
+        os.path.expanduser('~/.capturadio/capturadiorc'),
+        os.path.expanduser('~/.capturadiorc'),
+        os.path.join('/etc', 'capturadiorc'),
+    ]
+    for location in config_locations:
+        if os.path.exists(location):
+            return location
+    return None

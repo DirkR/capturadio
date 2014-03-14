@@ -4,14 +4,7 @@ import sys
 import os
 from docopt import docopt
 from capturadio import Configuration, Recorder, version_string
-
-config_locations = [
-    os.path.join(os.getcwd(), 'capturadiorc'),
-    os.path.expanduser('~/.capturadio/capturadiorc'),
-    os.path.expanduser('~/.capturadiorc'),
-    os.path.join('/etc', 'capturadiorc'),
-]
-
+from capturadio.util import find_configuration
 
 def show_capture(*args):
     """Usage:
@@ -114,19 +107,12 @@ See 'recorder.py help <command>' for more information on a specific command."""
     if len(sys.argv) == 1:
         sys.argv.append('--help')
 
-    for location in config_locations:
-        if os.path.exists(location):
-            Configuration.configuration_folder = os.path.dirname(location)
-            Configuration.filename = os.path.basename(location)
-            break
+    config_location = find_configuration()
+    if config_location:
+        Configuration.configuration_folder = os.path.dirname(config_location)
+        Configuration.filename = os.path.basename(config_location)
     else:
         print('No configuration file found')
-        sys.exit(1)
-
-    try:
-        config = Configuration()
-    except IOError, e:
-        print('Configuration could not be loaded: %s' % e)
         sys.exit(1)
 
     try:
