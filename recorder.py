@@ -99,10 +99,12 @@ Commands:
 
 See 'recorder.py help <command>' for more information on a specific command."""
 
-    args = docopt(main.__doc__,
-                  version=version_string,
-                  options_first=True,
-                  argv=argv or sys.argv[1:])
+    args = docopt(
+        main.__doc__,
+        version=version_string,
+        options_first=True,
+        argv=argv or sys.argv[1:]
+    )
 
     if len(sys.argv) == 1:
         sys.argv.append('--help')
@@ -118,7 +120,7 @@ See 'recorder.py help <command>' for more information on a specific command."""
     try:
         if args['help']:
             cmd = 'help'
-            options = [ r'%s_%s' % (args['<command>'], args['<action>']) ]
+            options = [r'%s_%s' % (args['<command>'], args['<action>'])]
         else:
             cmd = r'%s_%s' % (args['<command>'], args['<action>'])
             options = args['<options>']
@@ -131,7 +133,8 @@ See 'recorder.py help <command>' for more information on a specific command."""
 
 #        duration = parse_duration(args['--length'])
 #        if duration < 1:
-#            print "Length of '%d' is not a valid recording duration. Use a value greater 1." % duration
+#            print("""Length of '%d' is not a valid recording duration.
+#            Use a value greater 1.""" % duration)
 #            exit(1)
 #
 #        title = u'%s' % unicode(args['--title'] if (args['--title'] is not None) else args['--broadcast'], 'utf8')
