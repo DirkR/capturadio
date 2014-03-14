@@ -94,16 +94,23 @@ Generate rss feed files.
             Audiofiles.process_folder(dirname, path)
 
 
-def help(argv):
-    if len(argv) == 1:
-        cmd = argv[0]
-        try:
-            print(globals()[cmd].__doc__)
-        except KeyError:
-            exit("%r is not a tag command. See 'tag help'." % cmd)
-    else:
-        docopt(main.__doc__, argv='-h')
+def help(args):
+    print(args)
+    cmd = r'%s_%s' % (args['<command>'], args['<action>'])
+    try:
+        print(globals()[cmd].__doc__)
+    except KeyError:
+        exit("%r is not a valid command. See 'recorder help'." % cmd.replace('_', ' '))
 
+
+def find_command(args):
+    if not args['help']:
+        for command in ['feed', 'config', 'show']:
+            if args[command]:
+                for action in ['list', 'update', 'capture', 'show']:
+                    if args[action]:
+                        return r'%s_%s' % (command, action)
+    return 'help'
 
 def main(argv=None):
     """
@@ -111,7 +118,9 @@ capturadio - Capture internet radio broadcasts in mp3 encoding format.
 
 Usage:
     recorder.py help <command> <action>
-    recorder.py <command> <action> [<options>...]
+    recorder.py show capture <show>
+    recorder.py config show | config list
+    recorder.py feed update
 
 General Options:
     -h, --help        show this screen and exit
@@ -143,31 +152,15 @@ See 'recorder.py help <command>' for more information on a specific command."""
         sys.exit(1)
 
     try:
-        if args['help']:
-            cmd = 'help'
-            options = [r'%s_%s' % (args['<command>'], args['<action>'])]
-        else:
-            cmd = r'%s_%s' % (args['<command>'], args['<action>'])
-            options = args['<options>']
+        cmd = find_command(args)
         method = globals()[cmd]
         assert callable(method)
     except (KeyError, AssertionError):
-        exit("%r is not a recorder command. See 'recorder help'." %
+        exit("%r is not a valid command. See 'recorder help'." %
              cmd.replace('_', ' '))
 
-    method(options)
+    method(args)
 
-#        duration = parse_duration(args['--length'])
-#        if duration < 1:
-#            print("""Length of '%d' is not a valid recording duration.
-#            Use a value greater 1.""" % duration)
-#            exit(1)
-#
-#        title = u'%s' % unicode(
-#            args['--title'] if (args['--title'] is not None) else args['--broadcast'],
-#            'utf8'
-#        )
-#        show = config.add_show(station, title, title, duration)
 
 if __name__ == "__main__":
     main()
