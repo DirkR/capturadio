@@ -16,7 +16,7 @@ from capturadio import Configuration, Recorder, Show, Station
 
 def test_write_file(test_folder, config, monkeypatch):
     def mockreturn(path):
-        return open(os.path.join(os.path.dirname(__file__), 'testfilse.mp3'), 'r')
+        return open(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), 'r')
     import capturadio
     monkeypatch.setattr(capturadio, 'urlopen', mockreturn)
 
