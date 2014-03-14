@@ -95,7 +95,6 @@ Generate rss feed files.
 
 
 def help(args):
-    print(args)
     cmd = r'%s_%s' % (args['<command>'], args['<action>'])
     try:
         print(globals()[cmd].__doc__)
