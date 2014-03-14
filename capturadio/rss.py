@@ -2,6 +2,7 @@ import datetime as dt
 import urllib
 import os
 import time
+import re
 import logging
 import PyRSS2Gen
 try:
@@ -97,7 +98,35 @@ class Audiofiles:
 
         self.generator = 'CaptuRadio v%s' % capturadio_version
 
-    def readfolder(self, dirname):
+    @staticmethod
+    def process_folder(path, root_path):
+        local_path = path.replace(root_path, '')
+        if (local_path != ''):
+            if (local_path.startswith('/')):
+                local_path = local_path[1:]
+            if (not local_path.endswith('/')):
+                local_path += '/'
+
+        audio_files = Audiofiles(local_path)
+        audio_files.read_folder(path)
+        audio_files.write_to_file(path)
+
+    def write_to_file(self, path):
+        rss_file = self.config.feed['file_name']
+
+        rss = self.getrss(20)
+        if len(rss.items) > 0:
+            rss.write_xml(open(os.path.join(path, rss_file), "w"))
+
+    @staticmethod
+    def excluded_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):
+        for p in patterns:
+            pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
+            if re.match(pattern, dirname) is not None:
+                return True
+        return False
+
+    def read_folder(self, dirname):
         self.log.info(u'readfolder: processing %s' % dirname)
 
         self.dirname = dirname
