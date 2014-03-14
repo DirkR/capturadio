@@ -47,9 +47,9 @@ Examples:
         print('Unknown show %r' % args[0])
 
 
-def config_show(args):
+def config_list(args):
     """Usage:
-    recorder config show
+    recorder config list
 
 Show program settings.
 
@@ -100,7 +100,8 @@ def help(args):
     try:
         print(globals()[cmd].__doc__)
     except KeyError:
-        exit("%r is not a valid command. See 'recorder help'." % cmd.replace('_', ' '))
+        exit("%r is not a valid command. See 'recorder help'." %
+             cmd.replace('_', ' '))
 
 
 def find_command(args):
@@ -112,6 +113,7 @@ def find_command(args):
                         return r'%s_%s' % (command, action)
     return 'help'
 
+
 def main(argv=None):
     """
 capturadio - Capture internet radio broadcasts in mp3 encoding format.
@@ -119,7 +121,7 @@ capturadio - Capture internet radio broadcasts in mp3 encoding format.
 Usage:
     recorder.py help <command> <action>
     recorder.py show capture <show>
-    recorder.py config show | config list
+    recorder.py config list
     recorder.py feed update
 
 General Options:
@@ -128,7 +130,7 @@ General Options:
 
 Commands:
     show capture      Capture an episode of a show
-    config show       Show configuration
+    config list       Show configuration values
     feed update       Update rss feed files
 
 See 'recorder.py help <command>' for more information on a specific command."""
