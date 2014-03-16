@@ -22,7 +22,7 @@ except ImportError:
     from configparser import ConfigParser
 from capturadio.util import format_date, slugify, parse_duration
 
-version = (0, 7, 0)
+version = (0, 9, 0)
 version_string = ".".join(map(str, version))
 
 
