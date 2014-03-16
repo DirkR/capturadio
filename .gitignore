@@ -3,3 +3,6 @@ Deutschlandfunk/
 index.html
 rss.xml
 .idea
+dist
+build
+*.egg-info
