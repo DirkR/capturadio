@@ -6,66 +6,66 @@ except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen, HTTPError, Request
 import time
-import os, os.path
+import os
 import logging
 import re
-from pprint import pprint, pformat
 import tempfile
 try:
-  # Python 2.x
-  from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+    # Python 2.x
+    from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
 except ImportError:
-  # Python 3.x
-  from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+    # Python 3.x
+    from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
 try:
-  from ConfigParser import ConfigParser
+    from ConfigParser import ConfigParser
 except ImportError:
-  from configparser import ConfigParser
+    from configparser import ConfigParser
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 7, 0)
 version_string = ".".join(map(str, version))
 
-class Configuration: # implements Borg pattern
+
+class Configuration:   # implements Borg pattern
     configuration_folder = os.path.expanduser('~/.capturadio')
     filename = 'capturadiorc'
 
     _shared_state = {}
 
     def __init__(self, **kwargs):
-      if 'reset' in kwargs and kwargs['reset']:
-          Configuration._shared_state = {}
-          del kwargs['reset']
-      self.__dict__ = Configuration._shared_state
-      if len(self.__dict__) == 0:
-        if 'folder' in kwargs:
-          self.folder = kwargs['folder']
-        else:
-          self.folder = Configuration.configuration_folder
-        if not os.path.exists(self.folder):
-          raise IOError("Configuration folder '%s' doesn't exist." % unicode(self.folder))
+        if 'reset' in kwargs and kwargs['reset']:
+            Configuration._shared_state = {}
+            del kwargs['reset']
+            self.__dict__ = Configuration._shared_state
+            if len(self.__dict__) == 0:
+                if 'folder' in kwargs:
+                    self.folder = kwargs['folder']
+                else:
+                    self.folder = Configuration.configuration_folder
+                    if not os.path.exists(self.folder):
+                        raise IOError("Configuration folder '%s' doesn't exist." % unicode(self.folder))
 
         if 'filename' in kwargs:
-          self.filename = os.path.join(self.folder, kwargs['filename'])
+            self.filename = os.path.join(self.folder, kwargs['filename'])
         else:
-          self.filename = os.path.join(self.folder, Configuration.filename)
+            self.filename = os.path.join(self.folder, Configuration.filename)
 
         logging.basicConfig(
-            filename = os.path.join(self.folder, 'log'),
-            format = '[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-            level = logging.DEBUG,
+            filename=os.path.join(self.folder, 'log'),
+            format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+            level=logging.DEBUG,
         )
 
         self.stations = {}
         self.shows = {}
         self.default_logo_url = None
         if 'destination' in kwargs:
-          self.destination = kwargs['destination']
+            self.destination = kwargs['destination']
         else:
-          self.destination = os.getcwd()
-        self.tempdir = tempfile.gettempdir()
-        self.date_pattern = "%Y-%m-%d %H:%M"
-        self.comment_pattern = '''Show: %(show)s
+            self.destination = os.getcwd()
+            self.tempdir = tempfile.gettempdir()
+            self.date_pattern = "%Y-%m-%d %H:%M"
+            self.comment_pattern = '''Show: %(show)s
 Date: %(date)s
 Website: %(link_url)s
 Copyright: %(year)s %(station)s'''
@@ -78,7 +78,7 @@ Copyright: %(year)s %(station)s'''
         self.log.debug("Enter _load_config(%s)" % config_file)
 
         config = ConfigParser()
-        config.changed_settings = False # track changes
+        config.changed_settings = False  # track changes
 
         config.read(config_file)
         if config.has_section('settings'):
@@ -343,9 +343,8 @@ class Recorder:
             os.remove(file_name)
             raise e
 
-
     def _copy_file_to_destination(self, file_name, target_file):
-        import shutil, re
+        import shutil
 
         if not os.path.isdir(os.path.dirname(target_file)):
             os.makedirs(os.path.dirname(target_file))
@@ -367,11 +366,11 @@ class Recorder:
 
         time_string = format_date(config.date_pattern, time.localtime(self.start_time))
         comment = config.comment_pattern % {
-                'show': show.name,
-                'date': time_string,
-                'year': time.strftime('%Y', time.gmtime()),
-                'station': show.station.name,
-                'link_url': show.get_link_url()
+            'show': show.name,
+            'date': time_string,
+            'year': time.strftime('%Y', time.gmtime()),
+            'station': show.station.name,
+            'link_url': show.get_link_url()
         }
 
         audio = ID3()
@@ -402,9 +401,9 @@ class Recorder:
                 if logo_type in ['image/jpeg', 'image/png']:
                     img_data = urlopen(url).read()
                     img = APIC(
-                        encoding=3, # 3 is for utf-8
+                        encoding=3,  # 3 is for utf-8
                         mime=logo_type,
-                        type=3, # 3 is for the cover image
+                        type=3,  # 3 is for the cover image
                         desc=u'Station logo',
                         data=img_data
                     )
