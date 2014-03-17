@@ -12,10 +12,12 @@ import re
 import tempfile
 try:
     # Python 2.x
-    from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+    from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, \
+        TLEN, TPE1, TCOP, COMM, TCOM, APIC
 except ImportError:
     # Python 3.x
-    from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+    from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
+        TLEN, TPE1, TCOP, COMM, TCOM, APIC
 try:
     from ConfigParser import ConfigParser
 except ImportError:
@@ -36,42 +38,43 @@ class Configuration:   # implements Borg pattern
         if 'reset' in kwargs and kwargs['reset']:
             Configuration._shared_state = {}
             del kwargs['reset']
-            self.__dict__ = Configuration._shared_state
-            if len(self.__dict__) == 0:
-                if 'folder' in kwargs:
-                    self.folder = kwargs['folder']
-                else:
-                    self.folder = Configuration.configuration_folder
-                    if not os.path.exists(self.folder):
-                        raise IOError("Configuration folder '%s' doesn't exist." % unicode(self.folder))
+        self.__dict__ = Configuration._shared_state
+        if len(self.__dict__) == 0:
+            if 'folder' in kwargs:
+                self.folder = kwargs['folder']
+            else:
+                self.folder = Configuration.configuration_folder
+            if not os.path.exists(self.folder):
+                raise IOError("Configuration folder '%s' doesn't exist." %
+                              unicode(self.folder))
 
-        if 'filename' in kwargs:
-            self.filename = os.path.join(self.folder, kwargs['filename'])
-        else:
-            self.filename = os.path.join(self.folder, Configuration.filename)
+            self.filename = os.path.join(
+                self.folder,
+                kwargs['filename'] if 'filename' in kwargs else Configuration.filename
+            )
 
-        logging.basicConfig(
-            filename=os.path.join(self.folder, 'log'),
-            format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-            level=logging.DEBUG,
-        )
+            logging.basicConfig(
+                filename=os.path.join(self.folder, 'log'),
+                format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+                level=logging.DEBUG,
+            )
 
-        self.stations = {}
-        self.shows = {}
-        self.default_logo_url = None
-        if 'destination' in kwargs:
-            self.destination = kwargs['destination']
-        else:
-            self.destination = os.getcwd()
+            self.stations = {}
+            self.shows = {}
+            self.default_logo_url = None
+            if 'destination' in kwargs:
+                self.destination = kwargs['destination']
+            else:
+                self.destination = os.getcwd()
             self.tempdir = tempfile.gettempdir()
             self.date_pattern = "%Y-%m-%d %H:%M"
             self.comment_pattern = '''Show: %(show)s
 Date: %(date)s
 Website: %(link_url)s
 Copyright: %(year)s %(station)s'''
-        self.log = logging.getLogger('capturadio.config')
-        self.feed = {}
-        self._load_config()
+            self.log = logging.getLogger('capturadio.config')
+            self.feed = {}
+            self._load_config()
 
     def _load_config(self):
         config_file = os.path.expanduser(self.filename)
