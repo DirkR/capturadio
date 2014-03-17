@@ -7,72 +7,75 @@ It also contains tests for capturadio.Show and capturadio.Station,
 as they are greated and managed with the Configuration class.
 """
 
-import os, sys
+import os
+import sys
 import pytest
-from fixtures import test_folder
+from fixtures import test_folder, config
 
 sys.path.insert(0, os.path.abspath('.'))
 
 from capturadio import Configuration, Station, Show
 
+
 def test_configuration(test_folder):
-  config = Configuration(
-      reset = True,
-      folder = str(test_folder),
-      destination = os.path.join(str(test_folder), 'demodata')
-  )
-  config2 = Configuration()
-  assert config.__dict__ == config2.__dict__
-  assert config.date_pattern == '%d.%m.%Y'
-  assert config.destination == os.path.join(str(test_folder), 'demodata')
+    config = Configuration(
+        reset=True,
+        folder=str(test_folder),
+        destination=os.path.join(str(test_folder), 'demodata')
+    )
+    config2 = Configuration()
+    assert config.__dict__ == config2.__dict__
+    assert config.date_pattern == '%d.%m.%Y'
+    assert config.destination == os.path.join(str(test_folder), 'demodata')
 
-  assert len(config.stations) == 3
-  for station_id, station in config.stations.items():
-      assert isinstance(station, Station)
+    assert len(config.stations) == 3
+    for station_id, station in config.stations.items():
+        assert isinstance(station, Station)
 
-  assert 'dlf' in config.stations.keys()
+    assert 'dlf' in config.stations.keys()
 
-  assert config.stations['dlf'].stream_url == 'http://example.org/dlf'
-  assert config.stations['dlf'].name == 'Deutschlandfunk'
-  assert config.stations['dlf'].logo_url == 'http://example.org/dlf.png'
-  assert config.stations['dlf'].link_url == 'http://example.org/dlf'
-  assert config.stations['dlf'].date_pattern == '%d.%m.%Y %H:%M'
+    assert config.stations['dlf'].stream_url == 'http://example.org/dlf'
+    assert config.stations['dlf'].name == 'Deutschlandfunk'
+    assert config.stations['dlf'].logo_url == 'http://example.org/dlf.png'
+    assert config.stations['dlf'].link_url == 'http://example.org/dlf'
+    assert config.stations['dlf'].date_pattern == '%d.%m.%Y %H:%M'
 
-  assert 'dkultur' in config.stations.keys()
-  assert config.stations['dkultur'].stream_url == 'http://example.org/dkultur'
-  assert config.stations['dkultur'].name == 'dkultur'
-  assert config.stations['dkultur'].logo_url == 'http://example.org/default.png'
-  assert config.stations['dkultur'].link_url == 'http://my.example.org/'
-  assert not 'date_pattern' in config.stations['dkultur'].__dict__
-  assert config.stations['dkultur'].get_date_pattern() == '%d.%m.%Y'
+    assert 'dkultur' in config.stations.keys()
+    assert config.stations['dkultur'].stream_url == 'http://example.org/dkultur'
+    assert config.stations['dkultur'].name == 'dkultur'
+    assert config.stations['dkultur'].logo_url == 'http://example.org/default.png'
+    assert config.stations['dkultur'].link_url == 'http://my.example.org/'
+    assert not 'date_pattern' in config.stations['dkultur'].__dict__
+    assert config.stations['dkultur'].get_date_pattern() == '%d.%m.%Y'
 
-  assert 'wdr2' in config.stations.keys()
-  assert config.stations['wdr2'].stream_url == 'http://example.org/wdr2'
-  assert config.stations['wdr2'].name == 'wdr2'
-  assert config.stations['wdr2'].logo_url == 'http://example.org/wdr2.png'
-  assert config.stations['wdr2'].link_url == 'http://example.org/wdr2'
-  assert not 'date_pattern' in config.stations['wdr2'].__dict__
+    assert 'wdr2' in config.stations.keys()
+    assert config.stations['wdr2'].stream_url == 'http://example.org/wdr2'
+    assert config.stations['wdr2'].name == 'wdr2'
+    assert config.stations['wdr2'].logo_url == 'http://example.org/wdr2.png'
+    assert config.stations['wdr2'].link_url == 'http://example.org/wdr2'
+    assert not 'date_pattern' in config.stations['wdr2'].__dict__
 
-  assert len(config.shows) == 3
-  for show_id, show in config.shows.items():
-      assert isinstance(show, Show)
+    assert len(config.shows) == 3
+    for show_id, show in config.shows.items():
+        assert isinstance(show, Show)
 
-  assert 'nachtradio' in config.shows.keys()
+    assert 'nachtradio' in config.shows.keys()
 
-  show = config.shows['nachtradio']
-  assert show.logo_url == 'http://example.org/nachtradio.png'
-  assert show.link_url == 'http://example.org/nachtradio'
-  assert show.duration == 3300
-  assert show.get_date_pattern() == '%d.%m.%Y %H:%M'
+    show = config.shows['nachtradio']
+    assert show.logo_url == 'http://example.org/nachtradio.png'
+    assert show.link_url == 'http://example.org/nachtradio'
+    assert show.duration == 3300
+    assert show.get_date_pattern() == '%d.%m.%Y %H:%M'
 
-  show = config.shows['news']
-#  assert show.logo_url == 'http://example.org/nachtradio.png'
-#  assert show.link_url == 'http://example.org/nachtradio'
-  assert show.duration == 300
-  assert show.get_date_pattern() == '%Y-%m-%d'
+    show = config.shows['news']
+    #  assert show.logo_url == 'http://example.org/nachtradio.png'
+    #  assert show.link_url == 'http://example.org/nachtradio'
+    assert show.duration == 300
+    assert show.get_date_pattern() == '%Y-%m-%d'
+
 
 def test_old_style_configuration(test_folder):
-  test_folder.join('capturadiorc.oldstyle').write('''[settings]
+    test_folder.join('capturadiorc.oldstyle').write('''[settings]
 destination = {0}/demodata ; path relative to runtime dir
 date_pattern = %d.%m.%Y %H:%M
 
@@ -124,7 +127,7 @@ link_url = http://example.org/wdr2/news
 logo_url = http://example.org/wdr2/news.png
 '''.format(str(test_folder)))
 
-  test_folder.join('capturadiorc.newstyle').write('''[settings]
+    test_folder.join('capturadiorc.newstyle').write('''[settings]
 destination = {0}/demodata
 date_pattern = %d.%m.%Y %H:%M
 
@@ -175,88 +178,99 @@ station = wdr2
 
 '''.format(str(test_folder)))
 
-  config = Configuration(
-      folder = str(test_folder),
-      filename = 'capturadiorc.oldstyle',
-      reset=True
-  )
-  assert config.filename == os.path.join(config.folder, 'capturadiorc.oldstyle')
-  import filecmp
-  assert filecmp.cmp(
-      os.path.join(config.folder, 'capturadiorc.oldstyle.new'),
-      os.path.join(config.folder, 'capturadiorc.newstyle')
-  )
+    config = Configuration(
+        folder=str(test_folder),
+        filename='capturadiorc.oldstyle',
+        reset=True
+    )
+    assert config.filename == os.path.join(config.folder, 'capturadiorc.oldstyle')
+    import filecmp
+    assert filecmp.cmp(
+        os.path.join(config.folder, 'capturadiorc.oldstyle.new'),
+        os.path.join(config.folder, 'capturadiorc.newstyle')
+    )
+
 
 def test_change_destination(test_folder):
-  config = Configuration(reset=True, folder=str(test_folder))
-  new_folder = str(test_folder.mkdir('destination'))
-  config.set_destination(new_folder)
-  assert config.destination == new_folder
+    config = Configuration(reset=True, folder=str(test_folder))
+    new_folder = str(test_folder.mkdir('destination'))
+    config.set_destination(new_folder)
+    assert config.destination == new_folder
+
 
 def test_station_ids(test_folder):
-  config = Configuration(reset=True, folder=str(test_folder))
-  assert ['dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+    config = Configuration(reset=True, folder=str(test_folder))
+    assert ['dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+
 
 def test_add_station(test_folder):
-  config = Configuration(reset=True, folder=str(test_folder))
-  config.add_station('me', 'http://example.org/stream', 'Me', 'http://example.org/logo.png')
-  assert ['me', 'dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+    config = Configuration(reset=True, folder=str(test_folder))
+    config.add_station(
+        'me',
+        'http://example.org/stream',
+        'Me',
+        'http://example.org/logo.png'
+    )
+    assert ['me', 'dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
 
-  station = config.stations['me']
-  assert isinstance(station, Station)
-  assert station.name == 'Me'
-  assert station.id   == 'me'
-  assert station.logo_url == 'http://example.org/logo.png'
-  assert station.stream_url == 'http://example.org/stream'
-  assert station.shows == []
+    station = config.stations['me']
+    assert isinstance(station, Station)
+    assert station.name == 'Me'
+    assert station.id == 'me'
+    assert station.logo_url == 'http://example.org/logo.png'
+    assert station.stream_url == 'http://example.org/stream'
+    assert station.shows == []
+
 
 def test_add_show_to_station(test_folder):
-  config = Configuration(reset=True, folder=str(test_folder))
-  station = config.stations['dlf']
-  show = config.add_show(station, 'news', 'Latest News', 10)
-  assert isinstance(show, Show)
+    config = Configuration(reset=True, folder=str(test_folder))
+    station = config.stations['dlf']
+    show = config.add_show(station, 'news', 'Latest News', 10)
+    assert isinstance(show, Show)
 
-  assert len(config.shows) == 3
-  for show_id, show in config.shows.items():
-      assert isinstance(show, Show)
-  assert config.shows['news'].name == 'Latest News'
-  assert config.shows['news'].logo_url == None
-  assert config.shows['news'].station == station
-  assert config.shows['news'].duration == 10
+    assert len(config.shows) == 3
+    for show_id, show in config.shows.items():
+        assert isinstance(show, Show)
+    assert config.shows['news'].name == 'Latest News'
+    assert config.shows['news'].logo_url is None
+    assert config.shows['news'].station == station
+    assert config.shows['news'].duration == 10
+
 
 def test_parse_duration():
-  from capturadio.util import parse_duration
+    from capturadio.util import parse_duration
 
-  assert parse_duration("10h") == 36000
-  assert parse_duration("50m") == 3000
-  assert parse_duration("300s") == 300
-  assert parse_duration("300") == 300
-  assert parse_duration("1h15m20") == 4520
+    assert parse_duration("10h") == 36000
+    assert parse_duration("50m") == 3000
+    assert parse_duration("300s") == 300
+    assert parse_duration("300") == 300
+    assert parse_duration("1h15m20") == 4520
 
-  assert parse_duration("-50m") == 0
-  assert parse_duration("-300s") == 0
-  assert parse_duration("-300") == 0
-  assert parse_duration("1h-15m20") == 3600
-  assert parse_duration("trara") == 0
-  assert parse_duration("12trara") == 12
+    assert parse_duration("-50m") == 0
+    assert parse_duration("-300s") == 0
+    assert parse_duration("-300") == 0
+    assert parse_duration("1h-15m20") == 3600
+    assert parse_duration("trara") == 0
+    assert parse_duration("12trara") == 12
+
 
 def test_excluded_folders():
-  excluded_folders = [
-      '/var/.git',
-      '/var/.git/tra/ra',
-      '/var/tmp/.hg',
-      '/var/tmp/.hg/git',
-      '/var/tmp/.bzr',
-      '/var/tmp/.bzr/git/tra',
-      ]
-  included_folders = [
-      '/var/git',
-      '/var/git/tra/ra',
-      ]
+    excluded_folders = [
+        '/var/.git',
+        '/var/.git/tra/ra',
+        '/var/tmp/.hg',
+        '/var/tmp/.hg/git',
+        '/var/tmp/.bzr',
+        '/var/tmp/.bzr/git/tra',
+    ]
+    included_folders = [
+        '/var/git',
+        '/var/git/tra/ra',
+    ]
 
-  from recorder import ignore_folder
+    from recorder import ignore_folder
 
-  for folder in excluded_folders:
-    assert ignore_folder(folder) == True
-  for folder in included_folders:
-    assert ignore_folder(folder) == False
+    for folder in excluded_folders:
+        assert ignore_folder(folder) is True
+    for folder in included_folders:
+        assert ignore_folder(folder) is False

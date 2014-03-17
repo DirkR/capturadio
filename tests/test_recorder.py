@@ -5,14 +5,15 @@
 Tests for the capturadio.Recorder class.
 """
 
-import sys, os, time
-sys.path.insert(0, os.path.abspath('.'))
-
+import sys
+import os
+import time
 import pytest
 from fixtures import test_folder, config
+sys.path.insert(0, os.path.abspath('.'))
 
+from capturadio import Recorder, Show
 
-from capturadio import Configuration, Recorder, Show, Station
 
 def test_write_file(test_folder, config, monkeypatch):
     def mockreturn(path):
@@ -29,6 +30,7 @@ def test_write_file(test_folder, config, monkeypatch):
     recorder._write_stream_to_file(stream_url, file_name, 2)
     assert os.path.exists(file_name)
 
+
 # TODO: Create fixtures for source file, target file, etc.
 def test_copy_file_to_destination(config, test_folder):
     source_file = test_folder.join('output.mp3')
@@ -40,6 +42,7 @@ def test_copy_file_to_destination(config, test_folder):
     assert os.path.exists(target)
     assert os.path.isfile(target)
 
+
 def test_add_metadata(config, test_folder):
     import time
     media_file = test_folder.join('mystation', 'myshow', 'myepisode.pm3')
@@ -50,11 +53,11 @@ def test_add_metadata(config, test_folder):
     recorder._copy_file_to_destination(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), str(media_file))
     recorder._add_metadata(show, str(media_file))
     try:
-      # Python 2.x
-      from mutagen.mp3 import MP3
+        # Python 2.x
+        from mutagen.mp3 import MP3
     except ImportError:
-      # Python 3.x
-      from mutagenx.mp3 import MP3
+        # Python 3.x
+        from mutagenx.mp3 import MP3
 
     audio = MP3(str(media_file))
     #assert 'tit' == audio['TIT2'].text[0]
