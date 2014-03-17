@@ -1,10 +1,10 @@
 __author__ = 'dirk'
 try:
     # For Python 3.0 and later
-    from urllib.request import urlopen, HTTPError, Request
+    from urllib.request import urlopen, HTTPError, URLError, Request
 except ImportError:
     # Fall back to Python 2's urllib2
-    from urllib2 import urlopen, HTTPError, Request
+    from urllib2 import urlopen, HTTPError, URLError, Request
 import time
 import os
 import logging
@@ -408,7 +408,7 @@ class Recorder:
                         data=img_data
                     )
                     audio.add(img)
-            except HTTPError as e:
+            except (HTTPError, URLError) as e:
                 message = "Error during capturing %s - %s" % (url, e)
                 self.log.error(message)
             except Exception as e:
