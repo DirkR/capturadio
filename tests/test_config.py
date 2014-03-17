@@ -254,9 +254,9 @@ def test_excluded_folders():
       '/var/git/tra/ra',
       ]
 
-  from create_podcast_feed import excluded_folder
+  from recorder import ignore_folder
 
   for folder in excluded_folders:
-    assert excluded_folder(folder) == True
+    assert ignore_folder(folder) == True
   for folder in included_folders:
-    assert excluded_folder(folder) == False
+    assert ignore_folder(folder) == False
