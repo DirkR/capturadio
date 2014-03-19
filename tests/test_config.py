@@ -137,7 +137,7 @@ dkultur = http://example.org/dkultur
 wdr2 = http://example.org/wdr2
 
 [feed]
-url = http://my.example.org
+base_url = http://my.example.org
 title = Internet Radio Recordings
 about_url = http://my.example.org/about.html
 description = Recordings

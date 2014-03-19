@@ -57,14 +57,14 @@ Show program settings.
     config = Configuration()
 
     for key in ['destination', 'date_pattern', 'comment_pattern', 'folder',
-                'filename', 'tempdir', 'default_logo_url']:
+                'filename', 'tempdir']:
         val = config._shared_state[key]
         if key == 'comment_pattern':
             val = val.replace('\n', '\n      ')
         print u"%s: %s" % (key, val)
 
     for key, val in config._shared_state['feed'].items():
-        print u"feed_%s: %s" % (key, val)
+        print u"feed.%s: %s" % (key, val)
 
     show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
     station_ids = map(lambda id: id.encode('ascii'), config.stations.keys())
@@ -146,11 +146,11 @@ See 'recorder.py help <command>' for more information on a specific command."""
 
     config_location = find_configuration()
     if config_location:
-        Configuration.configuration_folder = os.path.dirname(config_location)
+        Configuration.folder = os.path.dirname(config_location)
         Configuration.filename = os.path.basename(config_location)
     else:
-        print('No configuration file found')
-        sys.exit(1)
+        config = Configuration()
+        config.write_config()
 
     try:
         cmd = find_command(args)
