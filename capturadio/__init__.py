@@ -19,9 +19,9 @@ except ImportError:
     from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
         TLEN, TPE1, TCOP, COMM, TCOM, APIC
 try:
-    from ConfigParser import ConfigParser
+    from ConfigParser import SafeConfigParser
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import SafeConfigParser
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 9, 0)
@@ -80,20 +80,20 @@ Copyright: %(year)s %(station)s'''
         config_file = os.path.expanduser(self.filename)
         self.log.debug("Enter _load_config(%s)" % config_file)
 
-        config = ConfigParser()
+        config = SafeConfigParser()
         config.changed_settings = False  # track changes
 
         config.read(config_file)
         if config.has_section('settings'):
             self.set_destination(config.get('settings', 'destination', os.getcwd()))
             if config.has_option('settings', 'date_pattern'):
-                self.date_pattern = config.get('settings', 'date_pattern')
+                self.date_pattern = config.get('settings', 'date_pattern', True)
             if config.has_option('settings', 'tempdir'):
                 self.tempdir = os.path.abspath(os.path.expanduser(config.get('settings', 'tempdir')))
                 if not os.path.exists(self.tempdir):
                     os.makedirs(self.tempdir)
             if config.has_option('settings', 'comment_pattern'):
-                pattern = config.get('settings', 'comment_pattern')
+                pattern = config.get('settings', 'comment_pattern', True)
                 pattern = re.sub(r'%([a-z_][a-z_]+)', r'%(\1)s', pattern)
                 self.comment_pattern = pattern
         self._read_feed_settings(config)
@@ -158,7 +158,7 @@ Copyright: %(year)s %(station)s'''
                     station.link_url = self.feed['base_url']
 
                 if config.has_option(station_id, 'date_pattern'):
-                    station.date_pattern = config.get(station_id, 'date_pattern')
+                    station.date_pattern = config.get(station_id, 'date_pattern', True)
 
                 self._add_shows(config, station)
 
@@ -191,7 +191,7 @@ Copyright: %(year)s %(station)s'''
                     show.link_url = station.link_url
 
                 if config.has_option(show_id, 'date_pattern'):
-                    show.date_pattern = config.get(show_id, 'date_pattern')
+                    show.date_pattern = config.get(show_id, 'date_pattern', True)
 
 
     def set_destination(self, destination):
