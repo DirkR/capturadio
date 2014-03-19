@@ -3,10 +3,17 @@
 import sys
 import os
 import re
+import logging
 from docopt import docopt
 from capturadio import Configuration, Recorder, version_string
 from capturadio.rss import Audiofiles
 from capturadio.util import find_configuration
+
+logging.basicConfig(
+    filename=os.path.join(Configuration.folder, 'log'),
+    format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
+    level=logging.DEBUG,
+)
 
 
 def show_capture(*args):
