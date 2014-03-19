@@ -54,6 +54,22 @@ Examples:
         print('Unknown show %r' % args[0])
 
 
+def config_setup(args):
+    """Usage:
+    recorder config setup [ -u | -p ]
+
+Setup program settings. A new settings file is created.
+
+Options:
+    -u        Create user settings in ~/.capturadio
+    -p        Crete local settings in current work directory
+
+    """
+    config = Configuration()
+    config.write_config()
+    config_list([])
+
+
 def config_list(args):
     """Usage:
     recorder config list
@@ -114,7 +130,7 @@ def find_command(args):
     if not args['help']:
         for command in ['feed', 'config', 'show']:
             if args[command]:
-                for action in ['list', 'update', 'capture', 'show']:
+                for action in ['list', 'update', 'capture', 'show', 'setup']:
                     if args[action]:
                         return r'%s_%s' % (command, action)
     return 'help'
@@ -128,6 +144,7 @@ Usage:
     recorder.py help <command> <action>
     recorder.py show capture <show>
     recorder.py config list
+    recorder.py config setup
     recorder.py feed update
 
 General Options:
@@ -136,6 +153,7 @@ General Options:
 
 Commands:
     show capture      Capture an episode of a show
+    config setup      Create configuration file
     config list       Show configuration values
     feed update       Update rss feed files
 
