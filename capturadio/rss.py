@@ -111,7 +111,7 @@ class Audiofiles:
         audio_files.write_to_file(path)
 
     def write_to_file(self, path):
-        rss_file = self.config.feed['file_name']
+        rss_file = self.config.feed['filename']
 
         rss = self.getrss(20)
         if len(rss.items) > 0:
@@ -172,7 +172,7 @@ class Audiofiles:
         config = Configuration()
 
         image = PyRSS2Gen.Image(
-            url=config.default_logo_url,
+            url=config.feed['default_logo_url'],
             title=config.feed['title'],
             link=config.feed['about_url'],
             description=u"%s\n\nLogo: %s" % (
@@ -207,7 +207,7 @@ class Audiofiles:
             )
         else:
             return PyRSS2Gen.Image(
-                url=config.default_logo_url,
+                url=config.feed['default_logo_url'],
                 title=rssitem.author, link=link_url
             )
 

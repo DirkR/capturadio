@@ -30,7 +30,7 @@ version_string = ".".join(map(str, version))
 
 
 class Configuration:   # implements Borg pattern
-    folder = os.path.expanduser('~/.capturadio')
+    folder = os.getcwd()
     filename = 'capturadiorc'
 
     _shared_state = {}
@@ -46,8 +46,6 @@ class Configuration:   # implements Borg pattern
             'destination': os.getcwd(),
             'stations': {},
             'shows': {},
-            'default_link_url': None,
-            'default_logo_url': None,
             'destination': os.getcwd(),
             'tempdir': tempfile.gettempdir(),
             'date_pattern': r"%Y-%m-%d",
@@ -61,11 +59,11 @@ Copyright: %(year)s %(station)s''',
                 'base_url': 'http://my.example.org/',
                 'about_url': 'http://my.example.org/about.html',
                 'default_link_url': 'http://www.podcast.de/',
-                'default_logo_url': 'http://www.podcast.de/',
+                'default_logo_url': 'http://www.podcast.de/default.png',
                 'logo_copyright': None,
                 'description': 'Recordings',
                 'language': 'en',
-                'file_name': 'rss.xml',
+                'filename': 'rss.xml',
             },
         }
 
@@ -97,28 +95,40 @@ Copyright: %(year)s %(station)s''',
                 self._load_config()
                 self.__loaded_from_disk = True
 
-            self.stations = {}
-            self.shows = {}
-            self.default_logo_url = None
-            if 'destination' in kwargs:
-                self.destination = kwargs['destination']
-            else:
-                self.destination = os.getcwd()
-            self.tempdir = tempfile.gettempdir()
-            self.date_pattern = "%Y-%m-%d %H:%M"
-            self.comment_pattern = '''Show: %(show)s
-Date: %(date)s
-Website: %(link_url)s
-Copyright: %(year)s %(station)s'''
-            self.log = logging.getLogger('capturadio.config')
-            self.feed = {}
-            self._load_config()
+
+    def write_config(self):
+        config = ConfigParser()
+        config.add_section('settings')
+        for key in ('destination', 'date_pattern', 'comment_pattern'):
+            if self.__dict__[key] is not None:
+                config.set('settings', key, self.__dict__[key])
+
+        config.add_section('feed')
+        for key in ('base_url', 'title', 'about_url', 'description',
+                    'language', 'filename', 'default_logo_url',
+                    'default_link_url'):
+            if self.feed[key] is not None:
+                config.set('feed', key, self.feed[key])
+        if self.feed['logo_copyright'] is not None:
+            config.set('feed', 'default_logo_copyright', self.feed['logo_copyright'])
+
+        config.add_section('stations')
+        for station in self.stations.values():
+            config.set('stations', station.id, station.stream_url)
+            config.add_section(station.id)
+            config.set(station.id, 'name', station.name)
+            config.set(station.id, 'logo_url', station.logo_url)
+            config.set(station.id, 'link_url', station.link_url)
+
+        with open(self.filename, 'w') as file:
+            config.write(file)
+
 
     def _load_config(self):
         config_file = os.path.expanduser(self.filename)
         self.log.debug("Enter _load_config(%s)" % config_file)
 
-        config = SafeConfigParser()
+        config = ConfigParser()
         config.changed_settings = False  # track changes
 
         config.read(config_file)
@@ -142,16 +152,8 @@ Copyright: %(year)s %(station)s'''
                 config.write(new_file)
             print("WARNING: Saved a updated version of config file as '%s.new'." % (config_file))
 
+
     def _read_feed_settings(self, config):
-        self.feed = {
-            'title': 'Internet Radio Recordings',
-            'about_url': 'http://my.example.org/about.html',
-            'default_link_url': 'http://www.podcast.de/',
-            'description': 'Recordings',
-            'language': 'en',
-            'file_name': 'rss.xml',
-            'logo_copyright': None,
-        }
         if config.has_section('feed'):
             if config.has_option('feed', 'default_logo_url'):
                 self.default_logo_url = config.get('feed', 'default_logo_url')
@@ -174,12 +176,14 @@ Copyright: %(year)s %(station)s'''
                 self.feed['description'] = config.get('feed', 'description')
             if config.has_option('feed', 'language'):
                 self.feed['language'] = config.get('feed', 'language')
-            if config.has_option('feed', 'file_name'):
-                self.feed['file_name'] = config.get('feed', 'filename')
+            if config.has_option('feed', 'filename'):
+                self.feed['filename'] = config.get('feed', 'filename')
             if config.has_option('feed', 'default_logo_copyright'):
                 self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright')
+            if config.has_option('feed', 'default_logo_url'):
+                self.feed['default_logo_url'] = config.get('feed', 'default_logo_url')
             if config.has_option('feed', 'default_link_url'):
-                self.default_link_url = config.get('feed', 'default_link_url')
+                self.feed['default_link_url'] = config.get('feed', 'default_link_url')
 
             if not self.feed['base_url'].endswith('/'):
                 self.feed['base_url'] += '/'
@@ -192,7 +196,7 @@ Copyright: %(year)s %(station)s'''
             for station_id in config.options('stations'):
                 station_stream = config.get('stations', station_id)
                 station_name = station_id
-                station_logo_url = self.default_logo_url
+                station_logo_url = self.feed['default_logo_url']
                 if config.has_section(station_id):
                     if config.has_option(station_id, 'name'):
                         station_name = u'%s' % unicode(config.get(station_id, 'name'), 'utf8')
@@ -265,8 +269,6 @@ Copyright: %(year)s %(station)s'''
             return self.destination
         #raise Exception("Could not set destination %s" % destination)
 
-    def __repr__(self):
-        return pformat(list(self))
 
     def get_station_ids(self):
         if self.stations is not None:
@@ -274,11 +276,13 @@ Copyright: %(year)s %(station)s'''
         else:
             return None
 
+
     def add_station(self, id, stream_url, name=None, logo_url=None):
         station = Station(unicode(id, 'utf-8'), stream_url, name, logo_url)
         self.stations[id] = station
         self.log.debug(u'  %s' % station)
         return station
+
 
     def add_show(self, station, id, name, duration, logo_url=None):
         if not isinstance(station, Station):
