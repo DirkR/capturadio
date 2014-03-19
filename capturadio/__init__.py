@@ -10,6 +10,7 @@ import os
 import logging
 import re
 import tempfile
+from pprint import pformat
 try:
     # Python 2.x
     from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, \
@@ -19,9 +20,9 @@ except ImportError:
     from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
         TLEN, TPE1, TCOP, COMM, TCOM, APIC
 try:
-    from ConfigParser import SafeConfigParser
+    from ConfigParser import ConfigParser
 except ImportError:
-    from configparser import SafeConfigParser
+    from configparser import ConfigParser
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 9, 0)
@@ -29,35 +30,72 @@ version_string = ".".join(map(str, version))
 
 
 class Configuration:   # implements Borg pattern
-    configuration_folder = os.path.expanduser('~/.capturadio')
+    folder = os.path.expanduser('~/.capturadio')
     filename = 'capturadiorc'
 
     _shared_state = {}
 
+    @staticmethod
+    def _reset():
+        Configuration._shared_state = {
+            'folder': Configuration.folder,
+            'filename': os.path.join(
+                Configuration.folder,
+                Configuration.filename
+            ),
+            'destination': os.getcwd(),
+            'stations': {},
+            'shows': {},
+            'default_link_url': None,
+            'default_logo_url': None,
+            'destination': os.getcwd(),
+            'tempdir': tempfile.gettempdir(),
+            'date_pattern': r"%Y-%m-%d",
+            'comment_pattern': '''Show: %(show)s
+Date: %(date)s
+Website: %(link_url)s
+Copyright: %(year)s %(station)s''',
+            'log': logging.getLogger('capturadio.' + __name__),
+            'feed': {
+                'title': 'Internet Radio Recordings',
+                'base_url': 'http://my.example.org/',
+                'about_url': 'http://my.example.org/about.html',
+                'default_link_url': 'http://www.podcast.de/',
+                'default_logo_url': 'http://www.podcast.de/',
+                'logo_copyright': None,
+                'description': 'Recordings',
+                'language': 'en',
+                'file_name': 'rss.xml',
+            },
+        }
+
     def __init__(self, **kwargs):
         if 'reset' in kwargs and kwargs['reset']:
-            Configuration._shared_state = {}
+            Configuration._reset()
             del kwargs['reset']
-        self.__dict__ = Configuration._shared_state
-        if len(self.__dict__) == 0:
-            if 'folder' in kwargs:
-                self.folder = kwargs['folder']
-            else:
-                self.folder = Configuration.configuration_folder
-            if not os.path.exists(self.folder):
-                raise IOError("Configuration folder '%s' doesn't exist." %
-                              unicode(self.folder))
+        if len(Configuration._shared_state) == 0:
+            Configuration._reset()
 
+        self.__dict__ = Configuration._shared_state
+        self.__loaded_from_disk = False
+
+        if 'folder' in kwargs:
+            self.folder = kwargs['folder']
             self.filename = os.path.join(
                 self.folder,
                 kwargs['filename'] if 'filename' in kwargs else Configuration.filename
             )
+            if not os.path.exists(self.folder):
+                os.makedirs(self.folder)
 
-            logging.basicConfig(
-                filename=os.path.join(self.folder, 'log'),
-                format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-                level=logging.DEBUG,
-            )
+        if 'destination' in kwargs:
+            self.destination = kwargs['destination']
+        if not os.path.exists(self.filename):
+            self.write_config()
+        else:
+            if not self.__loaded_from_disk:
+                self._load_config()
+                self.__loaded_from_disk = True
 
             self.stations = {}
             self.shows = {}
@@ -85,7 +123,8 @@ Copyright: %(year)s %(station)s'''
 
         config.read(config_file)
         if config.has_section('settings'):
-            self.set_destination(config.get('settings', 'destination', os.getcwd()))
+            if config.has_option('settings', 'destination'):
+                self.set_destination(config.get('settings', 'destination'))
             if config.has_option('settings', 'date_pattern'):
                 self.date_pattern = config.get('settings', 'date_pattern', True)
             if config.has_option('settings', 'tempdir'):
@@ -99,30 +138,52 @@ Copyright: %(year)s %(station)s'''
         self._read_feed_settings(config)
         self._add_stations(config)
         if config.changed_settings:
-            new_file = open(config_file + '.new', 'w')
-            config.write(new_file)
-            new_file.close()
+            with open(config_file + '.new', 'w') as new_file:
+                config.write(new_file)
             print("WARNING: Saved a updated version of config file as '%s.new'." % (config_file))
 
     def _read_feed_settings(self, config):
+        self.feed = {
+            'title': 'Internet Radio Recordings',
+            'about_url': 'http://my.example.org/about.html',
+            'default_link_url': 'http://www.podcast.de/',
+            'description': 'Recordings',
+            'language': 'en',
+            'file_name': 'rss.xml',
+            'logo_copyright': None,
+        }
         if config.has_section('feed'):
             if config.has_option('feed', 'default_logo_url'):
                 self.default_logo_url = config.get('feed', 'default_logo_url')
-            self.feed['base_url'] = config.get('feed', 'url')
-            if not self.feed['base_url'].endswith('/'):
-                self.feed['base_url'] += '/'
-            self.feed['title'] = config.get('feed', 'title', 'Internet Radio Recordings')
-            self.feed['about_url'] = config.get('feed', 'about_url', 'http://my.example.org/about.html')
-            self.feed['description'] = config.get('feed', 'description', 'Recordings')
-            self.feed['language'] = config.get('feed', 'language', 'en')
-            self.feed['file_name'] = config.get('feed', 'filename', 'rss.xml')
-            self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright', None)
+            if config.has_option('feed', 'base_url'):
+                self.feed['base_url'] = config.get('feed', 'base_url')
+            if config.has_option('feed', 'url'):
+                if not config.has_option('feed', 'base_url'):
+                    self.feed['base_url'] = config.get('feed', 'url')
+                    config.set('feed', 'base_url', self.feed['base_url'])
+                    print("WARNING: Replaced setting 'feed.url' with 'feed.base_url' in configuration file.")
+                else:
+                    print("WARNING: Removed setting 'feed.url' from configuration file.")
+                config.remove_option('feed', 'url')
+                config.changed_settings = True
+            if config.has_option('feed', 'title'):
+                self.feed['title'] = config.get('feed', 'title')
+            if config.has_option('feed', 'about_url'):
+                self.feed['about_url'] = config.get('feed', 'about_url')
+            if config.has_option('feed', 'description'):
+                self.feed['description'] = config.get('feed', 'description')
+            if config.has_option('feed', 'language'):
+                self.feed['language'] = config.get('feed', 'language')
+            if config.has_option('feed', 'file_name'):
+                self.feed['file_name'] = config.get('feed', 'filename')
+            if config.has_option('feed', 'default_logo_copyright'):
+                self.feed['logo_copyright'] = config.get('feed', 'default_logo_copyright')
             if config.has_option('feed', 'default_link_url'):
                 self.default_link_url = config.get('feed', 'default_link_url')
-            else:
-                self.feed['default_link_url'] = 'http://www.podcast.de/'
 
-                # Read stations
+            if not self.feed['base_url'].endswith('/'):
+                self.feed['base_url'] += '/'
+            # Read stations
 
 
     def _add_stations(self, config):
