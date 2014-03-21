@@ -40,7 +40,7 @@ class Configuration:   # implements Borg pattern
         import socket
         hostname = socket.gethostname()
         if hostname.endswith('uberspace.de'):
-            hostname = '%s.%s' % (os.environ["USERNAME"], hostname)
+            hostname = '%s.%s' % (os.environ["USER"], hostname)
             destination = '~/html/podcasts'
         elif os.uname()[0] == 'Darwin':
             destination = '~/Sites/podcasts'
