@@ -37,16 +37,25 @@ class Configuration:   # implements Borg pattern
 
     @staticmethod
     def _reset():
+        import socket
+        hostname = socket.gethostname()
+        if hostname.endswith('uberspace.de'):
+            hostname = '%s.%s' % (os.environ["USERNAME"], hostname)
+            destination = '~/html/podcasts'
+        elif os.uname()[0] == 'Darwin':
+            destination = '~/Sites/podcasts'
+        else:
+            destination = '~/public_html/podcasts'
+
         Configuration._shared_state = {
             'folder': Configuration.folder,
             'filename': os.path.join(
                 Configuration.folder,
                 Configuration.filename
             ),
-            'destination': os.getcwd(),
+            'destination': destination,
             'stations': {},
             'shows': {},
-            'destination': os.getcwd(),
             'tempdir': tempfile.gettempdir(),
             'date_pattern': r"%Y-%m-%d",
             'comment_pattern': '''Show: %(show)s
@@ -56,12 +65,12 @@ Copyright: %(year)s %(station)s''',
             'log': logging.getLogger('capturadio.' + __name__),
             'feed': {
                 'title': 'Internet Radio Recordings',
-                'base_url': 'http://my.example.org/',
-                'about_url': 'http://my.example.org/about.html',
+                'base_url': 'http://%s/podcasts' % hostname,
+                'about_url': 'http://%s/podcasts/about.html' % hostname,
                 'default_link_url': 'http://www.podcast.de/',
                 'default_logo_url': 'http://www.podcast.de/default.png',
                 'logo_copyright': None,
-                'description': 'Recordings',
+                'description': 'My Radio Recordings',
                 'language': 'en',
                 'filename': 'rss.xml',
             },
@@ -117,8 +126,20 @@ Copyright: %(year)s %(station)s''',
             config.set('stations', station.id, station.stream_url)
             config.add_section(station.id)
             config.set(station.id, 'name', station.name)
-            config.set(station.id, 'logo_url', station.logo_url)
-            config.set(station.id, 'link_url', station.link_url)
+            if station.logo_url is not None:
+                config.set(station.id, 'logo_url', station.logo_url)
+            if station.link_url is not None:
+                config.set(station.id, 'link_url', station.link_url)
+
+        for show in self.shows.values():
+            config.add_section(show.id)
+            config.set(show.id, 'name', show.name)
+            config.set(show.id, 'station', show.station)
+            config.set(show.id, 'duration', show.duration)
+            if show.logo_url is not None:
+                config.set(show.id, 'logo_url', show.logo_url)
+            if show.link_url is not None:
+                config.set(show.id, 'link_url', show.link_url)
 
         with open(self.filename, 'w') as file:
             config.write(file)
@@ -301,8 +322,8 @@ class Station:
         self.name = name
         self.stream_url = stream_url
         self.logo_url = logo_url
+        self.link_url = None
         self.shows = []
-        self.registry = None
 
     def __repr__(self):
         return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))

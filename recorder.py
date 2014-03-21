@@ -7,7 +7,7 @@ import logging
 from docopt import docopt
 from capturadio import Configuration, Recorder, version_string
 from capturadio.rss import Audiofiles
-from capturadio.util import find_configuration
+from capturadio.util import find_configuration, parse_duration
 
 logging.basicConfig(
     filename=os.path.join(Configuration.folder, 'log'),
@@ -66,6 +66,19 @@ Options:
 
     """
     config = Configuration()
+    bbcradio2 = config.add_station(
+        'bbc2',
+        'http://bbcmedia.ic.llnwd.net/stream/bbcmedia_intl_lc_radio2_p?s=1334169157&e=1334183557&h=6d38a92ed5d84d5a4a1a8b88df6fbe33',
+        'BBC Radio 2',
+        'http://www.bbc.co.uk/radio2/images/homepage/bbcradio2.gif'
+    )
+    bobharriscountry = config.add_show(
+        bbcradio2,
+        'bobharriscountry',
+        'Bob Harris Country',
+        parse_duration('58m'),
+    )
+    bobharriscountry.link_url = 'http://www.bbc.co.uk/programmes/b006x527'
     config.write_config()
     config_list([])
 
