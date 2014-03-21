@@ -118,7 +118,7 @@ class Audiofiles:
             rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
     def read_folder(self, dirname):
-        self.log.info(u'readfolder: processing %s' % dirname)
+        self.log.info(u'read_folder: processing %s' % dirname)
 
         self.dirname = dirname
         for dirname, dirnames, filenames in os.walk(dirname):
