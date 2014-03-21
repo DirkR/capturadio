@@ -34,6 +34,7 @@ class Configuration:   # implements Borg pattern
     filename = 'capturadiorc'
 
     _shared_state = {}
+    _loaded_from_disk = False
 
     @staticmethod
     def _reset():
@@ -84,7 +85,6 @@ Copyright: %(year)s %(station)s''',
             Configuration._reset()
 
         self.__dict__ = Configuration._shared_state
-        self.__loaded_from_disk = False
 
         if 'folder' in kwargs:
             self.folder = kwargs['folder']
@@ -97,12 +97,13 @@ Copyright: %(year)s %(station)s''',
 
         if 'destination' in kwargs:
             self.destination = kwargs['destination']
+
         if not os.path.exists(self.filename):
             self.write_config()
         else:
-            if not self.__loaded_from_disk:
+            if not Configuration._loaded_from_disk:
                 self._load_config()
-                self.__loaded_from_disk = True
+                Configuration._loaded_from_disk = True
 
 
     def write_config(self):
