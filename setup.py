@@ -31,7 +31,12 @@ setup(
         'mutagenx>=1.22',
         'pytest>=2.3',
     ],
-    packages=find_packages(exclude=('tests', 'docs', 'examples')),
+    packages=find_packages(exclude=('docs', 'examples')),
+    include_package_data = True,
+    package_data = {
+        '': ['*.txt', '*.md'],
+        # 'capturadio': ['*.msg'],
+    },
     scripts=["recorder.py"],
     test_suite='tests',
 )
