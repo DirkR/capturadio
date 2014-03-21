@@ -28,7 +28,7 @@ setup(
     install_requires=[
         'PyRSS2Gen>=1.1',
         'docopt>=0.6',
-        'mutagen>=1.21',
+        'mutagenx>=1.22',
         'pytest>=2.3',
     ],
     packages=find_packages(exclude=('tests', 'docs', 'examples')),

@@ -106,6 +106,7 @@ Copyright: %(year)s %(station)s''',
 
 
     def write_config(self):
+        self.log.debug('Enter write_config')
         config = ConfigParser()
         config.add_section('settings')
         for key in ('destination', 'date_pattern', 'comment_pattern'):
@@ -119,27 +120,25 @@ Copyright: %(year)s %(station)s''',
             if self.feed[key] is not None:
                 config.set('feed', key, self.feed[key])
         if self.feed['logo_copyright'] is not None:
-            config.set('feed', 'default_logo_copyright', self.feed['logo_copyright'])
+            config.set(
+                'feed',
+                'default_logo_copyright',
+                self.feed['logo_copyright']
+            )
 
         config.add_section('stations')
         for station in self.stations.values():
             config.set('stations', station.id, station.stream_url)
             config.add_section(station.id)
-            config.set(station.id, 'name', station.name)
-            if station.logo_url is not None:
-                config.set(station.id, 'logo_url', station.logo_url)
-            if station.link_url is not None:
-                config.set(station.id, 'link_url', station.link_url)
+            for key in ('name', 'logo_url', 'link_url'):
+                if station.__dict__[key] is not None:
+                    config.set(station.id, key, station.__dict__[key])
 
         for show in self.shows.values():
             config.add_section(show.id)
-            config.set(show.id, 'name', show.name)
-            config.set(show.id, 'station', show.station)
-            config.set(show.id, 'duration', show.duration)
-            if show.logo_url is not None:
-                config.set(show.id, 'logo_url', show.logo_url)
-            if show.link_url is not None:
-                config.set(show.id, 'link_url', show.link_url)
+            for key in ('name', 'station', 'duration', 'logo_url', 'link_url'):
+                if show.__dict__[key] is not None:
+                    config.set(show.id, key, show.__dict__[key])
 
         with open(self.filename, 'w') as file:
             config.write(file)
