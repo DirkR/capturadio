@@ -80,7 +80,18 @@ Options:
     )
     bobharriscountry.link_url = 'http://www.bbc.co.uk/programmes/b006x527'
     config.write_config()
-    config_list([])
+    print """
+Created a new configuration at %(filename)s.
+The URL is set to %(url)s and the files
+are stored at %(destination)s.
+You can change all settings by editing %(filename)s
+and you are engcouraged to do that.
+
+Use the command 'config list' to see all settings.""" % {
+        'destination': config.destination,
+        'filename': config.filename,
+        'url': config.feed['base_url'],
+    }
 
 
 def config_list(args):
