@@ -138,8 +138,14 @@ Copyright: %(year)s %(station)s''',
             config.add_section(show.id)
             for key in ('name', 'station', 'duration', 'logo_url', 'link_url'):
                 if show.__dict__[key] is not None:
-                    config.set(show.id, key, show.__dict__[key])
+                    if isinstance(show.__dict__[key], Station):
+                        config.set(show.id, key, show.station.id)
+                    else:
+                        config.set(show.id, key, show.__dict__[key])
 
+        folder = os.path.dirname(self.filename)
+        if not os.path.exists(folder):
+            os.makedirs(folder)
         with open(self.filename, 'w') as file:
             config.write(file)
 
@@ -168,9 +174,11 @@ Copyright: %(year)s %(station)s''',
         self._read_feed_settings(config)
         self._add_stations(config)
         if config.changed_settings:
-            with open(config_file + '.new', 'w') as new_file:
+            import shutil
+            shutil.copy(config_file, config_file + '.bak')
+            with open(config_file, 'w') as new_file:
                 config.write(new_file)
-            print("WARNING: Saved a updated version of config file as '%s.new'." % (config_file))
+            print("WARNING: Saved the old version of config file as '%s.bak' and updated configuration." % (config_file))
 
 
     def _read_feed_settings(self, config):
@@ -255,8 +263,11 @@ Copyright: %(year)s %(station)s''',
                 show_id = section_name
                 if config.has_option(show_id, 'title'):
                     show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
+                    print("WARNING: setting 'title' of show '%s' is deprecated and should be replaced by 'name'." % show_id)
+                elif config.has_option(show_id, 'name'):
+                    show_title = u'%s' % unicode(config.get(show_id, 'name'), 'utf8')
                 else:
-                    raise Exception('No title option defined for show "%s".' % show_id)
+                    raise Exception('No "title" or "name" option defined for show "%s".' % show_id)
 
                 if config.has_option(show_id, 'duration'):
                     show_duration = parse_duration(config.get(show_id, 'duration'))
