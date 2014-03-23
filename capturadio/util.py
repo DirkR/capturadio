@@ -67,4 +67,4 @@ def find_configuration():
     for location in config_locations:
         if os.path.exists(location):
             return location
-    return None
+    return os.path.expanduser('~/.capturadio/capturadiorc')

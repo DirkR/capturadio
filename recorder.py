@@ -194,12 +194,10 @@ See 'recorder.py help <command>' for more information on a specific command."""
         sys.argv.append('--help')
 
     config_location = find_configuration()
-    if config_location:
-        Configuration.folder = os.path.dirname(config_location)
-        Configuration.filename = os.path.basename(config_location)
-    else:
-        config = Configuration()
-        config.write_config()
+    Configuration.folder = os.path.dirname(config_location)
+    Configuration.filename = os.path.basename(config_location)
+    if not os.path.exists(config_location):
+        Configuration().write_config()
 
     try:
         cmd = find_command(args)
