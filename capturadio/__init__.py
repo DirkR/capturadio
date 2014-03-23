@@ -10,7 +10,6 @@ import os
 import logging
 import re
 import tempfile
-from pprint import pformat
 try:
     # Python 2.x
     from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, \

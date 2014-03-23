@@ -43,15 +43,15 @@ Examples:
         print('No shows defined, add shows at first!')
         sys.exit(0)
     args = args[0]
-    if args[0] in config.shows:
-        show = config.shows[args[0]]
+    if args['<show>'] in config.shows:
+        show = config.shows[args['<show>']]
         try:
             recorder = Recorder()
             recorder.capture(show)
         except Exception as e:
             print('Unable to capture recording: %s' % e)
     else:
-        print('Unknown show %r' % args[0])
+        print('Unknown show %r' % args['<show>'])
 
 
 def config_setup(args):
