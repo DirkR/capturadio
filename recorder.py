@@ -22,7 +22,10 @@ from capturadio.rss import Audiofiles
 from capturadio.util import find_configuration, parse_duration
 
 logging.basicConfig(
-    filename=os.path.join(Configuration.folder, 'log'),
+    filename=os.path.join(
+        Configuration.folder,
+        'log' if Configuration.folder.endswith('capturadio') else 'capturadio.log'
+    ),
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
     level=logging.DEBUG,
 )
