@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf_8 -*-
-dd="""capturadio is a library to capture mp3 radio streams, process
+"""capturadio is a library to capture mp3 radio streams, process
 the recorded media files and generate an podcast-like rss feed.
 
  * http://github.com/dirkr/capturadio

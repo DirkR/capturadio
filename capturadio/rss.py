@@ -28,6 +28,10 @@ from capturadio.util import url_fix, format_date
 
 
 class Audiofile:
+    """
+    A class to store metadata of a media file.
+    """
+
     def __init__(self, filename):
         self.log = logging.getLogger('create_podcast_feed.Audiofile')
         self.config = Configuration()
@@ -44,10 +48,14 @@ class Audiofile:
         self.size = os.path.getsize(self.path)
         self.pubdate = dt.datetime.fromtimestamp(os.path.getmtime(self.path))
 
-    def extract_metadata(self, audio):
+    def extract_metadata(self, audiofile):
+        """
+        Extract the ID3 tags of the file 'audiofile' and store them as object
+        attributes.
+        """
 
-        self.title = self.get_mp3_tag(audio, 'TIT2', self.basename[:-4])
-        self.show = self.get_mp3_tag(audio, 'TALB', None)
+        self.title = self._get_tag(audiofile, 'TIT2', self.basename[:-4])
+        self.show = self._get_tag(audiofile, 'TALB', None)
         if self.show is None:
             self.show = self.basename[:-4]
         else:
@@ -56,37 +64,52 @@ class Audiofile:
                     self.link = s.get_link_url()
                     break
         default_date = format_date(self.config.date_pattern, time.time())
-        self.date = self.get_mp3_tag(audio, 'TDRC', default_date)
-        self.artist = self.get_mp3_tag(audio, 'TPE1', self.show)
-        __playtime = self.get_mp3_tag(audio, 'TLEN', None)
+        self.date = self._get_tag(audiofile, 'TDRC', default_date)
+        self.artist = self._get_tag(audiofile, 'TPE1', self.show)
+        __playtime = self._get_tag(audiofile, 'TLEN', None)
         if __playtime is not None:
             self.playtime = int(__playtime) / 1000
         else:
             self.playtime = 0
-        self.copyright = self.get_mp3_tag(audio, 'TCOP', self.artist)
+        self.copyright = self._get_tag(
+            audiofile,
+            'TCOP',
+            self.artist
+        )
         __description = u'Show: %s<br>Episode: %s<br>Copyright: %s %s' % (
             self.show, self.title, self.date[:4], self.copyright)
-        self.description = self.get_mp3_tag(audio, "COMM:desc:'eng'",
-                                            __description)
-        self.link = self.get_mp3_tag(audio, "TCOM", u'http://www.podcast.de/')
+        self.description = self._get_tag(
+            audiofile,
+            "COMM:desc:'eng'",
+            __description
+        )
+        self.link = self._get_tag(
+            audiofile,
+            "TCOM",
+            u'http://www.podcast.de/'
+        )
 
-    def get_mp3_tag(self, audio, tag_string, default):
+    def _get_tag(self, audiofile, tag_string, default):
+        """
+        Helper function to get the contents of an ID3 tag from an audiofile.
+        """
         try:
-            return u"%s" % audio[tag_string]
-        except KeyError:
-            default
+            return u"%s" % audiofile[tag_string]
+        except (KeyError, TypeError):
+            return default
 
 
 class Audiofiles:
     """
-    A collection of audiofiles and some metadata, used as the basis for at
+    A collection of audiofiles and some metadata, used as the basis for the
+    generation of the rss feed.
     """
 
     files_cache = {}
 
     def __init__(self, local_path=''):
         self.log = logging.getLogger('create_podcast_feed.Audiofiles')
-        self.log.info('Create Audiofiles(%s)' % local_path)
+        self.log.debug('Create Audiofiles(%s)' % local_path)
         self.config = Configuration()
 
         feed_title = self.config.feed['title']
@@ -120,18 +143,28 @@ class Audiofiles:
                 local_path += '/'
 
         audio_files = Audiofiles(local_path)
-        audio_files.read_folder(path)
+        audio_files._read_folder(path)
         audio_files.write_to_file(path)
 
     def write_to_file(self, path):
+        """
+        Write the list of files as RSS formatted file.
+
+        The argument 'path' points to the folder, where the file will
+        be written to. The name of the file is specified in
+        config.feed['filename'] and defaults to 'rss.xml'.
+        """
         rss_file = self.config.feed['filename']
 
         rss = self.getrss(20)
         if len(rss.items) > 0:
             rss.write_xml(open(os.path.join(path, rss_file), "w"))
 
-    def read_folder(self, dirname):
-        self.log.info(u'read_folder: processing %s' % dirname)
+    def _read_folder(self, dirname):
+        """Helper function to read collect the audiofiles contained in
+        the folder specified with the argument 'dirname'.
+        """
+        self.log.info(u'_read_folder: processing %s' % dirname)
 
         self.dirname = dirname
         for dirname, dirnames, filenames in os.walk(dirname):
@@ -228,23 +261,13 @@ class Audiofiles:
     def _get_link_url(self, station_name):
         for id, station in self.config.stations.items():
             if station_name == station.name:
-                self.log.debug(u'    %s: found %s' % (
-                    station_name,
-                    station.link_url,
-                ))
                 return station.link_url
-        self.log.debug(u'    %s: found noting' % station_name)
         return None
 
     def _get_logo_url(self, station_name):
         for id, station in self.config.stations.items():
             if station_name == station.name:
-                self.log.debug(u'    %s: found %s' % (
-                    station_name,
-                    station.logo_url,
-                ))
                 return station.logo_url
-        self.log.debug(u'    %s: found noting' % station_name)
         return None
 
 
