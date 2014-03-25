@@ -1,4 +1,12 @@
-__author__ = 'dirk'
+"""capturadio is a library to capture mp3 radio streams, process
+the recorded media files and generate an podcast-like rss feed.
+
+ * http://github.com/dirkr/capturadio
+ * Repository and issue-tracker: https://github.com/dirkr/capturadio
+ * Licensed under the public domain
+ * Copyright (c) 2012- Dirk Ruediger <dirk@niebegeg.net>
+
+"""
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen, HTTPError, URLError, Request

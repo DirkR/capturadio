@@ -1,5 +1,16 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf_8 -*-
+dd="""capturadio is a library to capture mp3 radio streams, process
+the recorded media files and generate an podcast-like rss feed.
+
+ * http://github.com/dirkr/capturadio
+ * Repository and issue-tracker: https://github.com/dirkr/capturadio
+ * Licensed under the public domain
+ * Copyright (c) 2012- Dirk Ruediger <dirk@niebegeg.net>
+
+recorder.py is the command line program to interact with capturadio.
+"""
+
 
 import sys
 import os
