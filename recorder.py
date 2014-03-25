@@ -1,5 +1,6 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf_8 -*-
+
 import sys
 import os
 import re
@@ -115,8 +116,10 @@ Show program settings.
 
     show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
     station_ids = map(lambda id: id.encode('ascii'), config.stations.keys())
-    print('stations: %s' % ', '.join(station_ids) if len(station_ids) else 'No stations defined')
-    print('shows: %s' % ', '.join(show_ids) if len(show_ids) else 'No shows defined')
+    print('stations: %s' % ', '.join(station_ids) if len(station_ids)
+          else 'No stations defined')
+    print('shows: %s' % ', '.join(show_ids) if len(show_ids)
+          else 'No shows defined')
 
 
 def ignore_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):

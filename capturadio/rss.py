@@ -54,7 +54,8 @@ class Audiofile:
         self.copyright = self.get_mp3_tag(audio, 'TCOP', self.artist)
         __description = u'Show: %s<br>Episode: %s<br>Copyright: %s %s' % (
             self.show, self.title, self.date[:4], self.copyright)
-        self.description = self.get_mp3_tag(audio, "COMM:desc:'eng'", __description)
+        self.description = self.get_mp3_tag(audio, "COMM:desc:'eng'",
+                                            __description)
         self.link = self.get_mp3_tag(audio, "TCOM", u'http://www.podcast.de/')
 
     def get_mp3_tag(self, audio, tag_string, default):
@@ -143,7 +144,8 @@ class Audiofiles:
         for file in self.data:
             rssitem = ItunesRSSItem(
                 title=file.title,
-                link=file.link if 'link' in file.__dict__ else 'http://www.podcast.de/',
+                link=file.link if 'link' in file.__dict__
+                else 'http://www.podcast.de/',
                 author=file.artist,
                 description=file.description,
                 pubDate=file.pubdate,

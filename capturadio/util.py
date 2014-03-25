@@ -7,7 +7,10 @@ def format_date(pattern, time_value):
     elif type(time_value).__name__ == 'struct_time':
         pass
     else:
-        raise TypeError('time_value has to be a struct_time or a float. "%s" given.' % time_value)
+        raise TypeError(
+            'time_value has to be a struct_time or a float. "%s" given.' %
+            time_value
+        )
     return time.strftime(pattern, time_value)
 
 
@@ -33,7 +36,8 @@ def url_fix(s, charset='utf-8'):
     :param charset: The target charset for the URL if the url was
                     given as unicode string.
     """
-    import urlparse, urllib
+    import urlparse
+    import urllib
 
     if isinstance(s, unicode):
         s = s.encode(charset, 'ignore')
@@ -50,7 +54,8 @@ def slugify(value):
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
     """
-    import unicodedata, re
+    import unicodedata
+    import re
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
     value = unicode(re.sub('[-,;\s]+', '_', value).strip().lower())
     return value
