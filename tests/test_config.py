@@ -9,7 +9,6 @@ as they are greated and managed with the Configuration class.
 
 import os
 import sys
-import pytest
 from fixtures import test_folder, config
 
 sys.path.insert(0, os.path.abspath('.'))
@@ -178,16 +177,22 @@ station = wdr2
 
 '''.format(str(test_folder)))
 
-    config = Configuration(
+    configuration = Configuration(
         folder=str(test_folder),
         filename='capturadiorc.oldstyle',
         reset=True
     )
-    assert config.filename == os.path.join(config.folder, 'capturadiorc.oldstyle')
+    assert configuration.filename == os.path.join(
+        configuration.folder,
+        'capturadiorc.oldstyle'
+    )
+    assert Configuration.changed_settings is True
+    assert os.path.exists(configuration.filename)
+    assert os.path.exists(configuration.filename + '.bak')
     import filecmp
     assert filecmp.cmp(
-        os.path.join(config.folder, 'capturadiorc.oldstyle.new'),
-        os.path.join(config.folder, 'capturadiorc.newstyle')
+        os.path.join(configuration.folder, 'capturadiorc.oldstyle'),
+        os.path.join(configuration.folder, 'capturadiorc.newstyle')
     )
 
 
@@ -204,16 +209,17 @@ def test_station_ids(test_folder):
 
 
 def test_add_station(test_folder):
-    config = Configuration(reset=True, folder=str(test_folder))
-    config.add_station(
+    configuration = Configuration(reset=True, folder=str(test_folder))
+    assert configuration.folder == test_folder
+    configuration.add_station(
         'me',
         'http://example.org/stream',
         'Me',
         'http://example.org/logo.png'
     )
-    assert ['me', 'dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+    assert ['me', 'dkultur', 'dlf', 'wdr2'] == configuration.get_station_ids()
 
-    station = config.stations['me']
+    station = configuration.stations['me']
     assert isinstance(station, Station)
     assert station.name == 'Me'
     assert station.id == 'me'
@@ -252,25 +258,3 @@ def test_parse_duration():
     assert parse_duration("1h-15m20") == 3600
     assert parse_duration("trara") == 0
     assert parse_duration("12trara") == 12
-
-
-def test_excluded_folders():
-    excluded_folders = [
-        '/var/.git',
-        '/var/.git/tra/ra',
-        '/var/tmp/.hg',
-        '/var/tmp/.hg/git',
-        '/var/tmp/.bzr',
-        '/var/tmp/.bzr/git/tra',
-    ]
-    included_folders = [
-        '/var/git',
-        '/var/git/tra/ra',
-    ]
-
-    from recorder import ignore_folder
-
-    for folder in excluded_folders:
-        assert ignore_folder(folder) is True
-    for folder in included_folders:
-        assert ignore_folder(folder) is False

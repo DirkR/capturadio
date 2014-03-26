@@ -7,6 +7,7 @@ the recorded media files and generate an podcast-like rss feed.
  * Copyright (c) 2012- Dirk Ruediger <dirk@niebegeg.net>
 
 """
+
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen, HTTPError, URLError, Request
@@ -83,6 +84,7 @@ Copyright: %(year)s %(station)s''',
                 'filename': 'rss.xml',
             },
         }
+        Configuration._loaded_from_disk = False
 
     def __init__(self, **kwargs):
         if 'reset' in kwargs and kwargs['reset']:
@@ -112,7 +114,6 @@ Copyright: %(year)s %(station)s''',
                 self._load_config()
                 Configuration._loaded_from_disk = True
 
-
     def write_config(self):
         self.log.debug('Enter write_config')
         config = ConfigParser()
@@ -138,18 +139,18 @@ Copyright: %(year)s %(station)s''',
         for station in self.stations.values():
             config.set('stations', station.id, station.stream_url)
             config.add_section(station.id)
-            for key in ('name', 'logo_url', 'link_url'):
-                if station.__dict__[key] is not None:
-                    config.set(station.id, key, station.__dict__[key])
+            for key, value in station.__dict__.items():
+                if value is not None:
+                    config.set(station.id, key, value)
 
         for show in self.shows.values():
             config.add_section(show.id)
-            for key in ('name', 'station', 'duration', 'logo_url', 'link_url'):
-                if show.__dict__[key] is not None:
-                    if isinstance(show.__dict__[key], Station):
-                        config.set(show.id, key, show.station.id)
+            for key, value in show.__dict__.items():
+                if value is not None:
+                    if isinstance(value, Station):
+                        config.set(show.id, key, value.id)
                     else:
-                        config.set(show.id, key, show.__dict__[key])
+                        config.set(show.id, key, value)
 
         folder = os.path.dirname(self.filename)
         if not os.path.exists(folder):
@@ -157,13 +158,12 @@ Copyright: %(year)s %(station)s''',
         with open(self.filename, 'w') as file:
             config.write(file)
 
-
     def _load_config(self):
         config_file = os.path.expanduser(self.filename)
         self.log.debug("Enter _load_config(%s)" % config_file)
 
         config = ConfigParser()
-        config.changed_settings = False  # track changes
+        Configuration.changed_settings = False  # track changes
 
         config.read(config_file)
         if config.has_section('settings'):
@@ -181,13 +181,12 @@ Copyright: %(year)s %(station)s''',
                 self.comment_pattern = pattern
         self._read_feed_settings(config)
         self._add_stations(config)
-        if config.changed_settings:
+        if Configuration.changed_settings:
             import shutil
             shutil.copy(config_file, config_file + '.bak')
-            with open(config_file, 'w') as new_file:
-                config.write(new_file)
+            with open(config_file, 'w') as file:
+                config.write(file)
             print("WARNING: Saved the old version of config file as '%s.bak' and updated configuration." % (config_file))
-
 
     def _read_feed_settings(self, config):
         if config.has_section('feed'):
@@ -203,7 +202,7 @@ Copyright: %(year)s %(station)s''',
                 else:
                     print("WARNING: Removed setting 'feed.url' from configuration file.")
                 config.remove_option('feed', 'url')
-                config.changed_settings = True
+                Configuration.changed_settings = True
             if config.has_option('feed', 'title'):
                 self.feed['title'] = config.get('feed', 'title')
             if config.has_option('feed', 'about_url'):
@@ -251,7 +250,7 @@ Copyright: %(year)s %(station)s''',
                             config.set(show_id, 'station', station_id)
                             print("WARNING: added show section '%s' in configuration file." % (show_id))
                     config.remove_option(station_id, 'shows')
-                    config.changed_settings = True
+                    Configuration.changed_settings = True
 
                 if config.has_option(station_id, 'link_url'):
                     station.link_url = config.get(station_id, 'link_url')
@@ -362,7 +361,9 @@ class Station:
 
 
 class Show:
-    """Describes a single show, consists of episodes and belongs to a station"""
+    """
+    Describes a single show, consists of episodes and belongs to a station.
+    """
 
     def __init__(self, station, id, name, duration, logo_url=None):
         if not isinstance(station, Station):
