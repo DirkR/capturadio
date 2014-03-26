@@ -28,6 +28,20 @@ Install the application by running the setup script:
 
     python setup.py install
 
+The app needs a configuration file. Simply run
+
+    recorder.py config setup
+
+and it will create a configuration at `~/.capturadio/capturadiorc`.
+You should edit the file and customize it. Especially the destination folder
+and the base_url should be adopted.
+
+Run the command
+
+    recorder.py config list
+
+to see the current configuration.
+
 ## Usage
 
 _CaptuRadio_ needs some information on the commandline to operate correctly.
@@ -51,12 +65,18 @@ See `recorder.py help <command>` for more information on a specific command.
 
 ## Configuration
 
-At startup _CaptuRadio_ reads all configuration data from `~/.capturadio/capturadiorc`. If this file does not
-exist, then you have to create it. _CaptuRadio_ comes with a sample configuration file as template.
+At startup _CaptuRadio_ reads all configuration data from the configuration
+file. It looks for it at
 
-The station is defined in `~/.capturadio/capturadiorc` in
-the section `[]stations]`. Every entry consists of a key-value-pair
-defining the station name and the MP3 stream URL.
+  * ./capturadiorc (in the current directory)
+  * ~/.capturadio/capturadiorc
+  * ~/.capturadiorc'
+  * /etc/capturadiorc
+
+If this file does not exist, then `~/.capturadio/capturadiorc` is created using defult values.
+
+The stations is defined in the section `[stations]`. Every entry consists of a key-value-pair
+defining the station identifier and the MP3 stream URL.
 
     [stations]
     station1 = http://example.org/station1/mp3
@@ -102,6 +122,15 @@ The _CaptuRadio_ code is Freeware.
 * The command line interface has been changed completely.
   The former arguments do not work anymore. See `recorder.py help
   show capture` for details.
+* The configuration file can be placed on different locations:
+
+    * ./capturadiorc (in the current directory)
+    * ~/.capturadio/capturadiorc
+    * ~/.capturadiorc'
+    * /etc/capturadiorc
+
+If no configuration file can be found, then a new will be created at
+`~/.capturadio/capturadiorc`.
 
 #### Version 0.7 -- 2012-02-14
 
