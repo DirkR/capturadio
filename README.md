@@ -115,7 +115,7 @@ The _CaptuRadio_ code is Freeware.
 
 ## Version History
 
-### Version 0.9 -- 2014-03-XX
+### Version 0.9 -- 2014-03-27
 
 * The script 'create_podcast_feed.py' has been incorporated into the
   'recorder.py' script. Run 'recorder.py feed update' regulary.
