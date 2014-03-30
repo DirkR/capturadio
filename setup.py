@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
@@ -6,17 +7,36 @@ from capturadio import version_string as capturadio_version
 with open('README.md') as f:
     readme = f.read()
 
-with open('LICENSE') as f:
-    license = f.read()
-
 setup(
     name='capturadio',
     version=capturadio_version,
-    description='CaptuRadio is a tool to record shows from internet radio stations to your computer or server.',
-    long_description=readme,
+    description="""CaptuRadio is a tool to record shows from internet
+    radio stations to your computer or server.""",
     author='Dirk Ruediger',
     author_email='dirk@niebegeg.net',
     url='https://github.com/dirkr/capturadio',
-    license=license,
-    packages=find_packages(exclude=('tests', 'docs', 'examples'))
+    long_description=readme,
+    classifiers=[
+        "Topic :: Internet",
+        "Topic :: Multimedia",
+        "Development Status :: 5 - Production/Stable",
+        "Operating System :: OS Independent",
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2.7",
+        "License :: Freeware",
+    ],
+    install_requires=[
+        'PyRSS2Gen>=1.1',
+        'docopt>=0.6',
+        'mutagenx>=1.22',
+        'pytest>=2.3',
+    ],
+    packages=find_packages(exclude=('docs', 'examples')),
+    include_package_data = True,
+    package_data = {
+        '': ['*.txt', '*.md'],
+        # 'capturadio': ['*.msg'],
+    },
+    scripts=["recorder.py"],
+    test_suite='tests',
 )

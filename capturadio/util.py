@@ -1,4 +1,14 @@
-__author__ = 'dirk'
+"""capturadio is a library to capture mp3 radio streams, process
+the recorded media files and generate an podcast-like rss feed.
+
+ * http://github.com/dirkr/capturadio
+ * Repository and issue-tracker: https://github.com/dirkr/capturadio
+ * Licensed under the public domain
+ * Copyright (c) 2012- Dirk Ruediger <dirk@niebegeg.net>
+
+The module capturadio.util provides some helper funtions.
+"""
+
 
 def format_date(pattern, time_value):
     import time
@@ -7,7 +17,10 @@ def format_date(pattern, time_value):
     elif type(time_value).__name__ == 'struct_time':
         pass
     else:
-        raise TypeError('time_value has to be a struct_time or a float. "%s" given.' % time_value)
+        raise TypeError(
+            'time_value has to be a struct_time or a float. "%s" given.' %
+            time_value
+        )
     return time.strftime(pattern, time_value)
 
 
@@ -33,7 +46,8 @@ def url_fix(s, charset='utf-8'):
     :param charset: The target charset for the URL if the url was
                     given as unicode string.
     """
-    import urlparse, urllib
+    import urlparse
+    import urllib
 
     if isinstance(s, unicode):
         s = s.encode(charset, 'ignore')
@@ -50,7 +64,22 @@ def slugify(value):
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
     """
-    import unicodedata, re
+    import unicodedata
+    import re
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
     value = unicode(re.sub('[-,;\s]+', '_', value).strip().lower())
     return value
+
+
+def find_configuration():
+    import os
+    config_locations = [
+        os.path.join(os.getcwd(), 'capturadiorc'),
+        os.path.expanduser('~/.capturadio/capturadiorc'),
+        os.path.expanduser('~/.capturadiorc'),
+        os.path.join('/etc', 'capturadiorc'),
+    ]
+    for location in config_locations:
+        if os.path.exists(location):
+            return location
+    return os.path.expanduser('~/.capturadio/capturadiorc')
