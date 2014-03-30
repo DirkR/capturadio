@@ -255,7 +255,8 @@ class Audiofiles:
         else:
             return PyRSS2Gen.Image(
                 url=config.feed['default_logo_url'],
-                title=rssitem.author, link=link_url
+                title=rssitem.author,
+                link=link_url
             )
 
     def _get_link_url(self, station_name):
