@@ -33,6 +33,7 @@ class Audiofile:
     """
 
     def __init__(self, filename):
+        self.filename = filename
         self.log = logging.getLogger('create_podcast_feed.Audiofile')
         self.config = Configuration()
         self.path = filename
@@ -187,23 +188,26 @@ class Audiofiles:
     def rssitems(self, n=10):
         result = []
         for file in self.data:
-            rssitem = ItunesRSSItem(
-                title=file.title,
-                link=file.link if 'link' in file.__dict__
-                else 'http://www.podcast.de/',
-                author=file.artist,
-                description=file.description,
-                pubDate=file.pubdate,
-                guid=PyRSS2Gen.Guid(file.url),
-                enclosure=PyRSS2Gen.Enclosure(
-                    file.url,
-                    file.filesize,
-                    "audio/mpeg"
+            try:
+                rssitem = ItunesRSSItem(
+                    title=file.title,
+                    link=file.link if 'link' in file.__dict__
+                    else 'http://www.podcast.de/',
+                    author=file.artist,
+                    description=file.description,
+                    pubDate=file.pubdate,
+                    guid=PyRSS2Gen.Guid(file.url),
+                    enclosure=PyRSS2Gen.Enclosure(
+                        file.url,
+                        file.filesize,
+                        "audio/mpeg"
+                    )
                 )
-            )
-            rssitem.image = self._create_image_tag(rssitem)
-            rssitem.duration = str(dt.timedelta(seconds=file.playtime))
-            result.append(rssitem)
+                rssitem.image = self._create_image_tag(rssitem)
+                rssitem.duration = str(dt.timedelta(seconds=file.playtime))
+                result.append(rssitem)
+            except AttributeError as e:
+                raise RuntimeError("{}: {}".format(file.basename, e.message))
 
         waste = [(i.pubDate, i) for i in result]
         waste.sort()
