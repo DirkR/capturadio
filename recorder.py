@@ -224,7 +224,10 @@ See 'recorder.py help <command>' for more information on a specific command."""
         exit("%r is not a valid command. See 'recorder help'." %
              cmd.replace('_', ' '))
 
-    method(args)
+    try:
+        method(args)
+    except RuntimeError as e:
+      exit("ERROR: {}".format(e.message))
 
 
 if __name__ == "__main__":
