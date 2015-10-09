@@ -3,10 +3,9 @@ destination = ~/Downloads
 date_pattern = %d.%m.%Y %H:%M
 
 [stations]
-dlf = http://dradio.ic.llnwd.net/stream/dradio_dlf_m_a
-dkultur = http://dradio.ic.llnwd.net/stream/dradio_dkultur_m_a
+dlf = http://example.org/dlf
+dkultur = http://example.org/dkultur
 
-; settings for the Podcast feed
 [feed]
 url = http://music.example.org
 title = Internet Radio Recordings
@@ -17,7 +16,25 @@ filename = rss.xml
 default_logo_url = http://example.org/pic.png
 default_logo_copyright = Yagraph http://commons.wikimedia.org/wiki/File:Podcast-icon.svg
 
-; additional settings for station 'dlf'
 [dlf]
 name = Deutschlandfunk
-logo_url = http://www.dradio.de/images/31064/square/
+link_url = http://example.org/dlf
+logo_url = http://example.org/dlf.png
+
+[dkultur]
+name = Deutschlandradio Kultur
+link_url = http://example.org/dkultur
+logo_url = http://example.org/dkultur.png
+
+[news]
+title = Latest news
+duration = 300
+link_url = http://example.org/dlr/news
+logo_url = http://example.org/dlr/news.png
+station = dkultur
+
+[weather]
+title = Weather forecast
+duration = 300
+logo_url = http://example.org/weather.png
+station = dlf
