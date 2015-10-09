@@ -140,6 +140,8 @@ Copyright: %(year)s %(station)s''',
             config.set('stations', station.id, station.stream_url)
             config.add_section(station.id)
             for key, value in station.__dict__.items():
+                if key == 'shows':
+                    continue
                 if value is not None:
                     config.set(station.id, key, value)
 

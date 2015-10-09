@@ -83,7 +83,7 @@ Options:
     config = Configuration()
     bbcradio2 = config.add_station(
         'bbc2',
-        'http://bbcmedia.ic.llnwd.net/stream/bbcmedia_intl_lc_radio2_p?s=1334169157&e=1334183557&h=6d38a92ed5d84d5a4a1a8b88df6fbe33',
+        'http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio2_mf_p?s=1423688987&e=1423703387&h=1f97ff4f9b0e0f1ae988bdf684f233b3',
         'BBC Radio 2',
         'http://www.bbc.co.uk/radio2/images/homepage/bbcradio2.gif'
     )
@@ -94,6 +94,13 @@ Options:
         parse_duration('58m'),
     )
     bobharriscountry.link_url = 'http://www.bbc.co.uk/programmes/b006x527'
+    bobharrissunday = config.add_show(
+        bbcradio2,
+        'bobharrissunday',
+        'Bob Harris Sunday',
+        parse_duration('2h57m'),
+    )
+    bobharrissunday.link_url = 'http://www.bbc.co.uk/programmes/b006wqtf'
     config.write_config()
     print """
 Created a new configuration at %(filename)s.
