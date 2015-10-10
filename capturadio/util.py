@@ -10,6 +10,7 @@ The module capturadio.util provides some helper funtions.
 """
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from capturadio import PY3
 
 
 def format_date(pattern, time_value):
@@ -48,10 +49,14 @@ def url_fix(s, charset='utf-8'):
     :param charset: The target charset for the URL if the url was
                     given as unicode string.
     """
-    import urlparse
-    import urllib
+    if PY3:
+        import urllib.parse as urlparse
+        import urllib.parse as urllib
+    else:
+        import urlparse
+        import urllib
 
-    if isinstance(s, unicode):
+    if not PY3 and isinstance(s, unicode):
         s = s.encode(charset, 'ignore')
 
     scheme, netloc, path, qs, anchor = urlparse.urlsplit(s)
@@ -69,7 +74,10 @@ def slugify(value):
     import unicodedata
     import re
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = unicode(re.sub('[-,;\s]+', '_', value).strip().lower())
+    if PY3:
+        value = re.sub('[-,;\s]+', '_', value.decode()).strip().lower()
+    else:
+        value = unicode(re.sub('[-,;\s]+', '_', value).strip().lower())
     return value
 
 

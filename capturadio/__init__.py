@@ -544,7 +544,7 @@ class Recorder:
             request.get_method = lambda: 'HEAD'
             try:
                 response = urlopen(request)
-                logo_type = response.info().gettype()
+                logo_type = response.getheader('Content-Type')
 
                 if logo_type in ['image/jpeg', 'image/png']:
                     img_data = urlopen(url).read()

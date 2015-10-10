@@ -12,7 +12,6 @@ The module capturadio.rss provides classes to generate RSS streams.
 from __future__ import unicode_literals
 
 import datetime as dt
-import urllib
 import os
 import time
 import logging
@@ -20,10 +19,12 @@ import PyRSS2Gen
 try:
     # Python 2.x
     from mutagen.mp3 import MP3, HeaderNotFoundError
+    import urllib
 except ImportError:
     # Python 3.x
+    import urllib.parse as urllib
     from mutagenx.mp3 import MP3, HeaderNotFoundError
-from capturadio import Configuration
+from capturadio import Configuration, PY3
 from capturadio import version_string as capturadio_version
 from capturadio.util import url_fix, format_date
 
@@ -61,8 +62,10 @@ class Audiofile:
         if self.show is None:
             self.show = self.basename[:-4]
         else:
+            """Fixed for Unicode output"""
+            text = str if PY3 else unicode
             for s in self.config.shows.values():
-                if unicode(s.name) == self.show:
+                if text(s.name) == self.show:
                     self.link = s.get_link_url()
                     break
         default_date = format_date(self.config.date_pattern, time.time())
