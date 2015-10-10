@@ -7,15 +7,21 @@ the recorded media files and generate an podcast-like rss feed.
  * Copyright (c) 2012- Dirk Ruediger <dirk@niebegeg.net>
 
 """
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 try:
     # For Python 3.0 and later
     from urllib.request import urlopen, HTTPError, URLError, Request
+    PY3 = True
 except ImportError:
     # Fall back to Python 2's urllib2
     from urllib2 import urlopen, HTTPError, URLError, Request
+    PY3 = False
+
 import time
 import os
+import codecs
 import logging
 import re
 import tempfile
@@ -28,14 +34,37 @@ except ImportError:
     from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
         TLEN, TPE1, TCOP, COMM, TCOM, APIC
 try:
-    from ConfigParser import ConfigParser
+    from ConfigParser import ConfigParser, DEFAULTSECT
 except ImportError:
-    from configparser import ConfigParser
+    from configparser import ConfigParser, DEFAULTSECT
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 9, 0)
 version_string = ".".join(map(str, version))
 
+
+class UnicodeConfigParser(ConfigParser):
+    """The class UnicodeConfigParser is derived from RawConfigParser and
+    overloads the method write() to output unicode data."""
+
+    def __init__(self, *args, **kwargs):
+        ConfigParser.__init__(self, *args, **kwargs)
+
+    def write(self, fp):
+        """Fixed for Unicode output"""
+        text = str if PY3 else unicode
+        if self._defaults:
+            fp.write("[%s]\n" % DEFAULTSECT)
+            for (key, value) in self._defaults.items():
+                fp.write("%s = %s\n" % (key, text(value).replace('\n', '\n\t')))
+            fp.write("\n")
+        for section in self._sections:
+            fp.write("[%s]\n" % section)
+            for (key, value) in self._sections[section].items():
+                if key != "__name__":
+                    fp.write("%s = %s\n" %
+                                (key, text(value).replace('\n','\n\t')))
+            fp.write("\n")
 
 class Configuration:   # implements Borg pattern
     folder = os.getcwd()
@@ -116,7 +145,7 @@ Copyright: %(year)s %(station)s''',
 
     def write_config(self):
         self.log.debug('Enter write_config')
-        config = ConfigParser()
+        config = UnicodeConfigParser()
         config.add_section('settings')
         for key in ('destination', 'date_pattern', 'comment_pattern'):
             if self.__dict__[key] is not None:
@@ -164,21 +193,27 @@ Copyright: %(year)s %(station)s''',
         config_file = os.path.expanduser(self.filename)
         self.log.debug("Enter _load_config(%s)" % config_file)
 
-        config = ConfigParser()
+        config = UnicodeConfigParser()
         Configuration.changed_settings = False  # track changes
 
-        config.read(config_file)
+        config.readfp(codecs.open(config_file, "r", "utf8"))
         if config.has_section('settings'):
             if config.has_option('settings', 'destination'):
                 self.set_destination(config.get('settings', 'destination'))
             if config.has_option('settings', 'date_pattern'):
-                self.date_pattern = config.get('settings', 'date_pattern', True)
+                if PY3:
+                    self.date_pattern = config.get('settings', 'date_pattern', raw=True)
+                else:
+                    self.date_pattern = config.get('settings', 'date_pattern', True)
             if config.has_option('settings', 'tempdir'):
                 self.tempdir = os.path.abspath(os.path.expanduser(config.get('settings', 'tempdir')))
                 if not os.path.exists(self.tempdir):
                     os.makedirs(self.tempdir)
             if config.has_option('settings', 'comment_pattern'):
-                pattern = config.get('settings', 'comment_pattern', True)
+                if PY3:
+                    pattern = config.get('settings', 'comment_pattern', raw=True)
+                else:
+                    pattern = config.get('settings', 'comment_pattern', True)
                 pattern = re.sub(r'%([a-z_][a-z_]+)', r'%(\1)s', pattern)
                 self.comment_pattern = pattern
         self._read_feed_settings(config)
@@ -186,7 +221,7 @@ Copyright: %(year)s %(station)s''',
         if Configuration.changed_settings:
             import shutil
             shutil.copy(config_file, config_file + '.bak')
-            with open(config_file, 'w') as file:
+            with codecs.open(config_file, 'w', 'utf8') as file:
                 config.write(file)
             print("WARNING: Saved the old version of config file as '%s.bak' and updated configuration." % (config_file))
 
@@ -236,7 +271,7 @@ Copyright: %(year)s %(station)s''',
                 station_logo_url = self.feed['default_logo_url']
                 if config.has_section(station_id):
                     if config.has_option(station_id, 'name'):
-                        station_name = u'%s' % unicode(config.get(station_id, 'name'), 'utf8')
+                        station_name = config.get(station_id, 'name')
                     if config.has_option(station_id, 'logo_url'):
                         station_logo_url = config.get(station_id, 'logo_url')
                 station = self.add_station(station_id, station_stream, station_name, station_logo_url)
@@ -260,7 +295,7 @@ Copyright: %(year)s %(station)s''',
                     station.link_url = self.feed['base_url']
 
                 if config.has_option(station_id, 'date_pattern'):
-                    station.date_pattern = config.get(station_id, 'date_pattern', True)
+                    station.date_pattern = config.get(station_id, 'date_pattern', raw=True)
 
                 self._add_shows(config, station)
 
@@ -271,10 +306,10 @@ Copyright: %(year)s %(station)s''',
             if config.has_option(section_name, 'station') and config.get(section_name, 'station') == station.id:
                 show_id = section_name
                 if config.has_option(show_id, 'title'):
-                    show_title = u'%s' % unicode(config.get(show_id, 'title'), 'utf8')
+                    show_title = config.get(show_id, 'title')
                     print("WARNING: setting 'title' of show '%s' is deprecated and should be replaced by 'name'." % show_id)
                 elif config.has_option(show_id, 'name'):
-                    show_title = u'%s' % unicode(config.get(show_id, 'name'), 'utf8')
+                    show_title = config.get(show_id, 'name')
                 else:
                     raise Exception('No "title" or "name" option defined for show "%s".' % show_id)
 
@@ -296,7 +331,7 @@ Copyright: %(year)s %(station)s''',
                     show.link_url = station.link_url
 
                 if config.has_option(show_id, 'date_pattern'):
-                    show.date_pattern = config.get(show_id, 'date_pattern', True)
+                    show.date_pattern = config.get(show_id, 'date_pattern', raw=True)
 
 
     def set_destination(self, destination):
@@ -304,21 +339,20 @@ Copyright: %(year)s %(station)s''',
             destination = os.path.expanduser(destination)
             if not os.path.isdir(destination):
                 os.makedirs(destination)
-            destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
-            self.destination = unicode(destination)
+            self.destination = os.path.realpath(os.path.abspath(os.path.expanduser(destination)))
             return self.destination
         #raise Exception("Could not set destination %s" % destination)
 
 
     def get_station_ids(self):
         if self.stations is not None:
-            return self.stations.keys()
+            return list(self.stations.keys()) if PY3 else self.stations.keys()
         else:
             return None
 
 
     def add_station(self, id, stream_url, name=None, logo_url=None):
-        station = Station(unicode(id, 'utf-8'), stream_url, name, logo_url)
+        station = Station(id, stream_url, name, logo_url)
         self.stations[id] = station
         self.log.debug(u'  %s' % station)
         return station
@@ -345,10 +379,10 @@ class Station:
         self.shows = []
 
     def __repr__(self):
-        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))
+        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
 
     def __str__(self):
-        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, unicode(self.name), len(self.shows))
+        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
 
     def get_link_url(self):
         if 'link_url' in self.__dict__:
@@ -380,11 +414,11 @@ class Show:
 
     def __repr__(self):
         return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
-            self.id, unicode(self.name), self.duration, self.station.id)
+            self.id, self.name, self.duration, self.station.id)
 
     def __str__(self):
         return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
-            self.id, unicode(self.name), self.duration, self.station.id)
+            self.id, self.name, self.duration, self.station.id)
 
     def get_link_url(self):
         if 'link_url' in self.__dict__:
@@ -440,13 +474,17 @@ class Recorder:
         not_ready = True
         self.log.info("write %s to %s" % (stream_url, file_name))
         try:
-            file = open(file_name, 'w+b')
-            stream = urlopen(stream_url)
-            while not_ready:
-                file.write(stream.read(10240))
-                if time.time() - self.start_time > duration:
-                    not_ready = False
-            file.close()
+            with open(file_name, 'wb') as file:
+                stream = urlopen(stream_url)
+                while not_ready:
+                    file.write(stream.read(10240))
+                    if time.time() - self.start_time > duration:
+                        not_ready = False
+        except UnicodeDecodeError as e:
+            message = "Invalid input: %s (%s)" % (e.reason, e.object[e.start:e.end])
+            self.log.error("_write_stream_to_file: %s" % message)
+            os.remove(file_name)
+            raise e
         except Exception as e:
             message = "Could not capture show, because an exception occured: %s" % e.message
             self.log.error("_write_stream_to_file: %s" % message)

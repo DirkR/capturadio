@@ -8,6 +8,7 @@ Tests for the capturadio.Recorder class.
 import sys
 import os
 import time
+import codecs
 import pytest
 from fixtures import test_folder, config
 sys.path.insert(0, os.path.abspath('.'))
@@ -17,7 +18,8 @@ from capturadio import Recorder, Show
 
 def test_write_file(test_folder, config, monkeypatch):
     def mockreturn(path):
-        return open(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), 'r')
+        filename = os.path.join(os.path.dirname(__file__), 'testfile.mp3')
+        return open(filename, 'rb')
     import capturadio
     monkeypatch.setattr(capturadio, 'urlopen', mockreturn)
 

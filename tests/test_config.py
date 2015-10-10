@@ -75,7 +75,7 @@ def test_configuration(test_folder):
 
 def test_old_style_configuration(test_folder):
     test_folder.join('capturadiorc.oldstyle').write('''[settings]
-destination = {0}/demodata ; path relative to runtime dir
+destination = {0}/demodata
 date_pattern = %d.%m.%Y %H:%M
 
 [stations]
@@ -136,7 +136,6 @@ dkultur = http://example.org/dkultur
 wdr2 = http://example.org/wdr2
 
 [feed]
-base_url = http://my.example.org
 title = Internet Radio Recordings
 about_url = http://my.example.org/about.html
 description = Recordings
@@ -144,6 +143,7 @@ language = en
 filename = rss.xml
 default_logo_url = http://example.org/default.png
 default_logo_copyright = A Creative Commons license
+base_url = http://my.example.org
 
 [dlf]
 name = Deutschlandfunk
@@ -205,7 +205,7 @@ def test_change_destination(test_folder):
 
 def test_station_ids(test_folder):
     config = Configuration(reset=True, folder=str(test_folder))
-    assert ['dkultur', 'dlf', 'wdr2'] == config.get_station_ids()
+    assert ['dkultur', 'dlf', 'wdr2'].sort() == list(config.get_station_ids()).sort()
 
 
 def test_add_station(test_folder):
@@ -217,7 +217,7 @@ def test_add_station(test_folder):
         'Me',
         'http://example.org/logo.png'
     )
-    assert ['me', 'dkultur', 'dlf', 'wdr2'] == configuration.get_station_ids()
+    assert ['me', 'dkultur', 'dlf', 'wdr2'].sort() == configuration.get_station_ids().sort()
 
     station = configuration.stations['me']
     assert isinstance(station, Station)

@@ -8,6 +8,8 @@ the recorded media files and generate an podcast-like rss feed.
 
 The module capturadio.util provides some helper funtions.
 """
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 
 def format_date(pattern, time_value):

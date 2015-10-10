@@ -8,7 +8,8 @@ the recorded media files and generate an podcast-like rss feed.
 
 The module capturadio.rss provides classes to generate RSS streams.
 """
-
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 import datetime as dt
 import urllib

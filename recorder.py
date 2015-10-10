@@ -10,7 +10,8 @@ the recorded media files and generate an podcast-like rss feed.
 
 recorder.py is the command line program to interact with capturadio.
 """
-
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals, print_function
 
 import sys
 import os
@@ -102,7 +103,7 @@ Options:
     )
     bobharrissunday.link_url = 'http://www.bbc.co.uk/programmes/b006wqtf'
     config.write_config()
-    print """
+    print("""
 Created a new configuration at %(filename)s.
 The URL is set to %(url)s and the files
 are stored at %(destination)s.
@@ -114,6 +115,7 @@ Use the command 'config list' to see all settings.""" % {
         'filename': config.filename,
         'url': config.feed['base_url'],
     }
+          )
 
 
 def config_list(args):
@@ -130,10 +132,10 @@ Show program settings.
         val = config._shared_state[key]
         if key == 'comment_pattern':
             val = val.replace('\n', '\n      ')
-        print u"%s: %s" % (key, val)
+        print("%s: %s" % (key, val))
 
     for key, val in config._shared_state['feed'].items():
-        print u"feed.%s: %s" % (key, val)
+        print("feed.%s: %s" % (key, val))
 
     show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
     station_ids = map(lambda id: id.encode('ascii'), config.stations.keys())

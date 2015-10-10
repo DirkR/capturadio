@@ -1,4 +1,5 @@
 """Fixtures for capturadio tests"""
+# -*- coding: utf-8 -*-
 
 import pytest
 
@@ -6,14 +7,14 @@ import pytest
 def test_folder(request, tmpdir):
   olddir = tmpdir.chdir()
   request.addfinalizer(olddir.chdir)
-  tmpdir.join('capturadiorc').write('''
+  text = u'''
 [settings]
 destination = {0}/demodata
 date_pattern = %d.%m.%Y
 comment_pattern:  Show: %show
   Date: %date
   Website: %link_url
-  Copyright: %year %station
+  Copyright: © Dirk Rüdiger %year %station
 
 [stations]
 dlf = http://example.org/dlf
@@ -22,9 +23,9 @@ wdr2 = http://example.org/wdr2
 
 [feed]
 url = http://my.example.org
-title = Internet Radio Recordings
+title = Internet Radio Recördings
 about_url = http://my.example.org/about.html
-description = Recordings
+description = Recördings
 language = en
 filename = rss.xml
 default_logo_url = http://example.org/default.png
@@ -61,7 +62,15 @@ link_url = http://example.org/wdr2/news
 logo_url = http://example.org/wdr2/news.png
 station = wdr2
 date_pattern = %Y-%m-%d
-'''.format(str(tmpdir)))
+'''.format(str(tmpdir))
+  from capturadio import PY3
+  if PY3:
+    tmpdir.join('capturadiorc').write(text, 'w')
+  else:
+    import codecs
+    cfilename = tmpdir.join('capturadiorc')
+    with codecs.open(str(cfilename), 'w', 'utf8') as cfile:
+        cfile.write(text)
   return tmpdir
 
 @pytest.fixture
