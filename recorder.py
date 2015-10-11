@@ -138,8 +138,8 @@ Show program settings.
     for key, val in config._shared_state['feed'].items():
         print("feed.%s: %s" % (key, val))
 
-    show_ids = map(lambda id: id.encode('ascii'), config.shows.keys())
-    station_ids = map(lambda id: id.encode('ascii'), config.stations.keys())
+    show_ids = config.shows.keys()
+    station_ids = config.stations.keys()
     print('stations: %s' % ', '.join(station_ids) if len(station_ids)
           else 'No stations defined')
     print('shows: %s' % ', '.join(show_ids) if len(show_ids)
