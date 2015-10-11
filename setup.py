@@ -37,6 +37,10 @@ setup(
         '': ['*.txt', '*.md'],
         # 'capturadio': ['*.msg'],
     },
-    scripts=["recorder.py"],
+    entry_points = {
+        'console_scripts': [
+            'recorder = capturadio.recorder_cli:main'
+        ],
+    },
     test_suite='tests',
 )
