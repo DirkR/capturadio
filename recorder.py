@@ -127,6 +127,7 @@ Show program settings.
     """
     config = Configuration()
 
+    print("%s: %s" % ('Configutation file', config.filename))
     for key in ['destination', 'date_pattern', 'comment_pattern', 'folder',
                 'filename', 'tempdir']:
         val = config._shared_state[key]
