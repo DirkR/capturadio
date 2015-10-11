@@ -6,3 +6,5 @@ rss.xml
 dist
 build
 *.egg-info
+.coverage
+htmlcov
