@@ -10,33 +10,16 @@ the recorded media files and generate an podcast-like rss feed.
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-try:
-    # For Python 3.0 and later
-    from urllib.request import urlopen, HTTPError, URLError, Request
-    PY3 = True
-except ImportError:
-    # Fall back to Python 2's urllib2
-    from urllib2 import urlopen, HTTPError, URLError, Request
-    PY3 = False
-
+from urllib.request import urlopen, HTTPError, URLError, Request
 import time
 import os
 import codecs
 import logging
 import re
 import tempfile
-try:
-    # Python 2.x
-    from mutagen.id3 import ID3, TIT2, TDRC, TCON, TALB, \
+from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
         TLEN, TPE1, TCOP, COMM, TCOM, APIC
-except ImportError:
-    # Python 3.x
-    from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
-        TLEN, TPE1, TCOP, COMM, TCOM, APIC
-try:
-    from ConfigParser import ConfigParser, DEFAULTSECT
-except ImportError:
-    from configparser import ConfigParser, DEFAULTSECT
+from configparser import ConfigParser, DEFAULTSECT
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 9, 0)
@@ -52,7 +35,7 @@ class UnicodeConfigParser(ConfigParser):
 
     def write(self, fp):
         """Fixed for Unicode output"""
-        text = str if PY3 else unicode
+        text = str
         if self._defaults:
             fp.write("[%s]\n" % DEFAULTSECT)
             for (key, value) in self._defaults.items():
@@ -201,19 +184,13 @@ Copyright: %(year)s %(station)s''',
             if config.has_option('settings', 'destination'):
                 self.set_destination(config.get('settings', 'destination'))
             if config.has_option('settings', 'date_pattern'):
-                if PY3:
-                    self.date_pattern = config.get('settings', 'date_pattern', raw=True)
-                else:
-                    self.date_pattern = config.get('settings', 'date_pattern', True)
+                self.date_pattern = config.get('settings', 'date_pattern', raw=True)
             if config.has_option('settings', 'tempdir'):
                 self.tempdir = os.path.abspath(os.path.expanduser(config.get('settings', 'tempdir')))
                 if not os.path.exists(self.tempdir):
                     os.makedirs(self.tempdir)
             if config.has_option('settings', 'comment_pattern'):
-                if PY3:
-                    pattern = config.get('settings', 'comment_pattern', raw=True)
-                else:
-                    pattern = config.get('settings', 'comment_pattern', True)
+                pattern = config.get('settings', 'comment_pattern', raw=True)
                 pattern = re.sub(r'%([a-z_][a-z_]+)', r'%(\1)s', pattern)
                 self.comment_pattern = pattern
         self._read_feed_settings(config)
@@ -346,7 +323,7 @@ Copyright: %(year)s %(station)s''',
 
     def get_station_ids(self):
         if self.stations is not None:
-            return list(self.stations.keys()) if PY3 else self.stations.keys()
+            return list(self.stations.keys())
         else:
             return None
 
@@ -544,10 +521,7 @@ class Recorder:
             request.get_method = lambda: 'HEAD'
             try:
                 response = urlopen(request)
-                if PY3:
-                    logo_type = response.getheader('Content-Type')
-                else:
-                    logo_type = response.info().gettype()
+                logo_type = response.getheader('Content-Type')
 
                 if logo_type in ['image/jpeg', 'image/png']:
                     img_data = urlopen(url).read()

@@ -1,6 +1,7 @@
-PyRSS2Gen==1.1
 docopt==0.6.1
-mutagen==1.21
+Jinja2==2.8
+MarkupSafe==0.23
+mutagenx==1.24
 py==1.4.15
 pytest==2.3.5
-wsgiref==0.1.2
+xdg==1.0.1

@@ -63,14 +63,7 @@ logo_url = http://example.org/wdr2/news.png
 station = wdr2
 date_pattern = %Y-%m-%d
 '''.format(str(tmpdir))
-  from capturadio import PY3
-  if PY3:
-    tmpdir.join('capturadiorc').write(text, 'w')
-  else:
-    import codecs
-    cfilename = tmpdir.join('capturadiorc')
-    with codecs.open(str(cfilename), 'w', 'utf8') as cfile:
-        cfile.write(text)
+  tmpdir.join('capturadiorc').write(text, 'w')
   return tmpdir
 
 @pytest.fixture

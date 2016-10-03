@@ -19,7 +19,7 @@ import re
 import logging
 from docopt import docopt
 from capturadio import Configuration, Recorder, version_string
-from capturadio.rss import Audiofiles
+from capturadio.rss import RssFeed
 from capturadio.util import find_configuration, parse_duration
 
 logging.basicConfig(
@@ -165,7 +165,17 @@ Generate rss feed files.
     path = config.destination
     for dirname, dirnames, filenames in os.walk(path):
         if not ignore_folder(dirname):
-            Audiofiles.process_folder(dirname, path)
+#            RssFeed.process_folder(dirname, path)
+            local_path = dirname.replace(path, '')
+            if (local_path != ''):
+                if (local_path.startswith('/')):
+                    local_path = local_path[1:]
+                if (not local_path.endswith('/')):
+                    local_path += '/'
+
+            feed = RssFeed(path, local_path, config)
+            feed.read_folder()
+            feed.write_to_file()
 
 
 def help(args):
