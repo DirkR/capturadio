@@ -83,7 +83,6 @@ class Configuration:   # implements Borg pattern
 Date: %(date)s
 Website: %(link_url)s
 Copyright: %(year)s %(station)s''',
-            'log': logging.getLogger('capturadio.' + __name__),
             'feed': {
                 'title': 'Internet Radio Recordings',
                 'base_url': 'http://%s/podcasts' % hostname,
@@ -127,7 +126,7 @@ Copyright: %(year)s %(station)s''',
                 Configuration._loaded_from_disk = True
 
     def write_config(self):
-        self.log.debug('Enter write_config')
+        logging.debug('Enter write_config')
         config = UnicodeConfigParser()
         config.add_section('settings')
         for key in ('destination', 'date_pattern', 'comment_pattern'):
@@ -176,7 +175,7 @@ Copyright: %(year)s %(station)s''',
 
     def _load_config(self):
         config_file = os.path.expanduser(self.filename)
-        self.log.debug("Enter _load_config(%s)" % config_file)
+        logging.debug("Enter _load_config(%s)" % config_file)
 
         config = UnicodeConfigParser()
         Configuration.changed_settings = False  # track changes
@@ -242,7 +241,7 @@ Copyright: %(year)s %(station)s''',
 
 
     def _add_stations(self, config):
-        self.log.debug("Enter _add_stations")
+        logging.debug("Enter _add_stations")
         if config.has_section('stations'):
             for station_id in config.options('stations'):
                 station_stream = config.get('stations', station_id)
@@ -333,7 +332,7 @@ Copyright: %(year)s %(station)s''',
     def add_station(self, id, stream_url, name=None, logo_url=None):
         station = Station(id, stream_url, name, logo_url)
         self.stations[id] = station
-        self.log.debug(u'  %s' % station)
+        logging.debug(u'  %s' % station)
         return station
 
 
@@ -341,7 +340,7 @@ Copyright: %(year)s %(station)s''',
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
         show = Show(station, id, name, duration, logo_url)
-        self.log.debug(u'    %s' % show)
+        logging.debug(u'    %s' % show)
         self.shows[id] = show
         return show
 
@@ -416,13 +415,12 @@ class Show:
 
 class Recorder:
     def __init__(self):
-        self.log = logging.getLogger('capturadio.recorder')
         self.start_time = None
 
     def capture(self, show):
         config = Configuration()
 
-        self.log.info(u'capture "%s" from "%s" for %s seconds to %s' %\
+        logging.info(u'capture "%s" from "%s" for %s seconds to %s' %\
                       (show.name, show.station.name, show.duration, config.destination))
 
         self.start_time = time.time()
@@ -442,7 +440,7 @@ class Recorder:
             self.start_time = None
         except Exception as e:
             message = "Could not complete capturing, because an exception occured: %s" % e
-            self.log.error(message)
+            logging.error(message)
             raise e
         finally:
             if os.path.exists(file_name):
@@ -450,7 +448,7 @@ class Recorder:
 
     def _write_stream_to_file(self, stream_url, file_name, duration):
         not_ready = True
-        self.log.info("write %s to %s" % (stream_url, file_name))
+        logging.info("write %s to %s" % (stream_url, file_name))
         try:
             with open(file_name, 'wb') as file:
                 stream = urlopen(stream_url)
@@ -460,12 +458,12 @@ class Recorder:
                         not_ready = False
         except UnicodeDecodeError as e:
             message = "Invalid input: %s (%s)" % (e.reason, e.object[e.start:e.end])
-            self.log.error("_write_stream_to_file: %s" % message)
+            logging.error("_write_stream_to_file: %s" % message)
             os.remove(file_name)
             raise e
         except Exception as e:
             message = "Could not capture show, because an exception occured: %s" % e.message
-            self.log.error("_write_stream_to_file: %s" % message)
+            logging.error("_write_stream_to_file: %s" % message)
             os.remove(file_name)
             raise e
 
@@ -476,11 +474,11 @@ class Recorder:
             os.makedirs(os.path.dirname(target_file))
         try:
             shutil.copyfile(file_name, target_file)
-            self.log.info(u"file copied from %s to %s" % (file_name, target_file))
+            logging.info(u"file copied from %s to %s" % (file_name, target_file))
             return target_file
         except IOError as e:
             message = "Could not copy tmp file to %s: %s" % (target_file, e.message)
-            self.log.error("_copy_file_to_destination: %s" % message)
+            logging.error("_copy_file_to_destination: %s" % message)
             os.remove(file_name)
             raise IOError(message, e)
 
@@ -536,6 +534,6 @@ class Recorder:
                     audio.add(img)
             except (HTTPError, URLError) as e:
                 message = "Error during capturing %s - %s" % (url, e)
-                self.log.error(message)
+                logging.error(message)
             except Exception as e:
                 raise e

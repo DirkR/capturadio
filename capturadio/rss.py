@@ -18,6 +18,7 @@ import logging
 import jinja2
 import urllib.parse as urllib
 from mutagenx.mp3 import MP3, HeaderNotFoundError
+
 from capturadio import Configuration, version_string as capturadio_version
 from capturadio.util import url_fix, format_date
 
