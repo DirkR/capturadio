@@ -26,7 +26,8 @@ setup(
         "License :: Freeware",
     ],
     install_requires=[
-        'PyRSS2Gen>=1.1',
+        'xdg>=1.0',
+        'Jinja2>=2.6',
         'docopt>=0.6',
         'mutagenx>=1.22',
         'pytest>=2.3',

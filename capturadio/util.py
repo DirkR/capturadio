@@ -11,9 +11,18 @@ The module capturadio.util provides some helper funtions.
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
+import unicodedata
+import re
+import time
+import urllib.parse as urlparse
+import urllib.parse as urllib
+import logging
+import shutil
+
+from xdg import XDG_CONFIG_HOME
 
 def format_date(pattern, time_value):
-    import time
     if type(time_value).__name__ == 'float':
         time_value = time.localtime(time_value)
     elif type(time_value).__name__ == 'struct_time':
@@ -27,7 +36,6 @@ def format_date(pattern, time_value):
 
 
 def parse_duration(duration_string):
-    import re
 #   pattern = r"^((?P<h>\d+h)(?iP<m>\d+m)?(?iP<s>\d+s)?|?P<ps>\d+)$"
     pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
     matches = re.match(pattern, duration_string)
@@ -48,9 +56,6 @@ def url_fix(s, charset='utf-8'):
     :param charset: The target charset for the URL if the url was
                     given as unicode string.
     """
-    import urllib.parse as urlparse
-    import urllib.parse as urllib
-
     scheme, netloc, path, qs, anchor = urlparse.urlsplit(s)
     path = urllib.quote(path, '/%')
     qs = urllib.quote_plus(qs, ':&=')
@@ -63,22 +68,30 @@ def slugify(value):
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
     """
-    import unicodedata
-    import re
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
     value = re.sub('[-,;\s]+', '_', value.decode()).strip().lower()
     return value
 
 
 def find_configuration():
-    import os
-    config_locations = [
+    xdg_location = os.path.join(XDG_CONFIG_HOME, 'capturadio')
+    legacy_locations = [
         os.path.join(os.getcwd(), 'capturadiorc'),
         os.path.expanduser('~/.capturadio/capturadiorc'),
         os.path.expanduser('~/.capturadiorc'),
-        os.path.join('/etc', 'capturadiorc'),
+    ]
+    for location in legacy_locations:
+        if os.path.exists(location):
+            if not os.path.exists(xdg_location):
+                shutil.copy(location, xdg_location)
+                logging.info("Copy legacy configuration file {} to {}.".format(location, xdg_location))
+            logging.warning("Legacy configuration file {} can be removed.".format(location))
+
+    config_locations = [
+        xdg_location,
+        '/etc/capturadiorc',
     ]
     for location in config_locations:
         if os.path.exists(location):
             return location
-    return os.path.expanduser('~/.capturadio/capturadiorc')
+    return os.path.join(XDG_CONFIG_HOME, 'capturadio')

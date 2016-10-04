@@ -18,15 +18,18 @@ import os
 import re
 import logging
 from docopt import docopt
+from xdg import XDG_DATA_HOME
+
 from capturadio import Configuration, Recorder, version_string
 from capturadio.rss import RssFeed
 from capturadio.util import find_configuration, parse_duration
 
+app_folder = os.path.join(XDG_DATA_HOME, 'capturadio')
+if not os.path.exists(app_folder):
+    os.makedirs(app_folder)
+
 logging.basicConfig(
-    filename=os.path.join(
-        Configuration.folder,
-        'log' if Configuration.folder.endswith('capturadio') else 'capturadio.log'
-    ),
+    filename=os.path.join(app_folder, 'log'),
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
     level=logging.DEBUG,
 )
