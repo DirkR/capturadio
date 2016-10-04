@@ -27,14 +27,14 @@ link_url = http://example.org/dkultur
 logo_url = http://example.org/dkultur.png
 
 [news]
-title = Latest news
+name = Latest news
 duration = 300
 link_url = http://example.org/dlr/news
 logo_url = http://example.org/dlr/news.png
 station = dkultur
 
 [weather]
-title = Weather forecast
+name = Weather forecast
 duration = 300
 logo_url = http://example.org/weather.png
 station = dlf

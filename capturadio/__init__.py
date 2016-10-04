@@ -152,7 +152,7 @@ Copyright: %(year)s %(station)s''',
             config.set('stations', station.id, station.stream_url)
             config.add_section(station.id)
             for key, value in station.__dict__.items():
-                if key == 'shows':
+                if key in ('id', 'shows'):
                     continue
                 if value is not None:
                     config.set(station.id, key, value)
@@ -160,6 +160,8 @@ Copyright: %(year)s %(station)s''',
         for show in self.shows.values():
             config.add_section(show.id)
             for key, value in show.__dict__.items():
+                if key in ('id'):
+                    continue
                 if value is not None:
                     if isinstance(value, Station):
                         config.set(show.id, key, value.id)
@@ -359,7 +361,7 @@ class Station:
         return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
 
     def __str__(self):
-        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
+        return repr(self)
 
     def get_link_url(self):
         if 'link_url' in self.__dict__:
@@ -394,8 +396,7 @@ class Show:
             self.id, self.name, self.duration, self.station.id)
 
     def __str__(self):
-        return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
-            self.id, self.name, self.duration, self.station.id)
+        return repr(self)
 
     def get_link_url(self):
         if 'link_url' in self.__dict__:
