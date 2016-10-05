@@ -20,11 +20,16 @@ import tempfile
 from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
         TLEN, TPE1, TCOP, COMM, TCOM, APIC
 from configparser import ConfigParser, DEFAULTSECT
+from xdg import XDG_DATA_HOME
+
 from capturadio.util import format_date, slugify, parse_duration
 
 version = (0, 9, 0)
 version_string = ".".join(map(str, version))
 
+app_folder = os.path.join(XDG_DATA_HOME, 'capturadio')
+if not os.path.exists(app_folder):
+    os.makedirs(app_folder)
 
 class UnicodeConfigParser(ConfigParser):
     """The class UnicodeConfigParser is derived from RawConfigParser and
