@@ -17,9 +17,10 @@ import codecs
 import logging
 import re
 import tempfile
+from configparser import ConfigParser, DEFAULTSECT
+
 from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
         TLEN, TPE1, TCOP, COMM, TCOM, APIC
-from configparser import ConfigParser, DEFAULTSECT
 from xdg import XDG_DATA_HOME
 
 from capturadio.util import format_date, slugify, parse_duration
@@ -54,7 +55,7 @@ class UnicodeConfigParser(ConfigParser):
                                 (key, text(value).replace('\n','\n\t')))
             fp.write("\n")
 
-class Configuration:   # implements Borg pattern
+class Configuration(object):   # implements Borg pattern
     folder = os.getcwd()
     filename = 'capturadiorc'
 
@@ -251,31 +252,29 @@ Copyright: %(year)s %(station)s''',
             for station_id in config.options('stations'):
                 station_stream = config.get('stations', station_id)
                 station_name = station_id
-                station_logo_url = self.feed['default_logo_url']
                 if config.has_section(station_id):
                     if config.has_option(station_id, 'name'):
                         station_name = config.get(station_id, 'name')
-                    if config.has_option(station_id, 'logo_url'):
-                        station_logo_url = config.get(station_id, 'logo_url')
-                station = self.add_station(station_id, station_stream, station_name, station_logo_url)
+                station = self.add_station(station_id, station_stream, station_name)
                 if config.has_option(station_id, 'shows'):
                     show_ids = re.split(r',? +', config.get(station_id, 'shows'))
                     for show_id in show_ids:
                         if config.has_section(show_id):
                             config.set(show_id, 'station', station_id)
-                            print("WARNING: removed legacy setting 'shows' for show '%s' of station '%s' in configuration file." % (
+                            logging.warning("Removed legacy setting 'shows' for show '%s' of station '%s' in configuration file." % (
                                 show_id, station_id))
                         else:
                             config.add_section(show_id)
                             config.set(show_id, 'station', station_id)
-                            print("WARNING: added show section '%s' in configuration file." % (show_id))
+                            logging.warning("Added show section '%s' in configuration file." % (show_id))
                     config.remove_option(station_id, 'shows')
                     Configuration.changed_settings = True
 
+                if config.has_option(station_id, 'logo_url'):
+                    station.logo_url = config.get(station_id, 'logo_url')
+
                 if config.has_option(station_id, 'link_url'):
                     station.link_url = config.get(station_id, 'link_url')
-                else:
-                    station.link_url = self.feed['base_url']
 
                 if config.has_option(station_id, 'date_pattern'):
                     station.date_pattern = config.get(station_id, 'date_pattern', raw=True)
@@ -290,7 +289,7 @@ Copyright: %(year)s %(station)s''',
                 show_id = section_name
                 if config.has_option(show_id, 'title'):
                     show_title = config.get(show_id, 'title')
-                    print("WARNING: setting 'title' of show '%s' is deprecated and should be replaced by 'name'." % show_id)
+                    logging.warning("Setting 'title' of show '%s' is deprecated and should be replaced by 'name'." % show_id)
                 elif config.has_option(show_id, 'name'):
                     show_title = config.get(show_id, 'name')
                 else:
@@ -301,17 +300,16 @@ Copyright: %(year)s %(station)s''',
                 else:
                     raise Exception('No duration option defined for show "%s".' % show_id)
 
-                if config.has_option(show_id, 'logo_url'):
-                    show_logo_url = config.get(show_id, 'logo_url')
-                else:
-                    show_logo_url = station.logo_url
+                show = self.add_show(self, station, show_id, show_title, show_duration)
 
-                show = self.add_show(station, show_id, show_title, show_duration, show_logo_url)
+                if config.has_option(show_id, 'logo_url'):
+                    show.logo_url = config.get(show_id, 'logo_url')
 
                 if config.has_option(show_id, 'link_url'):
                     show.link_url = config.get(show_id, 'link_url')
-                else:
-                    show.link_url = station.link_url
+
+                if config.has_option(show_id, 'stream_url'):
+                    show.stream_url = config.get(show_id, 'stream_url')
 
                 if config.has_option(show_id, 'date_pattern'):
                     show.date_pattern = config.get(show_id, 'date_pattern', raw=True)
@@ -334,192 +332,192 @@ Copyright: %(year)s %(station)s''',
             return None
 
 
-    def add_station(self, id, stream_url, name=None, logo_url=None):
-        station = Station(id, stream_url, name, logo_url)
+    def add_station(self, id, stream_url, name=None):
+        station = Station(self, id, stream_url, name)
         self.stations[id] = station
         logging.debug(u'  %s' % station)
         return station
 
 
-    def add_show(self, station, id, name, duration, logo_url=None):
+    def add_show(self, config, station, id, name, duration):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
-        show = Show(station, id, name, duration, logo_url)
+        show = Show(config, station, id, name, duration)
         logging.debug(u'    %s' % show)
         self.shows[id] = show
         return show
 
 
-class Station:
-    """Describes a radio station, consists of shows."""
+class Entity(object):
 
-    def __init__(self, id, stream_url, name, logo_url=None):
+    logo_url = None
+    link_url = None
+    slug = None
+
+    def __init__(self, id, name=None):
         self.id = id
         self.name = name
-        self.stream_url = stream_url
-        self.logo_url = logo_url
-        self.link_url = None
-        self.shows = []
-
-    def __repr__(self):
-        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
 
     def __str__(self):
         return repr(self)
 
-    def get_link_url(self):
-        if 'link_url' in self.__dict__:
-            return self.link_url
 
-    def get_date_pattern(self):
-        if 'date_pattern' in self.__dict__:
-            return self.date_pattern
-        else:
-            config = Configuration()
-            return config.date_pattern
+class Station(Entity):
+    """Describes a radio station, consists of shows."""
 
+    def __init__(self, config, id, stream_url, name):
+        super(Station, self).__init__(id, name)
+        self.stream_url = stream_url
+        self.logo_url = config.feed['default_logo_url']
+        self.link_url = config.feed['base_url']
+        self.shows = []
+        self.date_pattern = config.date_pattern
+        self.slug = slugify(self.id)
+        self.filename = os.path.join(config.destination, self.slug)
 
-class Show:
+    def __repr__(self):
+        return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
+
+class Show(Entity):
     """
     Describes a single show, consists of episodes and belongs to a station.
     """
 
-    def __init__(self, station, id, name, duration, logo_url=None):
+    def __init__(self, config, station, id, name, duration):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
-
+        super(Show, self).__init__(id, name)
         self.station = station
-        self.id = id
-        self.name = name
+        self.stream_url = station.stream_url
+        self.link_url = station.link_url
+        self.logo_url = station.logo_url
+        self.date_pattern = station.date_pattern
         self.duration = duration
-        self.logo_url = logo_url
+        self.slug = os.path.join(station.slug, slugify(self.id))
+        self.filename = os.path.join(config.destination, self.slug)
         station.shows.append(self)
 
     def __repr__(self):
         return 'Show(id=%s, name=%s, duration=%d, station_id=%s)' % (
             self.id, self.name, self.duration, self.station.id)
 
-    def __str__(self):
-        return repr(self)
 
-    def get_link_url(self):
-        if 'link_url' in self.__dict__:
-            return self.link_url
-        else:
-            return self.station.get_link_url()
+class Episode(Entity):
+    """
+    Describes an episode of a show.
+    """
+    pubdate = None
+    starttime = time.localtime()
+    name = ""
 
-    def get_date_pattern(self):
-        if 'date_pattern' in self.__dict__:
-            return self.date_pattern
-        else:
-            return self.station.get_date_pattern()
+    def __init__(self, config, show):
+        if not isinstance(show, Show):
+            raise TypeError('show has to be of type "Show"')
 
-    def get_stream_url(self):
-        return self.station.stream_url
+        super(Episode, self).__init__(show.id)
+        self.__dict__ = show.__dict__.copy()
+        self.show = show
+        self.name = "{}, {}".format(show.name, time.strftime(config.date_pattern, self.starttime))
+        self.pubdate = time.strftime('%c', self.starttime)
+        self.slug = os.path.join(
+            show.slug,
+            "{}_{}.mp3".format(
+                slugify(self.show.id),
+                time.strftime('%Y-%m-%d_%H-%M', self.starttime)
+            )
+        )
+        self.filename = os.path.join(config.destination, self.slug)
+
+    def __repr__(self):
+        return 'Episode(id={}, name={}, pubdate={}, show_id={})'\
+            .format(self.id, self.name, self.pubdate, self.show.id)
 
 
-class Recorder:
-    def __init__(self):
-        self.start_time = None
+class Recorder(object):
 
-    def capture(self, show):
-        config = Configuration()
-
-        logging.info(u'capture "%s" from "%s" for %s seconds to %s' %\
-                      (show.name, show.station.name, show.duration, config.destination))
-
-        self.start_time = time.time()
-        file_name = u"%s/capturadio_%s.mp3" % (config.tempdir, os.getpid())
+    def capture(self, config, show):
+        logging.info(u'capture "{}"'.format(show))
+        episode = Episode(config, show)
         try:
-            self._write_stream_to_file(show.get_stream_url(), file_name, show.duration)
-
-            time_string = format_date(config.date_pattern, time.localtime(self.start_time))
-            target_file = u"%(station)s/%(show)s/%(show)s_%(time)s.mp3" %\
-                   { 'station' : show.station.name,
-                     'show': show.name,
-                     'time': time_string,
-                   }
-            target_file = os.path.join(config.destination, slugify(target_file))
-            final_file_name = self._copy_file_to_destination(file_name, target_file)
-            self._add_metadata(show, final_file_name)
-            self.start_time = None
+            self._write_stream_to_file(episode)
+            self._add_metadata(episode)
         except Exception as e:
-            message = "Could not complete capturing, because an exception occured: %s" % e
-            logging.error(message)
+            logging.error("Could not complete capturing, because an exception occured: {}".format(e))
             raise e
-        finally:
-            if os.path.exists(file_name):
-                os.remove(file_name)
 
-    def _write_stream_to_file(self, stream_url, file_name, duration):
+    def _write_stream_to_file(self, episode):
         not_ready = True
-        logging.info("write %s to %s" % (stream_url, file_name))
+
+        logging.debug("write {} to {}".format(episode.stream_url, episode.filename))
         try:
-            with open(file_name, 'wb') as file:
-                stream = urlopen(stream_url)
+            dirname = os.path.dirname(episode.filename)
+            if not os.path.isdir(dirname):
+                os.makedirs(dirname)
+
+            with open(episode.filename, 'wb') as file:
+                stream = urlopen(episode.stream_url)
+                starttimestamp = time.mktime(episode.starttime)
                 while not_ready:
-                    file.write(stream.read(10240))
-                    if time.time() - self.start_time > duration:
+                    try:
+                        file.write(stream.read(10240))
+                        if time.time() - starttimestamp > episode.duration:
+                            not_ready = False
+                    except KeyboardInterrupt:
+                        logging.warning('Capturing interupted.')
                         not_ready = False
+            return episode
+
         except UnicodeDecodeError as e:
-            message = "Invalid input: %s (%s)" % (e.reason, e.object[e.start:e.end])
-            logging.error("_write_stream_to_file: %s" % message)
-            os.remove(file_name)
-            raise e
-        except Exception as e:
-            message = "Could not capture show, because an exception occured: %s" % e.message
-            logging.error("_write_stream_to_file: %s" % message)
-            os.remove(file_name)
+            logging.error("Invalid input: {} ({})".format(e.reason, e.object[e.start:e.end]))
+            os.remove(episode.filename)
             raise e
 
-    def _copy_file_to_destination(self, file_name, target_file):
-        import shutil
+        except HTTPError as e:
+            logging.error("Could not open URL {} ({:d}): {}".format(episode.stream_url, e.code, e.msg))
+            os.remove(episode.filename)
+            raise e
 
-        if not os.path.isdir(os.path.dirname(target_file)):
-            os.makedirs(os.path.dirname(target_file))
-        try:
-            shutil.copyfile(file_name, target_file)
-            logging.info(u"file copied from %s to %s" % (file_name, target_file))
-            return target_file
         except IOError as e:
-            message = "Could not copy tmp file to %s: %s" % (target_file, e.message)
-            logging.error("_copy_file_to_destination: %s" % message)
-            os.remove(file_name)
-            raise IOError(message, e)
+            logging.error("Could not write file {}: {}".format(episode.filename, e))
+            os.remove(episode.filename)
+            raise e
 
-    def _add_metadata(self, show, file_name):
-        if file_name is None:
-            raise "file_name is not set - you cannot add metadata to None"
+        except Exception as e:
+            logging.error("Could not capture show, because an exception occured: {}".format(e))
+            os.remove(episode.filename)
+            raise e
+
+    def _add_metadata(self, episode):
+        if episode.filename is None:
+            raise "filename is not set - you cannot add metadata to None"
 
         config = Configuration()
-
-        time_string = format_date(config.date_pattern, time.localtime(self.start_time))
         comment = config.comment_pattern % {
-            'show': show.name,
-            'date': time_string,
-            'year': time.strftime('%Y', time.gmtime()),
-            'station': show.station.name,
-            'link_url': show.get_link_url()
+            'show': episode.show.name,
+            'date': episode.pubdate,
+            'year': time.strftime('%Y', episode.starttime),
+            'station': episode.show.station.name,
+            'link_url': episode.link_url
         }
 
         audio = ID3()
         # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
 
-        audio.add(TIT2(encoding=2, text=["%s, %s" % (show.name, time_string)]))
-        audio.add(TDRC(encoding=2, text=[format_date('%Y-%m-%d %H:%M', self.start_time)]))
-        audio.add(TCON(encoding=2, text=[u'Podcast']))
-        audio.add(TALB(encoding=2, text=[show.name]))
-        audio.add(TLEN(encoding=2, text=[show.duration * 1000]))
-        audio.add(TPE1(encoding=2, text=[show.station.name]))
-        audio.add(TCOP(encoding=2, text=[show.station.name]))
+        audio.add(TIT2(encoding=2, text=[episode.name]))
+        audio.add(TDRC(encoding=2, text=[episode.pubdate]))
+        audio.add(TCON(encoding=2, text=['Podcast']))
+        audio.add(TALB(encoding=2, text=[episode.show.name]))
+        audio.add(TLEN(encoding=2, text=[episode.duration * 1000]))
+        audio.add(TPE1(encoding=2, text=[episode.station.name]))
+        audio.add(TCOP(encoding=2, text=[episode.station.name]))
         audio.add(COMM(encoding=2, lang='eng', desc='desc', text=comment))
-        audio.add(TCOM(encoding=2, text=[show.get_link_url()]))
-        self._add_logo(show, audio)
-        audio.save(file_name)
+        audio.add(TCOM(encoding=2, text=[episode.link_url]))
+        self._add_logo(episode, audio)
+        audio.save(episode.filename)
 
-    def _add_logo(self, show, audio):
+    def _add_logo(self, episode, audio):
         # APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
-        url = show.station.logo_url
+        url = episode.logo_url
         if url is not None:
             request = Request(url)
             request.get_method = lambda: 'HEAD'

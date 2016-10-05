@@ -44,15 +44,14 @@ def test_configuration(test_folder):
     assert config.stations['dkultur'].name == 'dkultur'
     assert config.stations['dkultur'].logo_url == 'http://example.org/default.png'
     assert config.stations['dkultur'].link_url == 'http://my.example.org/'
-    assert not 'date_pattern' in config.stations['dkultur'].__dict__
-    assert config.stations['dkultur'].get_date_pattern() == '%d.%m.%Y'
+    assert config.stations['dkultur'].date_pattern == '%d.%m.%Y'
 
     assert 'wdr2' in config.stations.keys()
     assert config.stations['wdr2'].stream_url == 'http://example.org/wdr2'
     assert config.stations['wdr2'].name == 'wdr2'
     assert config.stations['wdr2'].logo_url == 'http://example.org/wdr2.png'
     assert config.stations['wdr2'].link_url == 'http://example.org/wdr2'
-    assert not 'date_pattern' in config.stations['wdr2'].__dict__
+    assert config.stations['wdr2'].date_pattern == '%d.%m.%Y'
 
     assert len(config.shows) == 3
     for show_id, show in config.shows.items():
@@ -64,13 +63,13 @@ def test_configuration(test_folder):
     assert show.logo_url == 'http://example.org/nachtradio.png'
     assert show.link_url == 'http://example.org/nachtradio'
     assert show.duration == 3300
-    assert show.get_date_pattern() == '%d.%m.%Y %H:%M'
+    assert show.date_pattern == '%d.%m.%Y %H:%M'
 
     show = config.shows['news']
     #  assert show.logo_url == 'http://example.org/nachtradio.png'
     #  assert show.link_url == 'http://example.org/nachtradio'
     assert show.duration == 300
-    assert show.get_date_pattern() == '%Y-%m-%d'
+    assert show.date_pattern == '%Y-%m-%d'
 
 
 def test_old_style_configuration(test_folder):
@@ -211,19 +210,14 @@ def test_station_ids(test_folder):
 def test_add_station(test_folder):
     configuration = Configuration(reset=True, folder=str(test_folder))
     assert configuration.folder == test_folder
-    configuration.add_station(
-        'me',
-        'http://example.org/stream',
-        'Me',
-        'http://example.org/logo.png'
-    )
+    station = configuration.add_station('me', 'http://example.org/stream', 'Me')
     assert ['me', 'dkultur', 'dlf', 'wdr2'].sort() == configuration.get_station_ids().sort()
 
     station = configuration.stations['me']
     assert isinstance(station, Station)
     assert station.name == 'Me'
     assert station.id == 'me'
-    assert station.logo_url == 'http://example.org/logo.png'
+    assert station.logo_url == 'http://example.org/default.png'
     assert station.stream_url == 'http://example.org/stream'
     assert station.shows == []
 
@@ -231,14 +225,14 @@ def test_add_station(test_folder):
 def test_add_show_to_station(test_folder):
     config = Configuration(reset=True, folder=str(test_folder))
     station = config.stations['dlf']
-    show = config.add_show(station, 'news', 'Latest News', 10)
+    show = config.add_show(config, station, 'news', 'Latest News', 10)
     assert isinstance(show, Show)
 
     assert len(config.shows) == 3
     for show_id, show in config.shows.items():
         assert isinstance(show, Show)
     assert config.shows['news'].name == 'Latest News'
-    assert config.shows['news'].logo_url is None
+    assert config.shows['news'].logo_url == 'http://example.org/dlf.png'
     assert config.shows['news'].station == station
     assert config.shows['news'].duration == 10
 

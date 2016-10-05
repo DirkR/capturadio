@@ -58,7 +58,7 @@ class Audiofile(object):
             """Fixed for Unicode output"""
             for s in self.config.shows.values():
                 if str(s.name) == self.show:
-                    self.link = s.get_link_url()
+                    self.link = s.link_url
                     break
         default_date = format_date(self.config.date_pattern, time.time())
         self.date = self._get_tag(audiofile, 'TDRC', default_date)
@@ -117,6 +117,7 @@ class RssFeed(object):
     def __init__(self, root_path, local_path, config):
         logging.debug('create RssFeed in {}'.format(local_path))
 
+        self.pubdate = dt.datetime.fromtimestamp(time.time())
         self.root_path = root_path
         self.path = local_path
         self.title = config.feed['title']
@@ -186,24 +187,6 @@ class RssFeed(object):
         else:
             audio_file = RssFeed.files_cache[path]
         return audio_file
-
-    def _create_image_tag(self, rssitem):
-        logo_url = self._get_logo_url(rssitem.author)
-        link_url = self._get_link_url(rssitem.author)
-        config = Configuration()
-
-        if logo_url is not None:
-            return RssImage(
-                url=logo_url,
-                title=rssitem.author,
-                link=link_url
-            )
-        else:
-            return RssImage(
-                url=config.feed['default_logo_url'],
-                title=rssitem.author,
-                link=link_url
-            )
 
     def _get_link_url(self, station_name):
         for id, station in self.config.stations.items():

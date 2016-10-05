@@ -13,7 +13,7 @@ import pytest
 from fixtures import test_folder, config
 sys.path.insert(0, os.path.abspath('.'))
 
-from capturadio import Recorder, Show
+from capturadio import Recorder, Show, Episode
 
 
 def test_write_file(test_folder, config, monkeypatch):
@@ -23,43 +23,31 @@ def test_write_file(test_folder, config, monkeypatch):
     import capturadio
     monkeypatch.setattr(capturadio, 'urlopen', mockreturn)
 
-    recorder = Recorder()
-    recorder.start_time = time.time()
-
     folder = test_folder.mkdir('casts')
-    file_name = os.path.join(str(folder), 'output.mp3')
-    stream_url = 'http://example.org/stream.mp3'
-    recorder._write_stream_to_file(stream_url, file_name, 2)
-    assert os.path.exists(file_name)
+    show = config.shows['weather']
+    episode = capturadio.Episode(config, show)
+    episode.filename = os.path.join(str(folder), 'output.mp3')
+    episode.duration = 3
 
-
-# TODO: Create fixtures for source file, target file, etc.
-def test_copy_file_to_destination(config, test_folder):
-    source_file = test_folder.join('output.mp3')
-    source_file.write('')
-    source = str(source_file)
-    target = str(test_folder.join('mystation', 'myshow', 'myepisode.pm3'))
     recorder = Recorder()
-    recorder._copy_file_to_destination(source, target)
-    assert os.path.exists(target)
-    assert os.path.isfile(target)
+    recorder._write_stream_to_file(episode)
+    assert os.path.exists(episode.filename)
 
 
 def test_add_metadata(config, test_folder):
-    import time
+    import shutil
+    from mutagenx.mp3 import MP3
+
     media_file = test_folder.join('mystation', 'myshow', 'myepisode.pm3')
+    os.makedirs(os.path.dirname(str(media_file)))
+    shutil.copy(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), str(media_file))
+
     station = config.stations['dlf']
-    show = Show(station, 'me', 'Me', 2)
+    show = Show(config, station, 'me', 'Me', 2)
+    episode = Episode(config, show)
+    episode.filename = str(media_file)
     recorder = Recorder()
-    recorder.start_time = time.time()
-    recorder._copy_file_to_destination(os.path.join(os.path.dirname(__file__), 'testfile.mp3'), str(media_file))
-    recorder._add_metadata(show, str(media_file))
-    try:
-        # Python 2.x
-        from mutagen.mp3 import MP3
-    except ImportError:
-        # Python 3.x
-        from mutagenx.mp3 import MP3
+    recorder._add_metadata(episode)
 
     audio = MP3(str(media_file))
     #assert 'tit' == audio['TIT2'].text[0]

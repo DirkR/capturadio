@@ -47,7 +47,6 @@ Examples:
         recorder show capture nighttalk -d 35m
 
     """
-
     config = Configuration()
     if len(config.stations) == 0:
         print('No stations defined, add stations at first!')
@@ -61,9 +60,9 @@ Examples:
         show = config.shows[args['<show>']]
         try:
             recorder = Recorder()
-            recorder.capture(show)
+            episode = recorder.capture(config, show)
         except Exception as e:
-            print('Unable to capture recording: %s' % e)
+            logging.error('Unable to capture recording: {}'.format(e))
     else:
         print('Unknown show %r' % args['<show>'])
 

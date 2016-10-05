@@ -3,10 +3,10 @@
     <channel>
         <title>{{ feed.title }}</title>
         <link>{{ feed.link }}</link>
-        <description>{{ feed.title }}</description>
-        <itunes:image href="{{ feed.logo_url }}"></itunes:image>
+        <description>{{ feed.description }}</description>
+        <itunes:image href="{{ feed.image.url }}"></itunes:image>
         <language>{{ feed.language }}</language>
-        <lastBuildDate>{{ feed.date }}</lastBuildDate>
+        <lastBuildDate>{{ feed.pubdate }}</lastBuildDate>
         <generator>{{ feed.generator }}</generator>
         <docs>http://blogs.law.harvard.edu/tech/rss</docs>
         <image>
@@ -18,7 +18,7 @@
 {% for item in feed.items %}
         <item>
             <title>{{ item.title }}</title>
-            <link>{{ item.link }}</link>
+            <link>{{ item.link_url }}</link>
             <itunes:duration>{{ item.duration }}</itunes:duration>
             <itunes:image href="{{ item.image_url }}"></itunes:image>
             <description>{{ item.description }}</description>
