@@ -12,33 +12,36 @@ _CaptuRadio_ has only been tested on unix-like OSes, like MacOSX and Linux.
 
 ### Prerequisites
 
-_CaptuRadio_ needs python 2.7 and an unix-like operation system running on your machine.
-The following python libraries need to be installed beside Python 2.7 to run CapturRadio:
+_CaptuRadio_ needs Python 3.x (tested using Python 3.4) and an unix-like operation system running on your machine.
+The following python libraries need to be installed beside Python to run CapturRadio:
 
-* mutagen -- a Python module to handle audio metadata
-  http://code.google.com/p/mutagen/, tested with version 1.21
-* PyRSS2Gen -- a Python library for manipulating RSS feeds
-  http://www.dalkescientific.com/Python/PyRSS2Gen.html, version 1.1.0 and above
+* mutagenx -- a Python module to handle audio metadata
+  https://pypi.python.org/pypi/mutagenx, tested with version 1.24
 * docopt -- a Python module to handle arguments parsing of cli
   applications, version 0.6 and above
+* Jinja2 -- a template engine written in pure python
+  https://pypi.python.org/pypi/Jinja2, version 2.6 and above
+* xdg -- Support for the XDG Base Directory Specification
+  https://pypi.python.org/pypi/xdg, tested with version 1.0
 
 ### Installation
 
 Install the application by running the setup script:
 
-    python setup.py install
+    pip3 install -r requirements.txt
+    python3 setup.py install
 
 The app needs a configuration file. Simply run
 
-    recorder.py config setup
+    recorder config setup
 
-and it will create a configuration at `~/.capturadio/capturadiorc`.
+and it will create a configuration at `~/.config/capturadio`.
 You should edit the file and customize it. Especially the destination folder
 and the base_url should be adopted.
 
 Run the command
 
-    recorder.py config list
+    recorder config list
 
 to see the current configuration.
 
@@ -46,36 +49,30 @@ to see the current configuration.
 
 _CaptuRadio_ needs some information on the commandline to operate correctly.
 
-    recorder.py show capture <show>
+    recorder show capture <show>
 
 records a pre-defined radio show.
 The option `show` tells _CaptuRadio_ which station should be recorded. The show name has
-to be defined in `~/.capturadio/capturadiorc` (see section `Configuration` below).
+to be defined in `~/.local/capturadio` (see section `Configuration` below).
 
-    recorder.py config list
+    recorder config list
 
 This command lists all defined confuration values.
 
-    recorder.py feed update
+    recorder feed update
 
 By running this command the files providing the RSS feeds are
 regenerated.
 
-See `recorder.py help <command>` for more information on a specific command.
+See `recorder help <command>` for more information on a specific command.
 
 ## Configuration
 
 At startup _CaptuRadio_ reads all configuration data from the configuration
-file. It looks for it at
+file. It looks for it at `~/.local/capturadio`. If this file does not exist,
+then it is created using defult values.
 
-  * ./capturadiorc (in the current directory)
-  * ~/.capturadio/capturadiorc
-  * ~/.capturadiorc'
-  * /etc/capturadiorc
-
-If this file does not exist, then `~/.capturadio/capturadiorc` is created using defult values.
-
-The stations is defined in the section `[stations]`. Every entry consists of a key-value-pair
+The stations are defined in the section `[stations]`. Every entry consists of a key-value-pair
 defining the station identifier and the MP3 stream URL.
 
     [stations]
@@ -115,12 +112,24 @@ The _CaptuRadio_ code is Freeware.
 
 ## Version History
 
+### Version 0.10 -- 2016-10-06
+
+* Ported to Python3, it will no longer run on Python 2.x
+* PyRSSGen is replaced by Jinja2 to generate output files
+* Episodes are stored in a database, so the episode metadata
+  don't have to be retrieved from ID3 tags
+* Support for the XDG Base Directory Specification, using
+  XDG_CONFIG_HOME and XDG_APP_HOME for configuration and databases
+* Configuration file is located at `~/.local/capturadio` and
+  will bemoved there, if one is found at legacy locations.
+* Major code cleanup
+
 ### Version 0.9 -- 2014-03-27
 
 * The script 'create_podcast_feed.py' has been incorporated into the
-  'recorder.py' script. Run 'recorder.py feed update' regulary.
+  'recorder' script. Run 'recorder feed update' regulary.
 * The command line interface has been changed completely.
-  The former arguments do not work anymore. See `recorder.py help
+  The former arguments do not work anymore. See `recorder help
   show capture` for details.
 * The configuration file can be placed on different locations:
 
