@@ -10,18 +10,19 @@ the recorded media files and generate an podcast-like rss feed.
 
 recorder.py is the command line program to interact with capturadio.
 """
-# -*- coding: utf-8 -*-
 from __future__ import unicode_literals, print_function
 
 import sys
 import os
 import re
 import logging
+import shelve
+
 from docopt import docopt
 
-from capturadio import Configuration, Recorder, version_string, app_folder
-from capturadio.rss import RssFeed
+from capturadio import Configuration, Recorder, Station, version_string as capturadio_version, app_folder
 from capturadio.util import find_configuration, parse_duration
+from capturadio.generator import generate_feed
 
 logging.basicConfig(
     filename=os.path.join(app_folder, 'log'),
@@ -61,6 +62,8 @@ Examples:
         try:
             recorder = Recorder()
             episode = recorder.capture(config, show)
+            with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+                db[episode.slug] = episode
         except Exception as e:
             logging.error('Unable to capture recording: {}'.format(e))
     else:
@@ -159,21 +162,16 @@ Generate rss feed files.
 
     """
     config = Configuration()
-    path = config.destination
-    for dirname, dirnames, filenames in os.walk(path):
-        if not ignore_folder(dirname):
-#            RssFeed.process_folder(dirname, path)
-            local_path = dirname.replace(path, '')
-            if (local_path != ''):
-                if (local_path.startswith('/')):
-                    local_path = local_path[1:]
-                if (not local_path.endswith('/')):
-                    local_path += '/'
+    root = Station(config, 'root', None, 'All recordings')
+    root.filename = config.destination
+    root.slug = ''
 
-            feed = RssFeed(path, local_path, config)
-            feed.read_folder()
-            feed.write_to_file()
-
+    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        generate_feed(config, db, root)
+        for station in config.stations.values():
+            generate_feed(config, db, station)
+            for show in station.shows:
+                generate_feed(config, db, show)
 
 def help(args):
     cmd = r'%s_%s' % (args['<command>'], args['<action>'])
@@ -219,7 +217,7 @@ See 'recorder.py help <command>' for more information on a specific command."""
 
     args = docopt(
         main.__doc__,
-        version=version_string,
+        version=capturadio_version,
         options_first=True,
         argv=argv or sys.argv[1:]
     )

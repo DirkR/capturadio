@@ -17,6 +17,7 @@ import codecs
 import logging
 import re
 import tempfile
+import datetime
 from configparser import ConfigParser, DEFAULTSECT
 
 from mutagenx.id3 import ID3, TIT2, TDRC, TCON, TALB, \
@@ -179,6 +180,7 @@ Copyright: %(year)s %(station)s''',
         with open(self.filename, 'w') as file:
             config.write(file)
 
+
     def _load_config(self):
         config_file = os.path.expanduser(self.filename)
         logging.debug("Enter _load_config(%s)" % config_file)
@@ -208,6 +210,7 @@ Copyright: %(year)s %(station)s''',
             with codecs.open(config_file, 'w', 'utf8') as file:
                 config.write(file)
             print("WARNING: Saved the old version of config file as '%s.bak' and updated configuration." % (config_file))
+
 
     def _read_feed_settings(self, config):
         if config.has_section('feed'):
@@ -241,8 +244,8 @@ Copyright: %(year)s %(station)s''',
             if config.has_option('feed', 'default_link_url'):
                 self.feed['default_link_url'] = config.get('feed', 'default_link_url')
 
-            if not self.feed['base_url'].endswith('/'):
-                self.feed['base_url'] += '/'
+            if self.feed['base_url'].endswith('/'):
+                self.feed['base_url'] = self.feed['base_url'][:-1]
             # Read stations
 
 
@@ -353,6 +356,7 @@ class Entity(object):
     logo_url = None
     link_url = None
     slug = None
+    language = "en"
 
     def __init__(self, id, name=None):
         self.id = id
@@ -370,6 +374,7 @@ class Station(Entity):
         self.stream_url = stream_url
         self.logo_url = config.feed['default_logo_url']
         self.link_url = config.feed['base_url']
+        self.language = config.feed['language']
         self.shows = []
         self.date_pattern = config.date_pattern
         self.slug = slugify(self.id)
@@ -377,6 +382,7 @@ class Station(Entity):
 
     def __repr__(self):
         return 'Station(id=%s, name=%s, show_count=%d)' % (self.id, self.name, len(self.shows))
+
 
 class Show(Entity):
     """
@@ -391,7 +397,9 @@ class Show(Entity):
         self.stream_url = station.stream_url
         self.link_url = station.link_url
         self.logo_url = station.logo_url
+        self.language = station.language
         self.date_pattern = station.date_pattern
+        self.author = station.name
         self.duration = duration
         self.slug = os.path.join(station.slug, slugify(self.id))
         self.filename = os.path.join(config.destination, self.slug)
@@ -427,6 +435,7 @@ class Episode(Entity):
             )
         )
         self.filename = os.path.join(config.destination, self.slug)
+        self.duration_string = str(datetime.timedelta(seconds=self.duration))
 
     def __repr__(self):
         return 'Episode(id={}, name={}, pubdate={}, show_id={})'\
@@ -441,6 +450,7 @@ class Recorder(object):
         try:
             self._write_stream_to_file(episode)
             self._add_metadata(episode)
+            return episode
         except Exception as e:
             logging.error("Could not complete capturing, because an exception occured: {}".format(e))
             raise e
@@ -465,6 +475,11 @@ class Recorder(object):
                     except KeyboardInterrupt:
                         logging.warning('Capturing interupted.')
                         not_ready = False
+
+            episode.duration = time.time() - starttimestamp
+            episode.duration_string = str(datetime.timedelta(seconds=episode.duration))
+            episode.filesize = str(os.path.getsize(episode.filename))
+            episode.mimetype = 'audio/mpeg'
             return episode
 
         except UnicodeDecodeError as e:
@@ -496,9 +511,10 @@ class Recorder(object):
             'show': episode.show.name,
             'date': episode.pubdate,
             'year': time.strftime('%Y', episode.starttime),
-            'station': episode.show.station.name,
+            'station': episode.station.name,
             'link_url': episode.link_url
         }
+        episode.description = comment
 
         audio = ID3()
         # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
