@@ -24,13 +24,13 @@ def generate_feed(config, db, entity):
         trim_blocks=True,
     )
 
-    if (entity.slug != ""):
-        items = list(v for (k, v) in db.items() if k.startswith(entity.slug))
-    else:
-        items = list(v for (k, v) in db.items())
+    items = []
+    for (key, value) in db.items():
+        if entity.slug == "" or key.startswith(entity.slug):
+            items.append(value)
 
-    if (len(items) == 0):
-        #logging.warning('Skipped "{}" because of empty db'.format(entity.slug))
+    if len(items) == 0:
+        # logging.warning('Skipped "{}" because of empty db'.format(entity.slug))
         return
 
     logging.debug("Generating feed for {}".format(entity.slug if entity.slug is not "" else '<root>'))

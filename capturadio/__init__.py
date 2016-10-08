@@ -506,6 +506,14 @@ class Recorder(object):
         if episode.filename is None:
             raise "filename is not set - you cannot add metadata to None"
 
+        episode.description = 'Show: {show}<br>Date: {date}<br>Copyright: {year} <a href="{link_url}">{station}</a>'.format(
+            show=episode.show.name,
+            date=episode.pubdate,
+            year=time.strftime('%Y', episode.starttime),
+            station=episode.station.name,
+            link_url=episode.link_url
+        )
+
         config = Configuration()
         comment = config.comment_pattern % {
             'show': episode.show.name,
@@ -514,7 +522,6 @@ class Recorder(object):
             'station': episode.station.name,
             'link_url': episode.link_url
         }
-        episode.description = comment
 
         audio = ID3()
         # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags

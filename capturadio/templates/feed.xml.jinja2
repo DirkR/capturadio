@@ -3,7 +3,7 @@
   <channel>
     <title>{{ title }} - {{ feed.name }}</title>
     <link>{{ feed.link_url }}</link>
-    <description>{{ feed.description }}</description>
+    <description><![CDATA[ {{ feed.description }} ]]></description>
     <itunes:image href="{{ feed.logo_url }}"></itunes:image>
     <language>{{ feed.language }}</language>
     <lastBuildDate>{{ build_date }}</lastBuildDate>
@@ -20,7 +20,7 @@
       <link>{{ item.link_url }}</link>
       <itunes:duration>{{ item.duration_string }}</itunes:duration>
       <itunes:image href="{{ item.logo_url }}"></itunes:image>
-      <description>{{ item.description }}</description>
+      <description><![CDATA[ {{ item.description }} ]]></description>
       <author>{{ item.author }}</author>
       <enclosure url="{{ base_url }}/{{ item.slug }}" length="{{ item.filesize }}" type="{{ item.mimetype }}"></enclosure>
       <guid isPermaLink="true">{{ base_url }}/{{ item.slug }}</guid>
