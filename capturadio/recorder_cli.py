@@ -21,11 +21,11 @@ import shelve
 from docopt import docopt
 
 from capturadio import Configuration, Recorder, Station, version_string as capturadio_version, app_folder
-from capturadio.util import find_configuration, parse_duration
+from capturadio.util import find_configuration, parse_duration, slugify, migrate_mediafile_to_episode
 from capturadio.generator import generate_feed
 
 logging.basicConfig(
-    filename=os.path.join(app_folder, 'log'),
+    #filename=os.path.join(app_folder, 'log'),
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
     level=logging.INFO,
 )
@@ -146,6 +146,50 @@ Show program settings.
           else 'No shows defined')
 
 
+def config_update(args):
+    """Usage:
+    recorder config update
+
+Update program settings and episodes database.
+
+    """
+    config = Configuration()
+
+    show_mappings = {}
+    for show in config.shows.values():
+        old_path = os.path.join(
+            slugify(show.author),
+            slugify(show.name)
+        )
+        show_mappings[old_path] = show
+
+    print(show_mappings)
+    import glob
+
+    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        episode_filenames = db.keys()
+        for filename in glob.glob(os.path.join(config.destination, "*", "*", "*.*")):
+            relative_filename = filename.replace(config.destination + '/', '')
+            if filename.endswith('.xml'):
+                continue
+
+            if relative_filename in episode_filenames:
+                continue
+
+            show_slug = os.path.dirname(relative_filename)
+            if show_slug not in show_mappings.keys():
+                logging.warning(
+                    "Could not migrate {} to episode_db".format(filename))
+                continue
+
+            logging.info("Migrate {}".format(filename))
+
+            show = show_mappings[show_slug]
+            episode = migrate_mediafile_to_episode(config, filename, show)
+            db[episode.slug] = episode
+        db.sync()
+
+
 def ignore_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):
     for p in patterns:
         pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
@@ -172,6 +216,20 @@ Generate rss feed files.
             generate_feed(config, db, station)
             for show in station.shows:
                 generate_feed(config, db, show)
+
+
+def feed_list(args):
+    """Usage:
+    recorder feed list
+
+List all episodes containes in any rss feeds.
+
+    """
+    config = Configuration()
+    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        for (slug, episode) in db.items():
+            print("{}: {}".format(slug, episode))
+
 
 def help(args):
     cmd = r'%s_%s' % (args['<command>'], args['<action>'])
@@ -201,7 +259,9 @@ Usage:
     recorder.py show capture <show>
     recorder.py config list
     recorder.py config setup
+    recorder.py config update
     recorder.py feed update
+    recorder.py feed list
 
 General Options:
     -h, --help        show this screen and exit
@@ -211,7 +271,9 @@ Commands:
     show capture      Capture an episode of a show
     config setup      Create configuration file
     config list       Show configuration values
+    config update     Update configuration settings and episodes database
     feed update       Update rss feed files
+    feed list         Lst all episodes contained in any rss feeds
 
 See 'recorder.py help <command>' for more information on a specific command."""
 

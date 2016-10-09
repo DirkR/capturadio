@@ -445,7 +445,7 @@ class Episode(Entity):
 class Recorder(object):
 
     def capture(self, config, show):
-        logging.info(u'capture "{}"'.format(show))
+        logging.debug('capture "{}"'.format(show))
         episode = Episode(config, show)
         try:
             self._write_stream_to_file(episode)
