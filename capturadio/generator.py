@@ -27,7 +27,7 @@ def generate_feed(config, db, entity):
     items = []
     for (key, value) in db.items():
         if entity.slug == "" or key.startswith(entity.slug):
-            items.append(value)
+            items.append(_escape_string_attributes(value))
 
     if len(items) == 0:
         # logging.warning('Skipped "{}" because of empty db'.format(entity.slug))
@@ -36,7 +36,7 @@ def generate_feed(config, db, entity):
     logging.debug("Generating feed for {}".format(entity.slug if entity.slug is not "" else '<root>'))
     items = sorted(items, key=operator.attrgetter('starttime'), reverse=True)
     contents = j2_env.get_template('feed.xml.jinja2').render(
-        feed=entity,
+        feed=_escape_string_attributes(entity),
         items=items,
         title=config.feed['title'],
         base_url=config.feed['base_url'],
@@ -46,3 +46,11 @@ def generate_feed(config, db, entity):
     filename = os.path.join(entity.filename, 'rss.xml')
     with open(filename, "w") as rssfile:
         rssfile.write(contents)
+
+
+def _escape_string_attributes(entity):
+    for attr in ('name', 'author'):
+        if attr in entity.__dict__:
+            entity.__dict__[attr + '_escaped'] = \
+                entity.__dict__[attr].encode('ascii', 'xmlcharrefreplace').decode("utf-8")
+    return entity

@@ -27,7 +27,7 @@ from capturadio.generator import generate_feed
 logging.basicConfig(
     filename=os.path.join(app_folder, 'log'),
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
 
 
