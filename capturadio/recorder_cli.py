@@ -21,13 +21,13 @@ import shelve
 from docopt import docopt
 
 from capturadio import Configuration, Recorder, Station, version_string as capturadio_version, app_folder
-from capturadio.util import find_configuration, parse_duration
+from capturadio.util import find_configuration, parse_duration, slugify, migrate_mediafile_to_episode
 from capturadio.generator import generate_feed
 
 logging.basicConfig(
-    filename=os.path.join(app_folder, 'log'),
+    #filename=os.path.join(app_folder, 'log'),
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
 
 
