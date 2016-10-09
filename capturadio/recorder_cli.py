@@ -217,6 +217,20 @@ Generate rss feed files.
             for show in station.shows:
                 generate_feed(config, db, show)
 
+
+def feed_list(args):
+    """Usage:
+    recorder feed list
+
+List all episodes containes in any rss feeds.
+
+    """
+    config = Configuration()
+    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        for (slug, episode) in db.items():
+            print("{}: {}".format(slug, episode))
+
+
 def help(args):
     cmd = r'%s_%s' % (args['<command>'], args['<action>'])
     try:
@@ -247,6 +261,7 @@ Usage:
     recorder.py config setup
     recorder.py config update
     recorder.py feed update
+    recorder.py feed list
 
 General Options:
     -h, --help        show this screen and exit
@@ -258,6 +273,7 @@ Commands:
     config list       Show configuration values
     config update     Update configuration settings and episodes database
     feed update       Update rss feed files
+    feed list         Lst all episodes contained in any rss feeds
 
 See 'recorder.py help <command>' for more information on a specific command."""
 
