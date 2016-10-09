@@ -146,6 +146,50 @@ Show program settings.
           else 'No shows defined')
 
 
+def config_update(args):
+    """Usage:
+    recorder config update
+
+Update program settings and episodes database.
+
+    """
+    config = Configuration()
+
+    show_mappings = {}
+    for show in config.shows.values():
+        old_path = os.path.join(
+            slugify(show.author),
+            slugify(show.name)
+        )
+        show_mappings[old_path] = show
+
+    print(show_mappings)
+    import glob
+
+    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        episode_filenames = db.keys()
+        for filename in glob.glob(os.path.join(config.destination, "*", "*", "*.*")):
+            relative_filename = filename.replace(config.destination + '/', '')
+            if filename.endswith('.xml'):
+                continue
+
+            if relative_filename in episode_filenames:
+                continue
+
+            show_slug = os.path.dirname(relative_filename)
+            if show_slug not in show_mappings.keys():
+                logging.warning(
+                    "Could not migrate {} to episode_db".format(filename))
+                continue
+
+            logging.info("Migrate {}".format(filename))
+
+            show = show_mappings[show_slug]
+            episode = migrate_mediafile_to_episode(config, filename, show)
+            db[episode.slug] = episode
+        db.sync()
+
+
 def ignore_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):
     for p in patterns:
         pattern = r'.*%s%s$|.*%s%s%s.*' % (os.sep, p, os.sep, p, os.sep)
@@ -201,6 +245,7 @@ Usage:
     recorder.py show capture <show>
     recorder.py config list
     recorder.py config setup
+    recorder.py config update
     recorder.py feed update
 
 General Options:
@@ -211,6 +256,7 @@ Commands:
     show capture      Capture an episode of a show
     config setup      Create configuration file
     config list       Show configuration values
+    config update     Update configuration settings and episodes database
     feed update       Update rss feed files
 
 See 'recorder.py help <command>' for more information on a specific command."""
