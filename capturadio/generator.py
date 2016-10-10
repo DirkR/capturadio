@@ -25,9 +25,12 @@ def generate_feed(config, db, entity):
     )
 
     items = []
-    for (key, value) in db.items():
-        if entity.slug == "" or key.startswith(entity.slug):
-            items.append(_escape_string_attributes(value))
+    for (slug, episode) in db.items():
+        if entity.slug == "" or slug.startswith(entity.slug):
+            if not os.path.exists(episode.filename):
+                logging.warning("Skipping non-existant file {}".format(episode.filename))
+                continue
+            items.append(_escape_string_attributes(episode))
 
     if len(items) == 0:
         # logging.warning('Skipped "{}" because of empty db'.format(entity.slug))

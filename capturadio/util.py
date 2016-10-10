@@ -20,6 +20,7 @@ import urllib.parse as urllib
 import logging
 import shutil
 
+from mutagenx.mp3 import MP3
 from xdg import XDG_CONFIG_HOME
 
 def format_date(pattern, time_value):
@@ -99,19 +100,17 @@ def find_configuration():
 
 def migrate_mediafile_to_episode(config, filename, show):
     import datetime
-    import time
-    import shutil
     from capturadio import Episode
 
     logging.info("Migrate {} to episode".format(filename))
     episode = Episode(config, show)
-    episode.name = "{}, {}".format(show.name, 1)
-    __playtime = _get_mp3_tag(filename, 'TLEN', 0)
-    episode.duration = int(__playtime) / 1000
+    audiofile = MP3(filename)
+    episode.filename = filename
+    episode.duration = round(float(_get_mp3_tag(audiofile, 'TLEN', 0)) / 1000)
     episode.duration_string = str(datetime.timedelta(seconds=episode.duration))
     filemtime = datetime.date.fromtimestamp(
         os.path.getmtime(filename)).strftime('%Y-%m-%d %H:%M')
-    starttimestr = _get_mp3_tag(filename, 'TDRC', filemtime)
+    starttimestr = _get_mp3_tag(audiofile, 'TDRC', filemtime)
     episode.starttime = datetime.datetime.strptime(starttimestr,
                                                    '%Y-%m-%d %H:%M').timetuple()
     episode.pubdate = time.strftime('%c', episode.starttime)
@@ -123,13 +122,14 @@ def migrate_mediafile_to_episode(config, filename, show):
         )
     )
     basename = os.path.basename(filename)
-    episode.name = _get_mp3_tag(filename, 'TIT2', basename[:-4])
+    episode.name = _get_mp3_tag(audiofile, 'TIT2', basename[:-4])
     new_filename = os.path.join(show.filename, basename)
-    new_dirname = os.path.dirname(new_filename)
-    if not os.path.exists(new_dirname):
-        os.makedirs(new_dirname)
-    shutil.move(filename, new_filename)
-    episode.filename = new_filename
+    if new_filename != filename:
+        new_dirname = os.path.dirname(new_filename)
+        if not os.path.exists(new_dirname):
+            os.makedirs(new_dirname)
+        shutil.move(filename, new_filename)
+        episode.filename = new_filename
     episode.slug = os.path.join(show.slug, basename)
     episode.filesize = str(os.path.getsize(episode.filename))
     episode.mimetype = 'audio/mpeg'
@@ -139,6 +139,6 @@ def migrate_mediafile_to_episode(config, filename, show):
 def _get_mp3_tag(audiofile, tag_string, default):
     """Helper function to get the contents of an ID3 tag from an audiofile."""
     try:
-        return u"%s" % audiofile[tag_string]
+        return "{}".format(audiofile[tag_string])
     except (KeyError, TypeError):
         return default
