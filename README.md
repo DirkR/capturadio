@@ -39,6 +39,11 @@ and it will create a configuration at `~/.config/capturadio`.
 You should edit the file and customize it. Especially the destination folder
 and the base_url should be adopted.
 
+If you updated the codebase, then runn the following command to update the
+configuration:
+
+    recorder config update
+
 Run the command
 
     recorder config list
