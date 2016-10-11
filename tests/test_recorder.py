@@ -13,15 +13,16 @@ import pytest
 from fixtures import test_folder, config
 sys.path.insert(0, os.path.abspath('.'))
 
-from capturadio import Recorder, Show, Episode
+from capturadio.entities import Show, Episode
+from capturadio.recorder import Recorder
 
 
 def test_write_file(test_folder, config, monkeypatch):
     def mockreturn(path):
         filename = os.path.join(os.path.dirname(__file__), 'testfile.mp3')
         return open(filename, 'rb')
-    import capturadio
-    monkeypatch.setattr(capturadio, 'urlopen', mockreturn)
+    import capturadio.recorder
+    monkeypatch.setattr(capturadio.recorder, 'urlopen', mockreturn)
 
     folder = test_folder.mkdir('casts')
     show = config.shows['weather']

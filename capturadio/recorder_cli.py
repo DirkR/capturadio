@@ -20,12 +20,12 @@ import shelve
 
 from docopt import docopt
 
-from capturadio import Configuration, Recorder, Station, version_string as capturadio_version, app_folder
+from capturadio import Recorder, Station, version_string as capturadio_version, app_folder
+from capturadio.config import Configuration
 from capturadio.util import find_configuration, parse_duration, slugify, migrate_mediafile_to_episode
 from capturadio.generator import generate_feed
 
 logging.basicConfig(
-    #filename=os.path.join(app_folder, 'log'),
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
     level=logging.INFO,
 )
@@ -162,8 +162,8 @@ Update program settings and episodes database.
             slugify(show.name)
         )
         show_mappings[old_path] = show
+        show_mappings[show.slug] = show
 
-    print(show_mappings)
     import glob
 
     with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
@@ -222,13 +222,11 @@ def feed_list(args):
     """Usage:
     recorder feed list
 
-List all episodes containes in any rss feeds.
-
+    List all episodes containes in any rss feeds.
     """
-    config = Configuration()
     with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
-        for (slug, episode) in db.items():
-            print("{}: {}".format(slug, episode))
+        for episode in sorted(db.values()):
+            print("{}: {}".format(episode.slug, episode))
 
 
 def help(args):

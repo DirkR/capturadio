@@ -43,7 +43,7 @@ def test_configuration(test_folder):
     assert config.stations['dkultur'].stream_url == 'http://example.org/dkultur'
     assert config.stations['dkultur'].name == 'dkultur'
     assert config.stations['dkultur'].logo_url == 'http://example.org/default.png'
-    assert config.stations['dkultur'].link_url == 'http://my.example.org/'
+    assert config.stations['dkultur'].link_url == 'http://my.example.org'
     assert config.stations['dkultur'].date_pattern == '%d.%m.%Y'
 
     assert 'wdr2' in config.stations.keys()

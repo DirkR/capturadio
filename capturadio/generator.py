@@ -12,10 +12,6 @@ from capturadio import version_string
 def generate_feed(config, db, entity):
     """
     Write the list of files as RSS formatted file.
-
-    The argument 'path' points to the folder, where the file will
-    be written to. The name of the file is specified in
-    config.feed['filename'] and defaults to 'rss.xml'.
     """
     this_dir = os.path.dirname(__file__)
     templates_dir = os.path.join(this_dir, 'templates')
