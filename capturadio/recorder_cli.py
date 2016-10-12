@@ -23,7 +23,7 @@ from docopt import docopt
 from capturadio import Recorder, Station, version_string as capturadio_version, app_folder
 from capturadio.config import Configuration
 from capturadio.util import find_configuration, parse_duration, slugify, migrate_mediafile_to_episode
-from capturadio.generator import generate_feed
+from capturadio.generator import generate_feed, generate_page
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
@@ -209,13 +209,17 @@ Generate rss feed files.
     root = Station(config, 'root', None, 'All recordings')
     root.filename = config.destination
     root.slug = ''
+    root.shows = config.stations.values()
 
     with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
         generate_feed(config, db, root)
+        generate_page(config, db, root)
         for station in config.stations.values():
             generate_feed(config, db, station)
+            generate_page(config, db, station)
             for show in station.shows:
                 generate_feed(config, db, show)
+                generate_page(config, db, show)
 
 
 def feed_list(args):
