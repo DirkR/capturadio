@@ -25,7 +25,7 @@ def generate_page(config, db, entity):
     if 'shows' in entity.__dict__:
         for show in entity.shows:
             if not os.path.exists(show.filename):
-                logging.warning("Skipping non-existant file {}".format(show.filename))
+                logging.debug("Skipping non-existant file {}".format(show.filename))
             else:
                 shows.append(_escape_string_attributes(show))
 
@@ -34,7 +34,7 @@ def generate_page(config, db, entity):
         for (slug, episode) in db.items():
             if entity.slug == "" or slug.startswith(entity.slug):
                 if not os.path.exists(episode.filename):
-                    logging.warning("Skipping non-existant file {}".format(episode.filename))
+                    logging.debug("Skipping non-existant file {}".format(episode.filename))
                     continue
                 items.append(_escape_string_attributes(episode))
 
