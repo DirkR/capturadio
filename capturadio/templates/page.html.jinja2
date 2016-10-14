@@ -1,56 +1,94 @@
-<html>
-    <head>
-        <title>{{ title }} - {{ feed.name_escaped }}</title>
-        <style type="text/css">
-            .header img.logo {
-                height: 36px;
-                width: 36px;
-            }
-            li .item {
-                height: 22px;
-            }
-            li .item img.logo {
-                height: 16px;
-                width: 16px;
-            }
-        </style>
-    </head>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} - {{ feed.name_escaped }}</title>
+    <link href="{{ base_url }}/assets/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ base_url }}/assets/bootstrap/bootstrap_flatly.min.css" rel="stylesheet">
+    <link href="{{ base_url }}/assets/font-awesome/css/font-awesome.min.css" rel="stylesheet">
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style type="text/css">
+        body > .container {
+          padding: 60px 15px 0;
+        }
+        .navbar img.logo {
+            height: 36px;
+            width: 36px;
+        }
+        li .item {
+            height: 22px;
+        }
+        li .item img.logo {
+            height: 16px;
+            width: 16px;
+        }
+        .footer {
+          position: absolute;
+          bottom: 0;
+          width: 100%;
+          height: 60px;
+          background-color: #f5f5f5;
+        }
+        .container .text-muted {
+          margin: 20px 0;
+        }
+    </style>
+  </head>
   <body>
-    <div class="header">
-        <a title="{{ feed.name_escaped }}" href="{{ feed.link_url }}">
-            <img class="logo" title="{{ feed.name_escaped }}" alt="{{ feed.name_escaped }}" src="{{ feed.logo_url }}"></img>
-        </a>
-        <h1>{{ title }} - {{ feed.name_escaped }}</h1>
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a class="navbar-brand" href="{{ base_url }}">CaptuRadio - {{ title | e }}</a>
         </div>
-    <div class="description">
-    <blockquote>
-        <p>Mpeg stream recordings of the show "{{ feed.name_escaped | e }}".</p>
-    </blockquote>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="page-header">
+        <h1>{{ title }} - {{ feed.name_escaped }}</h1>
+      </div>
+      <p>Mpeg stream recordings of the show "{{ feed.name_escaped | e }}".</p>
+      <ul>
+  {% for item in shows %}
+      <li>
+      <div class="item show">
+          <img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
+          <a href="{{ base_url }}/{{ item.slug }}/index.html">{{ item.name_escaped }}</a>
+          <a href="{{ base_url }}/{{ item.slug }}/rss.xml"><i class="fa fa-rss-square" aria-hidden="true"></i></a>
+          <a href="{{ item.link_url }}"><i class="fa fa-external-link-square" aria-hidden="true"></i></a>
+      </div>
+      </li>
+  {% endfor %}
+      </ul>
+      <hr>
+      <ul>
+  {% for item in items %}
+      <li>
+      <div class="item episode">
+          <img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
+          <a href="{{ base_url }}/{{ item.slug }}">{{ item.name_escaped }}</a>
+      </div>
+      </li>
+  {% endfor %}
+      </ul>
     </div>
-    <ul>
-{% for item in shows %}
-    <li>
-    <div class="item show">
-        <img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
-        <a href="{{ base_url }}/{{ item.slug }}/index.html">{{ item.name_escaped }}</a>
-        <a href="{{ base_url }}/{{ item.slug }}/rss.xml">RSS</a>
-        <a href="{{ item.link_url }}">Web</a>
-    </div>
-    </li>
-{% endfor %}
-    </ul>
-    <hr>
-    <ul>
-{% for item in items %}
-    <li>
-    <div class="item episode">
-        <img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
-        <a href="{{ base_url }}/{{ item.slug }}">{{ item.name_escaped }}</a>
-    </div>
-    </li>
-{% endfor %}
-    </ul>
-  <hr/>
-      <p>Copyright of media: <a href="{{ feed.link_url }}">{{ feed.author }}</a>, Generator: {{ generator | e }}, built date: {{ build_date | e }}</p>
+
+    <footer class="footer">
+      <div class="container">
+      <p class="text-muted">
+        Powered by <a href="http://github.com/dirkr/capturadio" title="CaptuRadio">CaptuRadio</a>&nbsp;&mdash;&nbsp;
+        Copyright of media: <a href="{{ feed.link_url }}">{{ feed.author }}</a>&nbsp;&mdash;&nbsp;
+        Build date: {{ build_date | e }}
+      </p>
+      </div>
+    </footer>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="{{base_url }}/assets/bootstrap/js/bootstrap.min.js"></script>
   </body>
 </html>
