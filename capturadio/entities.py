@@ -14,6 +14,7 @@ class Entity(object):
         self.link_url = None
         self.slug = None
         self.language = "en"
+        self.endurance = 14 * 24 * 3600  # two weeks
 
 
     def __str__(self):
@@ -34,6 +35,8 @@ class Station(Entity):
         self.logo_url = config.feed['default_logo_url']
         self.link_url = config.feed['base_url']
         self.language = config.feed['language']
+        if 'endurance' in config.feed:
+            self.endurance = config.feed['endurance']
         self.shows = []
         self.date_pattern = config.date_pattern
         self.slug = slugify(self.id)
@@ -61,6 +64,7 @@ class Show(Entity):
         self.date_pattern = station.date_pattern
         self.author = station.name
         self.duration = duration
+        self.endurance = station.endurance
         self.slug = os.path.join(station.slug, slugify(self.id))
         self.filename = os.path.join(config.destination, self.slug)
         station.shows.append(self)

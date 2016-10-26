@@ -23,6 +23,7 @@ import shutil
 from mutagenx.mp3 import MP3
 from xdg import XDG_CONFIG_HOME
 
+
 def format_date(pattern, time_value):
     if type(time_value).__name__ == 'float':
         time_value = time.localtime(time_value)
@@ -37,13 +38,19 @@ def format_date(pattern, time_value):
 
 
 def parse_duration(duration_string):
-#   pattern = r"^((?P<h>\d+h)(?iP<m>\d+m)?(?iP<s>\d+s)?|?P<ps>\d+)$"
-    pattern = r"((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
+    pattern = r"((?P<d>\d+)d)?((?P<h>\d+)h)?((?P<m>\d+)m)?((?P<s>\d+)s?)?"
     matches = re.match(pattern, duration_string)
-    (h, m, s) = (matches.group('h'), matches.group('m'), matches.group('s'))
-    duration = (int(h) * 3600 if h is not None else 0) +\
-               (int(m) * 60 if m is not None else 0) +\
-               (int(s) if s is not None else 0)
+    (d, h, m, s) = (
+        matches.group('d'),
+        matches.group('h'),
+        matches.group('m'),
+        matches.group('s')
+    )
+    duration = \
+        (int(d) * 24*3600 if d is not None else 0) +\
+        (int(h) * 3600 if h is not None else 0) +\
+        (int(m) * 60 if m is not None else 0) +\
+        (int(s) if s is not None else 0)
     return duration
 
 
@@ -85,8 +92,10 @@ def find_configuration():
         if os.path.exists(location):
             if not os.path.exists(xdg_location):
                 shutil.copy(location, xdg_location)
-                logging.info("Copy legacy configuration file {} to {}.".format(location, xdg_location))
-            logging.warning("Legacy configuration file {} can be removed.".format(location))
+                logging.info("Copy legacy configuration file {} to {}."
+                             .format(location, xdg_location))
+            logging.warning("Legacy configuration file {} can be removed."
+                            .format(location))
 
     config_locations = [
         xdg_location,
@@ -99,7 +108,7 @@ def find_configuration():
 
 
 def migrate_mediafile_to_episode(config, filename, show):
-    import datetime
+    from datetime import datetime, date, timedelta
     from capturadio import Episode
 
     logging.info("Migrate {} to episode".format(filename))
@@ -107,12 +116,14 @@ def migrate_mediafile_to_episode(config, filename, show):
     audiofile = MP3(filename)
     episode.filename = filename
     episode.duration = round(float(_get_mp3_tag(audiofile, 'TLEN', 0)) / 1000)
-    episode.duration_string = str(datetime.timedelta(seconds=episode.duration))
-    filemtime = datetime.date.fromtimestamp(
+    episode.duration_string = str(timedelta(seconds=episode.duration))
+    filemtime = date.fromtimestamp(
         os.path.getmtime(filename)).strftime('%Y-%m-%d %H:%M')
     starttimestr = _get_mp3_tag(audiofile, 'TDRC', filemtime)
-    episode.starttime = datetime.datetime.strptime(starttimestr,
-                                                   '%Y-%m-%d %H:%M').timetuple()
+    episode.starttime = datetime.strptime(
+        starttimestr,
+        '%Y-%m-%d %H:%M'
+    ).timetuple()
     episode.pubdate = time.strftime('%c', episode.starttime)
     episode.slug = os.path.join(
         show.slug,

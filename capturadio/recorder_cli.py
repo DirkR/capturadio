@@ -17,6 +17,7 @@ import os
 import re
 import logging
 import shelve
+from time import time, mktime
 
 from docopt import docopt
 
@@ -233,6 +234,24 @@ def feed_list(args):
             print("{}: {}".format(episode.slug, episode))
 
 
+def feed_cleanup(args):
+    """Usage:
+    recorder feed cleanup
+
+    Remove overdue episodes from database and cache.
+    """
+    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        for slug, episode in db.items():
+            if 'endurance' not in episode.__dict__:
+                episode.endurance = parse_duration('14d')
+                db[slug] = episode
+            if episode.endurance < (time() - mktime(episode.starttime)):
+                logging.warning("del db[" + slug + "]")
+                del db[slug]
+                os.unlink(episode.filename)
+    feed_update(args)
+
+
 def help(args):
     cmd = r'%s_%s' % (args['<command>'], args['<action>'])
     try:
@@ -246,7 +265,8 @@ def find_command(args):
     if not args['help']:
         for command in ['feed', 'config', 'show']:
             if args[command]:
-                for action in ['list', 'update', 'capture', 'show', 'setup']:
+                for action in ['list', 'update', 'capture', 'show',
+                               'setup', 'cleanup']:
                     if args[action]:
                         return r'%s_%s' % (command, action)
     return 'help'
@@ -257,13 +277,14 @@ def main(argv=None):
 capturadio - Capture internet radio broadcasts in mp3 encoding format.
 
 Usage:
-    recorder.py help <command> <action>
-    recorder.py show capture <show>
-    recorder.py config list
-    recorder.py config setup
-    recorder.py config update
-    recorder.py feed update
-    recorder.py feed list
+    recorder help <command> <action>
+    recorder show capture <show>
+    recorder config list
+    recorder config setup
+    recorder config update
+    recorder feed update
+    recorder feed list
+    recorder feed cleanup
 
 General Options:
     -h, --help        show this screen and exit
@@ -275,7 +296,8 @@ Commands:
     config list       Show configuration values
     config update     Update configuration settings and episodes database
     feed update       Update rss feed files
-    feed list         Lst all episodes contained in any rss feeds
+    feed list         List all episodes contained in any rss feeds
+    feed cleanup      Delete overdue episodes from database
 
 See 'recorder.py help <command>' for more information on a specific command."""
 

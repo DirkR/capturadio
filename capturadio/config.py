@@ -109,6 +109,7 @@ Copyright: %(year)s %(station)s''',
                 self._load_config()
                 Configuration._loaded_from_disk = True
 
+
     def write_config(self):
         logging.debug('Enter write_config')
         config = UnicodeConfigParser()
@@ -220,6 +221,8 @@ Copyright: %(year)s %(station)s''',
                 self.feed['default_logo_url'] = config.get('feed', 'default_logo_url')
             if config.has_option('feed', 'default_link_url'):
                 self.feed['default_link_url'] = config.get('feed', 'default_link_url')
+            if config.has_option('feed', 'endurance'):
+                self.feed['endurance'] = parse_duration(config.get('feed', 'endurance'))
 
             if self.feed['base_url'].endswith('/'):
                 self.feed['base_url'] = self.feed['base_url'][:-1]
@@ -256,6 +259,9 @@ Copyright: %(year)s %(station)s''',
                 if config.has_option(station_id, 'link_url'):
                     station.link_url = config.get(station_id, 'link_url')
 
+                if config.has_option(station_id, 'endurance'):
+                    station.endurance = parse_duration(config.get(station_id, 'endurance'))
+
                 if config.has_option(station_id, 'date_pattern'):
                     station.date_pattern = config.get(station_id, 'date_pattern', raw=True)
 
@@ -290,6 +296,9 @@ Copyright: %(year)s %(station)s''',
 
                 if config.has_option(show_id, 'stream_url'):
                     show.stream_url = config.get(show_id, 'stream_url')
+
+                if config.has_option(show_id, 'endurance'):
+                    show.endurance = parse_duration(config.get(show_id, 'endurance'))
 
                 if config.has_option(show_id, 'date_pattern'):
                     show.date_pattern = config.get(show_id, 'date_pattern', raw=True)
