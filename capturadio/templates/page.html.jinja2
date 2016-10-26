@@ -20,10 +20,10 @@
             height: 36px;
             width: 36px;
         }
-        li .item {
-            height: 22px;
+        li.item blockquote {
+          font-size: 95%;
         }
-        li .item img.logo {
+        li.item img.logo {
             height: 16px;
             width: 16px;
         }
@@ -54,24 +54,24 @@
       <p>Mpeg stream recordings of the show "{{ feed.name_escaped | e }}".</p>
       <ul>
   {% for item in shows %}
-      <li>
-      <div class="item show">
-          <img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
-          <a href="{{ base_url }}/{{ item.slug }}/index.html">{{ item.name_escaped }}</a>
-          <a href="{{ base_url }}/{{ item.slug }}/rss.xml"><i class="fa fa-rss-square" aria-hidden="true"></i></a>
-          <a href="{{ item.link_url }}"><i class="fa fa-external-link-square" aria-hidden="true"></i></a>
-      </div>
+      <li class="item show">
+        <p><img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
+        <a href="{{ base_url }}/{{ item.slug }}/index.html">{{ item.name_escaped }}</a>
+        <a href="{{ base_url }}/{{ item.slug }}/rss.xml"><i class="fa fa-rss-square" aria-hidden="true"></i></a>
+        <a href="{{ item.link_url }}"><i class="fa fa-external-link-square" aria-hidden="true"></i></a>
+        </p>
       </li>
   {% endfor %}
       </ul>
       <hr>
       <ul>
   {% for item in items %}
-      <li>
-      <div class="item episode">
-          <img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
-          <a href="{{ base_url }}/{{ item.slug }}">{{ item.name_escaped }}</a>
-      </div>
+  <li class="item episode">
+        <p><img class="logo" title="{{ item.name_escaped }}" alt="{{ item.name_escaped }}" src="{{ item.logo_url }}"></img>
+        <a href="{{ base_url }}/{{ item.slug }}">{{ item.name_escaped }}</a></p>
+  {% if item.description %}
+        <blockquote><p>{{ item.description }}</p></blockquote>
+  {% endif %}
       </li>
   {% endfor %}
       </ul>
