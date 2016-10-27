@@ -12,16 +12,31 @@ import os
 import fcntl
 import types
 import builtins
+import logging
 from fcntl import LOCK_SH, LOCK_EX, LOCK_UN, LOCK_NB
 
 from capturadio import app_folder
 
 
 # Based on: https://code.activestate.com/recipes/576591-simple-shelve-with-linux-file-locking/
-def _close(self):
-    shelve.Shelf.close(self)
-    fcntl.flock(self.lckfile.fileno(), LOCK_UN)
-    self.lckfile.close()
+def _close_shelve_and_remove_lock(self):
+    try:
+        self.orig_close()
+    except OSError as e:
+        logging.error("Could not close shelve: {}".format(e))
+
+    try:
+        fcntl.flock(self.lckfile, LOCK_UN)
+    except ValueError as e:
+        pass
+
+    try:
+        self.lckfile.close()
+    except OSError as e:
+        pass
+    finally:
+        if os.path.exists(self.lckfile.name):
+            os.unlink(self.lckfile.name)
 
 
 # Based on: https://code.activestate.com/recipes/576591-simple-shelve-with-linux-file-locking/
@@ -40,13 +55,14 @@ def open(dbname, flag='c', protocol=None, writeback=False, block=True):
         lockflags = LOCK_EX
     if not block:
         lockflags = LOCK_NB
-    fcntl.flock(lckfile.fileno(), lockflags)
+    fcntl.flock(lckfile, lockflags)
 
     # Open the shelf
     shelf = shelve.open(filename, flag, protocol, writeback)
 
     # Override close
-    shelf.close = types.MethodType(_close, shelf)
+    shelf.orig_close = shelf.close
+    shelf.close = types.MethodType(_close_shelve_and_remove_lock, shelf)
     shelf.lckfile = lckfile
 
     # And return it
