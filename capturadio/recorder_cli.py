@@ -21,10 +21,11 @@ from time import time, mktime
 
 from docopt import docopt
 
-from capturadio import Recorder, Station, version_string as capturadio_version, app_folder
+from capturadio import Recorder, Station, version_string as capturadio_version
 from capturadio.config import Configuration
 from capturadio.util import find_configuration, parse_duration, slugify, migrate_mediafile_to_episode
 from capturadio.generator import generate_feed, generate_page
+import capturadio.database as database
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
@@ -63,8 +64,9 @@ Examples:
         try:
             recorder = Recorder()
             episode = recorder.capture(config, show)
-            with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
-                db[episode.slug] = episode
+            db = database.open('episodes_db')
+            db[episode.slug] = episode
+            db.close()
         except Exception as e:
             logging.error('Unable to capture recording: {}'.format(e))
     else:
@@ -167,7 +169,7 @@ Update program settings and episodes database.
 
     import glob
 
-    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+    with database.open('episodes_db') as db:
         episode_filenames = db.keys()
         for filename in glob.glob(os.path.join(config.destination, "*", "*", "*.*")):
             relative_filename = filename.replace(config.destination + '/', '')
@@ -188,7 +190,6 @@ Update program settings and episodes database.
             show = show_mappings[show_slug]
             episode = migrate_mediafile_to_episode(config, filename, show)
             db[episode.slug] = episode
-        db.sync()
 
 
 def ignore_folder(dirname, patterns=['.git', '.bzr', 'svn', '.svn', '.hg']):
@@ -212,8 +213,10 @@ Generate rss feed files.
     root.slug = ''
     root.shows = config.stations.values()
 
-    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+    with database.open('episodes_db') as db:
         _cleanup_database(db)
+        db.sync()
+
         generate_feed(config, db, root)
         generate_page(config, db, root)
         for station in config.stations.values():
@@ -230,17 +233,17 @@ def feed_list(args):
 
     List all episodes containes in any rss feeds.
     """
-    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+    with database.open('episodes_db') as db:
         for episode in sorted(db.values()):
             print("{}: {}".format(episode.slug, episode))
 
 
 def _cleanup_database(db):
     for slug, episode in db.items():
-        if 'endurance' not in episode.__dict__:
-            episode.endurance = parse_duration('14d')
-            db[slug] = episode
-        if episode.endurance < (time() - mktime(episode.starttime)):
+        endurance = episode.endurance \
+            if 'endurance' in episode.__dict__ \
+            else parse_duration('14d')
+        if endurance < (time() - mktime(episode.starttime)):
             del db[slug]
             try:
                 os.unlink(episode.filename)
