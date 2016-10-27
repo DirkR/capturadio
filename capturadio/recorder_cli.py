@@ -213,6 +213,7 @@ Generate rss feed files.
     root.shows = config.stations.values()
 
     with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+        _cleanup_database(db)
         generate_feed(config, db, root)
         generate_page(config, db, root)
         for station in config.stations.values():
@@ -234,22 +235,18 @@ def feed_list(args):
             print("{}: {}".format(episode.slug, episode))
 
 
-def feed_cleanup(args):
-    """Usage:
-    recorder feed cleanup
-
-    Remove overdue episodes from database and cache.
-    """
-    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
-        for slug, episode in db.items():
-            if 'endurance' not in episode.__dict__:
-                episode.endurance = parse_duration('14d')
-                db[slug] = episode
-            if episode.endurance < (time() - mktime(episode.starttime)):
-                logging.warning("del db[" + slug + "]")
-                del db[slug]
+def _cleanup_database(db):
+    for slug, episode in db.items():
+        if 'endurance' not in episode.__dict__:
+            episode.endurance = parse_duration('14d')
+            db[slug] = episode
+        if episode.endurance < (time() - mktime(episode.starttime)):
+            del db[slug]
+            try:
                 os.unlink(episode.filename)
-    feed_update(args)
+            except OSError as e:
+                logging.error('Could not remove episode media file {}: {}'
+                              .format(episode.slug, e))
 
 
 def help(args):
@@ -284,7 +281,6 @@ Usage:
     recorder config update
     recorder feed update
     recorder feed list
-    recorder feed cleanup
 
 General Options:
     -h, --help        show this screen and exit
@@ -297,7 +293,6 @@ Commands:
     config update     Update configuration settings and episodes database
     feed update       Update rss feed files
     feed list         List all episodes contained in any rss feeds
-    feed cleanup      Delete overdue episodes from database
 
 See 'recorder.py help <command>' for more information on a specific command."""
 
