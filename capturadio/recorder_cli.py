@@ -25,6 +25,7 @@ from capturadio import Recorder, Station, version_string as capturadio_version, 
 from capturadio.config import Configuration
 from capturadio.util import find_configuration, parse_duration, slugify, migrate_mediafile_to_episode
 from capturadio.generator import generate_feed, generate_page
+import capturadio.database as database
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
@@ -63,8 +64,9 @@ Examples:
         try:
             recorder = Recorder()
             episode = recorder.capture(config, show)
-            with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
-                db[episode.slug] = episode
+            db = database.open('episodes_db')
+            db[episode.slug] = episode
+            db.close()
         except Exception as e:
             logging.error('Unable to capture recording: {}'.format(e))
     else:
@@ -212,7 +214,7 @@ Generate rss feed files.
     root.slug = ''
     root.shows = config.stations.values()
 
-    with shelve.open(os.path.join(app_folder, 'episodes_db')) as db:
+    with database.open('episodes_db') as db:
         _cleanup_database(db)
         generate_feed(config, db, root)
         generate_page(config, db, root)
