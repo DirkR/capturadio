@@ -16,7 +16,6 @@ import sys
 import os
 import re
 import logging
-import shelve
 from time import time, mktime
 
 from docopt import docopt
@@ -29,7 +28,7 @@ import capturadio.database as database
 
 logging.basicConfig(
     format='[%(asctime)s] %(levelname)-6s %(module)s::%(funcName)s:%(lineno)d: %(message)s',
-    level=logging.INFO,
+    level=logging.WARN,
 )
 
 

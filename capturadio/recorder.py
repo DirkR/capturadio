@@ -5,10 +5,12 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
 
+from mutagenx._id3frames import \
+    TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
+from mutagenx.id3 import ID3
+
 from capturadio.config import Configuration
 from capturadio.entities import Episode
-from mutagenx._id3frames import TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
-from mutagenx.id3 import ID3
 
 
 class Recorder(object):
@@ -26,8 +28,9 @@ class Recorder(object):
 
     def _write_stream_to_file(self, episode):
         not_ready = True
-
-        logging.debug("write {} to {}".format(episode.stream_url, episode.filename))
+        logging.debug("write {} to {}".format(
+            episode.stream_url, episode.filename
+        ))
         try:
             dirname = os.path.dirname(episode.filename)
             if not os.path.isdir(dirname):
@@ -127,8 +130,6 @@ class Recorder(object):
                         data=img_data
                     )
                     audio.add(img)
-            except (HTTPError, URLError) as e:
-                message = "Error during capturing %s - %s" % (url, e)
-                logging.error(message)
             except Exception as e:
-                raise e
+                message = "Error during embedding logo %s - %s" % (url, e)
+                logging.error(message)
