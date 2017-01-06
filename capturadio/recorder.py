@@ -7,7 +7,8 @@ from urllib.request import urlopen, Request
 
 from mutagenx._id3frames import \
     TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
-from mutagenx.id3 import ID3
+from mutagenx.mp3 import MP3
+from mutagenx.id3 import ID3, error
 
 from capturadio.config import Configuration
 from capturadio.entities import Episode
@@ -95,24 +96,27 @@ class Recorder(object):
             'link_url': episode.link_url
         }
 
-        audio = ID3()
-        # See http://www.id3.org/id3v2.3.0 for details about the ID3 tags
+        audiofile = MP3(episode.filename, ID3=ID3)
+        # add ID3 tag if it doesn't exist
+        try:
+            audiofile.add_tags()
+        except error:
+            pass
 
-        audio.add(TIT2(encoding=2, text=[episode.name]))
-        audio.add(TDRC(encoding=2, text=[episode.pubdate]))
-        audio.add(TCON(encoding=2, text=['Podcast']))
-        audio.add(TALB(encoding=2, text=[episode.show.name]))
-        audio.add(TLEN(encoding=2, text=[episode.duration * 1000]))
-        audio.add(TPE1(encoding=2, text=[episode.station.name]))
-        audio.add(TCOP(encoding=2, text=[episode.station.name]))
-        audio.add(COMM(encoding=2, lang='eng', desc='desc', text=comment))
-        audio.add(TCOM(encoding=2, text=[episode.link_url]))
-        self._add_logo(episode, audio)
-        audio.save(episode.filename)
+        audiofile.tags.add(TIT2(encoding=2, text=[episode.name]))
+        audiofile.tags.add(TDRC(encoding=2, text=[episode.pubdate]))
+        audiofile.tags.add(TCON(encoding=2, text=['Podcast']))
+        audiofile.tags.add(TALB(encoding=2, text=[episode.show.name]))
+        audiofile.tags.add(TLEN(encoding=2, text=[episode.duration * 1000]))
+        audiofile.tags.add(TPE1(encoding=2, text=[episode.station.name]))
+        audiofile.tags.add(TCOP(encoding=2, text=[episode.station.name]))
+        audiofile.tags.add(COMM(encoding=2, lang='eng', desc='desc', text=comment))
+        audiofile.tags.add(TCOM(encoding=2, text=[episode.link_url]))
+        self._add_logo(audiofile, episode.logo_url)
+        audiofile.save()
 
-    def _add_logo(self, episode, audio):
+    def _add_logo(self, audiofile, url):
         # APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
-        url = episode.logo_url
         if url is not None:
             request = Request(url)
             request.get_method = lambda: 'HEAD'
@@ -120,16 +124,15 @@ class Recorder(object):
                 response = urlopen(request)
                 logo_type = response.getheader('Content-Type')
 
-                if logo_type in ['image/jpeg', 'image/png']:
-                    img_data = urlopen(url).read()
+                if logo_type in ['image/jpeg', 'image/png', 'image/gif']:
                     img = APIC(
                         encoding=3,  # 3 is for utf-8
                         mime=logo_type,
                         type=3,  # 3 is for the cover image
-                        desc=u'Station logo',
-                        data=img_data
+                        desc='Station logo',
+                        data=urlopen(url).read()
                     )
-                    audio.add(img)
+                    audiofile.tags.add(img)
             except Exception as e:
                 message = "Error during embedding logo %s - %s" % (url, e)
                 logging.error(message)
