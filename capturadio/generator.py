@@ -88,7 +88,7 @@ def generate_feed(config, db, entity):
         items=items,
         title=config.feed['title'],
         base_url=config.feed['base_url'],
-        build_date=time.strftime('%c', time.localtime()),
+        build_date=time.strftime('%a, %d %b %Y %X %Z', time.localtime()),
         generator='CaptuRadio v{}'.format(version_string),
     )
     filename = os.path.join(entity.filename, 'rss.xml')

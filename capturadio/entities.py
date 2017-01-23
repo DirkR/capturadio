@@ -89,7 +89,7 @@ class Episode(Entity):
         self.starttime = time.localtime()
         self.show = show
         self.name = "{}, {}".format(show.name, time.strftime(config.date_pattern, self.starttime))
-        self.pubdate = time.strftime('%c', self.starttime)
+        self.pubdate = time.strftime('%a, %d %b %Y %X %Z', self.starttime)
         self.slug = os.path.join(
             show.slug,
             "{}_{}.mp3".format(
