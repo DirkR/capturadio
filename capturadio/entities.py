@@ -89,7 +89,7 @@ class Episode(Entity):
         self.starttime = time.localtime()
         self.show = show
         self.name = "{}, {}".format(show.name, time.strftime(config.date_pattern, self.starttime))
-        self.pubdate = time.strftime('%a, %d %b %Y %X %Z', self.starttime)
+        self.pubdate = time.strftime('%a, %d %b %Y %X %z', self.starttime)
         self.slug = os.path.join(
             show.slug,
             "{}_{}.mp3".format(
@@ -98,7 +98,7 @@ class Episode(Entity):
             )
         )
         self.filename = os.path.join(config.destination, self.slug)
-        self.duration_string = str(datetime.timedelta(seconds=self.duration))
+        self.duration_string = str(datetime.timedelta(seconds=self.duration)).split(".")[0]
 
     def __repr__(self):
         print(self.__class__.__dict__)

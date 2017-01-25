@@ -83,12 +83,14 @@ def generate_feed(config, db, entity):
 
     logging.debug("Generating feed for {}".format(entity.slug if entity.slug is not "" else '<root>'))
     items = sorted(items, key=operator.attrgetter('starttime'), reverse=True)
+    slug = entity.slug + ("/" if entity.slug != '' else '') + 'rss.xml'
     contents = j2_env.get_template('feed.xml.jinja2').render(
         feed=_escape_string_attributes(entity),
         items=items,
         title=config.feed['title'],
         base_url=config.feed['base_url'],
-        build_date=time.strftime('%a, %d %b %Y %X %Z', time.localtime()),
+        slug=slug,
+        build_date=time.strftime('%a, %d %b %Y %X %z', time.localtime()),
         generator='CaptuRadio v{}'.format(version_string),
     )
     filename = os.path.join(entity.filename, 'rss.xml')
