@@ -39,6 +39,11 @@ and it will create a configuration at `~/.config/capturadio`.
 You should edit the file and customize it. Especially the destination folder
 and the base_url should be adopted.
 
+If you updated the codebase, then runn the following command to update the
+configuration:
+
+    recorder config update
+
 Run the command
 
     recorder config list
@@ -111,6 +116,21 @@ Git clone _CaptuRadio_ from GitHub at https://github.com/DirkR/capturadio
 The _CaptuRadio_ code is Freeware.
 
 ## Version History
+
+### Version 0.11 -- 2017-01-29
+
+CaptuRadio had it's 5th birthday last week - time for a new release.
+
+ * Rendering a HTML version of the feeds
+ * Updated RSS feed file structure
+ * Command 'feed list' lists all episodes from episodes_db
+ * Command 'config update' migrates mp3 files in podcasts folder into entries in
+   episodes database.
+ * Project structure re-organized.
+
+Warning: Due to the Upgrade to Python3 it is no longer possible to capture
+Icecast streams. The urllib library is more strict when parsing the HTTP
+responses.
 
 ### Version 0.10 -- 2016-10-06
 

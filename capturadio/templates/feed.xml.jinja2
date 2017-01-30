@@ -1,30 +1,35 @@
-<?xml version="1.0" encoding="iso-8859-1"?>
-<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" version="2.0">
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+  xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+  xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>{{ title }} - {{ feed.name }}</title>
+    <title>{{ title }} - {{ feed.name_escaped }}</title>
     <link>{{ feed.link_url }}</link>
-    <description><![CDATA[ {{ feed.description }} ]]></description>
-    <itunes:image href="{{ feed.logo_url }}"></itunes:image>
-    <language>{{ feed.language }}</language>
+    <description>Recordings of the show "{{ feed.name_escaped | e }}".</description>
     <lastBuildDate>{{ build_date }}</lastBuildDate>
-    <generator>{{ generator }}</generator>
-    <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+
     <image>
       <url>{{ feed.logo_url }}</url>
-      <title>{{ feed.name }}</title>
+      <title>{{ title }} - {{ feed.name_escaped }}</title>
       <link>{{ feed.link_url }}</link>
     </image>
+    <language>{{ feed.language }}</language>
+    <generator>{{ generator | e }}</generator>
+    <itunes:image href="{{ feed.logo_url }}"></itunes:image>
+    <atom:link href="{{ base_url }}/{{ slug }}" rel="self" type="application/rss+xml" />
+
 {% for item in items %}
     <item>
-      <title>{{ item.name }}</title>
+      <title>{{ item.name_escaped }}</title>
       <link>{{ item.link_url }}</link>
+      <pubDate>{{ item.pubdate }}</pubDate>
+      <author>{{ item.author_escaped }}</author>
+      <guid isPermaLink="false">{{ item.slug }}</guid>
+      <description><![CDATA[Show: {{ item.name_escaped }}<br>Copyright: <a href="{{ item.link_url }}">{{ item.author_escaped }}</a>]]></description>
+      <enclosure url="{{ base_url }}/{{ item.slug }}" length="{{ item.filesize }}" type="{{ item.mimetype }}"></enclosure>
       <itunes:duration>{{ item.duration_string }}</itunes:duration>
       <itunes:image href="{{ item.logo_url }}"></itunes:image>
-      <description><![CDATA[ {{ item.description }} ]]></description>
-      <author>{{ item.author }}</author>
-      <enclosure url="{{ base_url }}/{{ item.slug }}" length="{{ item.filesize }}" type="{{ item.mimetype }}"></enclosure>
-      <guid isPermaLink="true">{{ base_url }}/{{ item.slug }}</guid>
-      <pubDate>{{ item.pubdate }}</pubDate>
+      <itunes:summary>{{ item.name_escaped }}, Link: {{ item.link_url }}</itunes:summary>
     </item>
 {% endfor %}
   </channel>

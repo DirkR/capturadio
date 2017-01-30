@@ -43,7 +43,7 @@ def test_configuration(test_folder):
     assert config.stations['dkultur'].stream_url == 'http://example.org/dkultur'
     assert config.stations['dkultur'].name == 'dkultur'
     assert config.stations['dkultur'].logo_url == 'http://example.org/default.png'
-    assert config.stations['dkultur'].link_url == 'http://my.example.org/'
+    assert config.stations['dkultur'].link_url == 'http://my.example.org'
     assert config.stations['dkultur'].date_pattern == '%d.%m.%Y'
 
     assert 'wdr2' in config.stations.keys()
@@ -245,6 +245,8 @@ def test_parse_duration():
     assert parse_duration("300s") == 300
     assert parse_duration("300") == 300
     assert parse_duration("1h15m20") == 4520
+    assert parse_duration("5d2h") == 439200
+    assert parse_duration("5d20s") == 432020
 
     assert parse_duration("-50m") == 0
     assert parse_duration("-300s") == 0
