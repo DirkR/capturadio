@@ -117,6 +117,21 @@ The _CaptuRadio_ code is Freeware.
 
 ## Version History
 
+### Version 0.11 -- 2017-01-29
+
+CaptuRadio had it's 5th birthday last week - time for a new release.
+
+ * Rendering a HTML version of the feeds
+ * Updated RSS feed file structure
+ * Command 'feed list' lists all episodes from episodes_db
+ * Command 'config update' migrates mp3 files in podcasts folder into entries in
+   episodes database.
+ * Project structure re-organized.
+
+Warning: Due to the Upgrade to Python3 it is no longer possible to capture
+Icecast streams. The urllib library is more strict when parsing the HTTP
+responses.
+
 ### Version 0.10 -- 2016-10-06
 
 * Ported to Python3, it will no longer run on Python 2.x
