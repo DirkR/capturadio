@@ -19,7 +19,7 @@ from capturadio.recorder import Recorder
 from capturadio.config import Configuration
 from capturadio.util import format_date, slugify, parse_duration
 
-version = (0, 10, 0)
+version = (0, 11, 0)
 version_string = ".".join(map(str, version))
 
 app_folder = os.path.join(XDG_DATA_HOME, 'capturadio')
