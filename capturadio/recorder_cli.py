@@ -88,7 +88,6 @@ Options:
         'bbc2',
         'http://bbcmedia.ic.llnwd.net/stream/bbcmedia_radio2_mf_p?s=1423688987&e=1423703387&h=1f97ff4f9b0e0f1ae988bdf684f233b3',
         'BBC Radio 2',
-        'http://www.bbc.co.uk/radio2/images/homepage/bbcradio2.gif'
     )
     bobharriscountry = config.add_show(
         bbcradio2,

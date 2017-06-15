@@ -286,7 +286,7 @@ Copyright: %(year)s %(station)s''',
                 else:
                     raise Exception('No duration option defined for show "%s".' % show_id)
 
-                show = self.add_show(self, station, show_id, show_title, show_duration)
+                show = self.add_show(station, show_id, show_title, show_duration)
 
                 if config.has_option(show_id, 'logo_url'):
                     show.logo_url = config.get(show_id, 'logo_url')
@@ -328,10 +328,10 @@ Copyright: %(year)s %(station)s''',
         return station
 
 
-    def add_show(self, config, station, id, name, duration):
+    def add_show(self, station, id, name, duration):
         if not isinstance(station, Station):
             raise TypeError('station has to be of type "Station"')
-        show = Show(config, station, id, name, duration)
+        show = Show(self, station, id, name, duration)
         logging.debug(u'    %s' % show)
         self.shows[id] = show
         return show
