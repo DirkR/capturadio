@@ -3,18 +3,18 @@ import logging
 import os
 import re
 import tempfile
-from configparser import ConfigParser, DEFAULTSECT
+from configparser import RawConfigParser, DEFAULTSECT
 
 from capturadio import Station, Show
 from capturadio.util import parse_duration
 
 
-class UnicodeConfigParser(ConfigParser):
+class UnicodeConfigParser(RawConfigParser):
     """The class UnicodeConfigParser is derived from RawConfigParser and
     overloads the method write() to output unicode data."""
 
     def __init__(self, *args, **kwargs):
-        ConfigParser.__init__(self, *args, **kwargs)
+        RawConfigParser.__init__(self, *args, **kwargs)
 
     def write(self, fp):
         """Fixed for Unicode output"""
@@ -109,14 +109,14 @@ Copyright: %(year)s %(station)s''',
                 self._load_config()
                 Configuration._loaded_from_disk = True
 
-
     def write_config(self):
         logging.debug('Enter write_config')
         config = UnicodeConfigParser()
         config.add_section('settings')
         for key in ('destination', 'date_pattern', 'comment_pattern'):
             if self.__dict__[key] is not None:
-                config.set('settings', key, self.__dict__[key])
+                val = self.__dict__[key]
+                config.set('settings', key, val)
 
         config.add_section('feed')
         for key in ('base_url', 'title', 'about_url', 'description',
