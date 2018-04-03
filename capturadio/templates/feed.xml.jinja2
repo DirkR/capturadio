@@ -7,7 +7,6 @@
     <link>{{ feed.link_url }}</link>
     <description>Recordings of the show "{{ feed.name_escaped | e }}".</description>
     <lastBuildDate>{{ build_date }}</lastBuildDate>
-
     <image>
       <url>{{ feed.logo_url }}</url>
       <title>{{ title }} - {{ feed.name_escaped }}</title>
@@ -16,7 +15,6 @@
     <language>{{ feed.language }}</language>
     <generator>{{ generator | e }}</generator>
     <itunes:image href="{{ feed.logo_url }}"></itunes:image>
-    <atom:link href="{{ base_url }}/{{ slug }}" rel="self" type="application/rss+xml" />
 
 {% for item in items %}
     <item>
