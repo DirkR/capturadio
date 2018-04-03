@@ -155,6 +155,10 @@ Update program settings and episodes database.
 
     """
     config = Configuration()
+    _migrate_files_to_episodesdb(config)
+
+def _migrate_files_to_episodesdb(config):
+    "Method to import files residing in the filesystem into the episodes_db"
 
     show_mappings = {}
     for show in config.shows.values():
@@ -211,6 +215,7 @@ Generate rss feed files.
     root.slug = ''
     root.shows = config.stations.values()
 
+    config.icons_db = database.open('icons_db')
     with database.open('episodes_db') as db:
         _cleanup_database(db)
         db.sync()
