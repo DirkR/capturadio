@@ -117,6 +117,13 @@ The _CaptuRadio_ code is Freeware.
 
 ## Version History
 
+### Version 0.12 -- 2017-04-03
+
+CaptuRadio is much more SSL friendlier by now.
+
+ * The HTML version contains the icons embedded as data-uri, so that HTTP-URLs
+   don't break the SSL lavel of the web page any longer.
+
 ### Version 0.11 -- 2017-01-29
 
 CaptuRadio had it's 5th birthday last week - time for a new release.
