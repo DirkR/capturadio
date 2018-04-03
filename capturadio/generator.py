@@ -26,8 +26,10 @@ def generate_page(config, db, entity):
         for show in entity.shows:
             if not os.path.exists(show.filename):
                 logging.debug("Skipping non-existant file {}".format(show.filename))
-            else:
-                shows.append(_escape_string_attributes(show))
+                continue
+
+            _convert_logo_to_dataurl(config.icons_db, show)
+            shows.append(_escape_string_attributes(show))
 
     items = []
     if len(shows) == 0:
@@ -36,6 +38,8 @@ def generate_page(config, db, entity):
                 if not os.path.exists(episode.filename):
                     logging.debug("Skipping non-existant file {}".format(episode.filename))
                     continue
+
+                _convert_logo_to_dataurl(config.icons_db, episode)
                 items.append(_escape_string_attributes(episode))
 
     if len(items) == 0 and len(shows) == 0:
@@ -57,6 +61,29 @@ def generate_page(config, db, entity):
     with open(filename, "w") as rssfile:
         rssfile.write(contents)
 
+
+def _convert_logo_to_dataurl(icons_db, entity):
+    logo_url = str.lower(entity.logo_url)
+    if logo_url in icons_db.keys():
+        item = icons_db[logo_url]
+        entity.logo_url = "data:{};base64,{}".format(item['mimetype'], item['data'])
+    else:
+        mimetype, data = _get_imgurl_as_base64(entity.logo_url)
+        icons_db[logo_url] = {
+            'mimetype': mimetype,
+            'data': data
+        }
+        entity.logo_url = "data:{};base64,{}".format(mimetype, data)
+
+
+def _get_imgurl_as_base64(url):
+    import urllib.request
+    import base64
+
+    local_filename, headers = urllib.request.urlretrieve(url)
+    data = base64.b64encode(open(local_filename, "rb").read())
+    mimetype = headers.get_content_type()
+    return mimetype, data.decode('utf-8')
 
 def generate_feed(config, db, entity):
     """

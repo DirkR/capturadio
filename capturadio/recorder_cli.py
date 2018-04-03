@@ -215,6 +215,7 @@ Generate rss feed files.
     root.slug = ''
     root.shows = config.stations.values()
 
+    config.icons_db = database.open('icons_db')
     with database.open('episodes_db') as db:
         _cleanup_database(db)
         db.sync()
