@@ -155,6 +155,10 @@ Update program settings and episodes database.
 
     """
     config = Configuration()
+    _migrate_files_to_episodesdb(config)
+
+def _migrate_files_to_episodesdb(config):
+    "Method to import files residing in the filesystem into the episodes_db"
 
     show_mappings = {}
     for show in config.shows.values():
