@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import re
 import time
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
@@ -9,6 +10,7 @@ from mutagenx._id3frames import \
     TIT2, TDRC, TCON, TALB, TLEN, TPE1, TCOP, COMM, TCOM, APIC
 from mutagenx.mp3 import MP3
 from mutagenx.id3 import ID3, error
+import m3u8
 
 from capturadio.config import Configuration
 from capturadio.entities import Episode
@@ -38,7 +40,8 @@ class Recorder(object):
                 os.makedirs(dirname)
 
             with open(episode.filename, 'wb') as file:
-                stream = urlopen(episode.stream_url)
+                uri = self._get_canonical_url(episode.stream_url)
+                stream = urlopen(uri)
                 starttimestamp = time.mktime(episode.starttime)
                 while not_ready:
                     try:
@@ -75,9 +78,36 @@ class Recorder(object):
             os.remove(episode.filename)
             raise e
 
+    def _get_canonical_url(self, url):
+        with urlopen(url) as response:
+            mimetype = response.getheader('Content-Type')
+            if mimetype in ('application/mpegurl', 'audio/mpegurl', 'application/x-mpegurl', 'audio/x-mpegurl',
+                            'application/vnd.apple.mpegurl'):
+                content = response.read().decode('utf-8')
+                m3u8_obj = m3u8.loads(content)
+
+                if len(m3u8_obj.files) > 0:
+                    url = self._get_canonical_url(m3u8_obj.files[0])
+                elif len(m3u8_obj.playlists) > 0:
+                    url = self._get_canonical_url(m3u8_obj.playlists[0].uri)
+                else:
+                    # Regex taken from https://stackoverflow.com/questions/7160737/#7160778
+                    regex = re.compile(
+                        r'(?:http|ftp)s?://'  # http:// or https://
+                        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain,
+                        r'localhost|'  # localhost,
+                        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
+                        r'(?::\d+)?'  # optional port
+                        r'(?:/?|[/?]\S+)', re.IGNORECASE & re.MULTILINE)
+                    urls = regex.findall(content)
+                    if len(urls) > 0:
+                        url = urls[0]
+
+        return url
+
     def _add_metadata(self, episode):
         if episode.filename is None:
-            raise "filename is not set - you cannot add metadata to None"
+            raise FileNotFoundError("filename is not set - you cannot add metadata to None")
 
         episode.description = 'Show: {show}<br>Date: {date}<br>Copyright: {year} <a href="{link_url}">{station}</a>'.format(
             show=episode.show.name,
@@ -116,7 +146,8 @@ class Recorder(object):
         audiofile.save()
 
     def _add_logo(self, audiofile, url):
-        # APIC part taken from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
+        # APIC part taken
+        # from http://mamu.backmeister.name/praxis-tipps/pythonmutagen-audiodateien-mit-bildern-versehen/
         if url is not None:
             request = Request(url)
             request.get_method = lambda: 'HEAD'

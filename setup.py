@@ -31,6 +31,7 @@ setup(
         'docopt>=0.6',
         'mutagenx>=1.22',
         'pytest>=2.3',
+        'm3u8>=0.3.4',
     ],
     packages=find_packages(exclude=('docs', 'examples')),
     include_package_data = True,

@@ -1,7 +1,8 @@
-docopt==0.6.1
-Jinja2==2.8
-MarkupSafe==0.23
-mutagenx==1.24
-py==1.4.15
-pytest==2.3.5
-xdg==1.0.1
+docopt>=0.6.0
+Jinja2>=2.6
+MarkupSafe>=0.23
+mutagenx>=1.22
+py>=1.4.15
+pytest>=2.3
+xdg>=1.0
+m3u8>=0.3.4
