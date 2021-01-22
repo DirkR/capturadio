@@ -10,7 +10,6 @@ the recorded media files and generate an podcast-like rss feed.
 
 recorder.py is the command line program to interact with capturadio.
 """
-from __future__ import unicode_literals, print_function
 
 import sys
 import os

@@ -1,5 +1,4 @@
 *.pyc
-Deutschlandfunk/
 index.html
 rss.xml
 .idea
@@ -9,3 +8,4 @@ build
 .coverage
 htmlcov
 .ropeproject
+/venv/

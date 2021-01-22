@@ -1,11 +1,13 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 import sys
 import os
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from recorder import ignore_folder
+src_folder = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(src_folder)
+
+from capturadio.recorder_cli import ignore_folder
 
 def test_excludedFolders():
     folders_and_results = {

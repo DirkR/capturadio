@@ -166,7 +166,7 @@ Copyright: %(year)s %(station)s''',
         config = UnicodeConfigParser()
         Configuration.changed_settings = False  # track changes
 
-        config.readfp(codecs.open(config_file, "r", "utf8"))
+        config.read_file(codecs.open(config_file, "r", "utf8"))
         if config.has_section('settings'):
             if config.has_option('settings', 'destination'):
                 self.set_destination(config.get('settings', 'destination'))

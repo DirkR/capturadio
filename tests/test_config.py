@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 """
@@ -225,7 +225,7 @@ def test_add_station(test_folder):
 def test_add_show_to_station(test_folder):
     config = Configuration(reset=True, folder=str(test_folder))
     station = config.stations['dlf']
-    show = config.add_show(config, station, 'news', 'Latest News', 10)
+    show = config.add_show(station, 'news', 'Latest News', 10)
     assert isinstance(show, Show)
 
     assert len(config.shows) == 3

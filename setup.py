@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
@@ -22,15 +22,17 @@ setup(
         "Development Status :: 5 - Production/Stable",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2.7",
+        "Programming Language :: Python :: 3",
         "License :: Freeware",
     ],
     install_requires=[
-        'xdg>=1.0',
-        'Jinja2>=2.6',
-        'docopt>=0.6',
-        'mutagenx>=1.22',
-        'pytest>=2.3',
+        'xdg>=5.0.0',
+        'Jinja2>=2.10.1',
+        'docopt>=0.6.1',
+        'MarkupSafe>=1.0.0',
+        'mutagenx>=1.24',
+        'pytest>=2.3.5',
+        'py>=1.10.0',
     ],
     packages=find_packages(exclude=('docs', 'examples')),
     include_package_data = True,

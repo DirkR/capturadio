@@ -8,8 +8,6 @@ the recorded media files and generate an podcast-like rss feed.
 
 """
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import os
 
 from xdg import XDG_DATA_HOME

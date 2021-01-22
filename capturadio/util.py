@@ -9,7 +9,6 @@ the recorded media files and generate an podcast-like rss feed.
 The module capturadio.util provides some helper funtions.
 """
 # -*- coding: utf-8 -*-
-from __future__ import unicode_literals
 
 import os
 import unicodedata
@@ -77,7 +76,7 @@ def slugify(value):
     and converts spaces to hyphens.
     """
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
-    value = re.sub('[-,;\s]+', '_', value.decode()).strip().lower()
+    value = re.sub(r'[-,;\s]+', '_', value.decode()).strip().lower()
     return value
 
 
